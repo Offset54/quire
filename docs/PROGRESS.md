@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1, 2 and 8 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1, 2, 3, 5 and 8 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -25,9 +25,10 @@
 |---|---|---|
 | 1 | Workspace scaffold | Done (85ac033) |
 | 2 | License and dependency gates | Done (85ac033) |
-| 3 | CI | Blocked: needs `gh auth login` (you) to create the private repo |
+| 3 | CI | Done: [Offset54/quire](https://github.com/Offset54/quire) (private); Windows runs every gate, macOS and Linux build and test |
 | 8 | Tracing | Done: Chrome-trace recorder in `quire-core::trace`, frontend measures and long tasks merged (`QUIRE_TRACE=<file>`) |
-| 4–7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 5 | Job scheduler | Done: `quire-core::scheduler`, 12 unit tests + a model-based property test, criterion benches |
+| 4, 6, 7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -37,6 +38,18 @@
 - TypeScript is pinned to 6.0.x: typescript-eslint 8.71 supports `<6.1`, so TS 7 waits for it.
 
 ## Benchmarks vs. budget
+
+### Micro-benchmarks (criterion, raw dev machine, AC power, 2026-10-08)
+
+These are component costs, not §4 scenarios, so they aren't derated.
+
+| Benchmark | Median | Notes |
+|---|---|---|
+| Scheduler: submit + wait, Interaction, idle pool | 5.7 µs | Hand-off cost on the input path; 0.04 % of the 16 ms budget |
+| Scheduler: 10k no-op jobs, mixed priorities | 16.7 ms (≈ 598k jobs/s) | 4 workers, 1 reserved |
+| Scheduler: coalescing hit | 130 ns | Duplicate tile request while queued |
+
+### §4 scenarios
 
 No official results yet: the harness and ref-sim profile come in task 12.
 
