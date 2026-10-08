@@ -1,3 +1,11 @@
 {
-  "app.empty": "No document open"
+  "app.empty": "No document open",
+  "hud.title": "Performance",
+  "hud.frames": "Frames",
+  "hud.longTasks": "Long tasks (> 50 ms)",
+  "hud.queues": "Queued",
+  "hud.jobs": "Jobs",
+  "hud.memory": "Cache memory",
+  "hud.surface": "Surface {view}",
+  "hud.recentJobs": "Recent jobs"
 }

@@ -10,7 +10,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getLongTaskCount } from "../perf/trace";
 import { DocumentSurface, type FrameSample, type ViewInfo } from "../surface/surface";
-import { summarize } from "./stats";
+import { summarize } from "../perf/stats";
 
 const ROWS = 10_000_000;
 const ROW_CSS_PX = 20;

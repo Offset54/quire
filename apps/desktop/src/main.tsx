@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { setLocale } from "./i18n";
+import { installHud } from "./perf/hud";
 import { startTracing } from "./perf/trace";
 
 const root = document.getElementById("root");
@@ -9,6 +10,7 @@ if (!root) throw new Error("missing #root element");
 
 setLocale(navigator.language);
 void startTracing();
+installHud();
 
 async function start(host: HTMLElement) {
   // Dead code in normal builds: Vite replaces the condition with `false`.

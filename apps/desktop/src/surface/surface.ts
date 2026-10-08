@@ -58,6 +58,11 @@ interface WebView2 {
 
 const webview2 = (window as unknown as { chrome?: { webview?: WebView2 } }).chrome?.webview;
 const surfacesByView = new Map<number, DocumentSurface>();
+
+/** Open surfaces, for the performance HUD. */
+export function openSurfaces(): DocumentSurface[] {
+  return [...surfacesByView.values()];
+}
 let sharedListenerInstalled = false;
 
 /** One listener for all surfaces; routes shared buffers by view id. */
@@ -132,6 +137,14 @@ class TileCache {
   get size(): number {
     return this.tiles.size;
   }
+}
+
+export interface SurfaceDiagnostics {
+  view: number;
+  transport: string;
+  cachedTiles: number;
+  cacheCapacity: number;
+  counters: TileCounters;
 }
 
 export class DocumentSurface {
@@ -267,6 +280,17 @@ export class DocumentSurface {
     const top = id.row * this.tileSize;
     const [lo, hi] = wantedRange(this.scroll.value, this.height);
     return top + this.tileSize > lo && top < hi;
+  }
+
+  diagnostics(): SurfaceDiagnostics | undefined {
+    if (!this.info) return undefined;
+    return {
+      view: this.info.view,
+      transport: this.info.transport,
+      cachedTiles: this.cache.size,
+      cacheCapacity: this.cache.capacity,
+      counters: { ...this.counters },
+    };
   }
 
   /** PNG data URL of the tile layer, for visual checks in benchmarks and tests. */

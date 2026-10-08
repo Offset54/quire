@@ -7,6 +7,7 @@ type Scenario = { run(host: HTMLElement): Promise<unknown> };
 
 const scenarios: Record<string, () => Promise<Scenario>> = {
   "scroll-list": () => import("./scroll-list"),
+  hud: () => import("./hud"),
 };
 
 /** Runs the scenario named by QUIRE_BENCH, if any. Returns whether one ran. */

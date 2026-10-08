@@ -72,3 +72,29 @@ body {
   opacity: 0.6;
   will-change: transform;
 }
+
+.perf-hud {
+  position: fixed;
+  top: 8px;
+  right: 20px;
+  z-index: 1000;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgb(20 22 30 / 88%);
+  color: #e6e7ee;
+  font:
+    11px/1.4 ui-monospace,
+    "Cascadia Mono",
+    Consolas,
+    monospace;
+  pointer-events: none;
+}
+
+.perf-hud canvas {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.perf-hud pre {
+  margin: 0;
+}

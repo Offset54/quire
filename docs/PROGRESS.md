@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1–9 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1–10 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -32,7 +32,8 @@
 | 4 | Shell hardening | Done: command allowlist + per-window capability, navigation/new-window/download blocking (unit-tested), Windows manifest (longPathAware, PerMonitorV2, UTF-8 code page), window-state restore, ICU MessageFormat catalog (`t()`) |
 | 7 | Tile transport spike | Done: [ADR-0004](adr/0004-tile-transport.md). Windows uses WebView2 SharedBuffer (raw 512 px tile 2.7 ms p50, full 1080p repaint 26 ms); fallback is `invoke` + QOI |
 | 9 | Compositor and virtual scroller | Done: [ADR-0005](adr/0005-virtual-scroll-model.md). `DocumentSurface` (tile + overlay canvases, custom scrollbar, LRU bitmaps), view service, synthetic 10M-row list behind `bench-fixtures`. Raw dev machine: steady scroll and fling 0 dropped frames at 144 Hz, 0 placeholders |
-| 10–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 10 | Performance HUD | Done: Ctrl+Shift+H overlay (frame graph with 16.7/50 ms lines, long tasks, queue depths, job counters, memory caches, per-surface tile counters, last 10 jobs); verified live by the `hud` bench scenario |
+| 11–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -106,5 +107,7 @@ Needed later and not installed yet: PDFium prebuilt binaries and `qpdf` (M3), th
 Benchmarks that count against §4 run in the ref-sim profile ([ADR-0021](adr/0021-reference-machine-emulation.md)) and are labeled "ref-sim", never "reference".
 
 ## Known gaps
+
+- The webview's tile bitmap cache (LRU, ten viewports of tiles) is capped by count but not reported to the core memory governor, so the HUD's cache memory excludes it. To be fixed when the governor gets a frontend-reported budget (before M3, where PDF tiles dominate memory).
 
 - Windows long paths are enabled on this PC, and git uses `core.longpaths = true` for this repo. The app must still declare `longPathAware` in its manifest (§9), because users' machines may have the setting off.

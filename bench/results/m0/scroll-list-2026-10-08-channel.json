@@ -34,10 +34,7 @@
     "tileSize": 512,
     "transport": "channel",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
-    "viewport": [
-      1902,
-      1080
-    ]
+    "viewport": [1902, 1080]
   },
   "firstPaintMs": 48.5,
   "fling": {
@@ -536,13 +533,7 @@
       "coalesced": 0,
       "completed": 4869,
       "panicked": 0,
-      "queued": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
+      "queued": [0, 0, 0, 0, 0],
       "running": 0,
       "stale_dropped": 51
     }
