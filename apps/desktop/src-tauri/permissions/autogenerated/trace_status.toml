@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-trace-status"
+description = "Enables the trace_status command without any pre-configured scope."
+commands.allow = ["trace_status"]
+
+[[permission]]
+identifier = "deny-trace-status"
+description = "Denies the trace_status command without any pre-configured scope."
+commands.deny = ["trace_status"]

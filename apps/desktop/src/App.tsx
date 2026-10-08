@@ -1,7 +1,9 @@
+import { t } from "./i18n";
+
 export function App() {
   return (
     <main className="empty">
-      <p>No document open</p>
+      <p>{t("app.empty")}</p>
     </main>
   );
 }
