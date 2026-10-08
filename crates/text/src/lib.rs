@@ -5,6 +5,7 @@ pub mod buffer;
 pub mod chars;
 pub mod document;
 pub mod encoding;
+pub mod file;
 pub mod history;
 pub mod index;
 pub mod layout;

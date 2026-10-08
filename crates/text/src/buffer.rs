@@ -499,9 +499,18 @@ impl TextBuffer {
     /// A document over `original` (buffer 0), indexed by `index`, which may
     /// still be filling in the background.
     pub fn new(original: Arc<dyn Source>, index: Arc<ChunkIndex>) -> Self {
+        Self::with_original(original, index, 0)
+    }
+
+    /// Like [`TextBuffer::new`], with the document starting at `start` of
+    /// the original (after a byte-order mark).
+    pub fn with_original(original: Arc<dyn Source>, index: Arc<ChunkIndex>, start: u64) -> Self {
         let buffers = Buffers::default();
-        let len = original.len();
-        let breaks = index.piece_breaks(&*original, 0, len).ok().flatten();
+        let len = original.len() - start;
+        let breaks = index
+            .piece_breaks(&*original, start, start + len)
+            .ok()
+            .flatten();
         buffers.push(BufferEntry {
             source: original,
             index,
@@ -514,7 +523,7 @@ impl TextBuffer {
         });
         let tree = PieceTree::from_pieces(&[Piece {
             buf: ORIGINAL,
-            start: 0,
+            start,
             len,
             breaks,
         }]);
@@ -524,6 +533,24 @@ impl TextBuffer {
             add,
             add_index,
         }
+    }
+
+    /// Points the document at a new original (after a save, §5.8 step 5):
+    /// buffer 0 becomes `entry` and the tree one piece over it from `start`.
+    pub fn rebase(&mut self, entry: BufferEntry, start: u64) {
+        let len = entry.source.len() - start;
+        let breaks = entry
+            .index
+            .piece_breaks(&*entry.source, start, start + len)
+            .ok()
+            .flatten();
+        self.buffers.replace(ORIGINAL, entry);
+        self.tree = PieceTree::from_pieces(&[Piece {
+            buf: ORIGINAL,
+            start,
+            len,
+            breaks,
+        }]);
     }
 
     /// A document holding `bytes` in memory (new files, tests).

@@ -192,6 +192,51 @@ impl std::fmt::Debug for ChunkIndex {
     }
 }
 
+/// Builds an index from a byte stream as it is written (the save pipeline
+/// indexes the new file while writing it, so line numbers stay exact after
+/// a save without re-reading the file).
+#[derive(Debug, Default)]
+pub struct IndexBuilder {
+    pending: Vec<u8>,
+    prev: Option<u8>,
+    chunks: Vec<(u64, EndingStats, u64)>,
+    len: u64,
+}
+
+impl IndexBuilder {
+    pub fn push(&mut self, bytes: &[u8]) {
+        self.len += bytes.len() as u64;
+        self.pending.extend_from_slice(bytes);
+        let c = CHUNK as usize;
+        // A chunk is final once the byte after it is known.
+        let mut at = 0;
+        while self.pending.len() - at > c {
+            let chunk = &self.pending[at..at + c];
+            let (n, s) = scan(chunk, self.prev, Some(self.pending[at + c]));
+            self.chunks.push((n, s, xxh3_64(chunk)));
+            self.prev = chunk.last().copied();
+            at += c;
+        }
+        self.pending.drain(..at);
+    }
+
+    pub fn finish(mut self) -> ChunkIndex {
+        if !self.pending.is_empty() {
+            let (n, s) = scan(&self.pending, self.prev, None);
+            self.chunks.push((n, s, xxh3_64(&self.pending)));
+        }
+        let len = self.len;
+        let index = ChunkIndex::unindexed(len);
+        {
+            let mut st = index.state.write();
+            for (i, (n, s, fp)) in self.chunks.into_iter().enumerate() {
+                st.set(i, n, s, fp);
+            }
+        }
+        index
+    }
+}
+
 impl ChunkIndex {
     /// An index of `len` bytes with nothing known yet.
     pub fn unindexed(len: u64) -> Self {
