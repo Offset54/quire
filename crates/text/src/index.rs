@@ -143,6 +143,30 @@ impl State {
         }
     }
 
+    /// Walks chunks `c..last` while their counts stay below `remaining`:
+    /// returns the first chunk whose count reaches it (or `last`) and the
+    /// breaks in the chunks before it. `None` if an unknown chunk is in the
+    /// way. A binary search over the prefix sums once complete.
+    fn skip(&self, c: usize, last: usize, remaining: u64) -> Option<(usize, u64)> {
+        if let Some(p) = &self.prefix {
+            let target = p[c] + remaining;
+            let j = c + p[c + 1..=last].partition_point(|&s| s < target);
+            return Some((j, p[j] - p[c]));
+        }
+        let mut sum = 0u64;
+        for j in c..last {
+            let n = self.counts[j];
+            if n == UNKNOWN {
+                return None;
+            }
+            if sum + u64::from(n) >= remaining {
+                return Some((j, sum));
+            }
+            sum += u64::from(n);
+        }
+        Some((last, sum))
+    }
+
     /// Sum of counts of chunks `lo..hi`, if all are known.
     fn sum(&self, lo: usize, hi: usize) -> Option<u64> {
         if lo >= hi {
@@ -443,21 +467,32 @@ impl ChunkIndex {
         let mut remaining = k;
         let mut at = a;
         while at < b {
-            let chunk_end = ((at / CHUNK + 1) * CHUNK).min(len);
-            let seg_end = chunk_end.min(b);
-            // Whole indexed chunks are skipped by their count.
-            if at.is_multiple_of(CHUNK) && seg_end == chunk_end {
+            // Whole indexed chunks are skipped by their counts: a binary
+            // search over the prefix sums once the index is complete.
+            if at.is_multiple_of(CHUNK) {
                 let c = (at / CHUNK) as usize;
-                match self.state.read().sum(c, c + 1) {
-                    None => return Ok(None),
-                    Some(n) if n < remaining => {
-                        remaining -= n;
-                        at = seg_end;
-                        continue;
+                let last = if b == len {
+                    len.div_ceil(CHUNK) as usize
+                } else {
+                    (b / CHUNK) as usize
+                };
+                if last > c {
+                    let Some((j, n)) = self.state.read().skip(c, last, remaining) else {
+                        return Ok(None);
+                    };
+                    remaining -= n;
+                    at = (j as u64 * CHUNK).min(len);
+                    if j < last {
+                        // The target is inside chunk j.
+                        let end = ((j as u64 + 1) * CHUNK).min(len);
+                        let (_, hit) = scan_nth(source, at, end, remaining, len)?;
+                        return Ok(Some(hit));
                     }
-                    Some(_) => {}
+                    continue;
                 }
             }
+            let chunk_end = ((at / CHUNK + 1) * CHUNK).min(len);
+            let seg_end = chunk_end.min(b);
             let (n, hit) = scan_nth(source, at, seg_end, remaining, len)?;
             if hit.is_some() {
                 return Ok(Some(hit));

@@ -94,6 +94,7 @@ pub fn build(
     let from = rows.first().map_or(0, |r| r.start);
     let to = rows.last().map_or(0, |r| r.next_line.max(r.end));
     let mut body = Vec::with_capacity(rows.len() * 128);
+    let mut next_line: Option<u64> = None;
     for r in &rows {
         let (text_start, text_end) = if r.end - r.start > MAX_ROW_TEXT {
             let (c0, c1) = req.hcols.unwrap_or((0, 0));
@@ -110,8 +111,12 @@ pub fn build(
         };
         let bytes = snap.read(text_start..text_end)?;
         let (text, subst) = display_text(&bytes);
+        // Rows are consecutive: number the first line through the index,
+        // then count.
         let line = if r.is_first() {
-            snap.line_of(r.start).unwrap_or(u64::MAX)
+            let l = next_line.or_else(|| snap.line_of(r.start));
+            next_line = l.map(|l| l + 1);
+            l.unwrap_or(u64::MAX)
         } else {
             u64::MAX
         };

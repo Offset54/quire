@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bench-memory"
+description = "Enables the bench_memory command without any pre-configured scope."
+commands.allow = ["bench_memory"]
+
+[[permission]]
+identifier = "deny-bench-memory"
+description = "Denies the bench_memory command without any pre-configured scope."
+commands.deny = ["bench_memory"]

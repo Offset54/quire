@@ -2,22 +2,45 @@
 
 | | |
 |---|---|
-| Phase | M0 complete (2026-10-08). M1 (TXT engine) is next. |
+| Phase | M1 (TXT engine) in progress |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-08 |
+| Last updated | 2026-10-09 |
 
 ## Milestones
 
 | Milestone | Status | DoD |
 |---|---|---|
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
-| M1 TXT engine | Next | n/a |
+| M1 TXT engine | In progress ([plan](M1_PLAN.md)) | Not yet measured in ref-sim |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
 | M5 PPTX | Not started | n/a |
 | M6 PPT, export and print | Not started | n/a |
 | M7 Hardening and release | Not started | n/a |
+
+## M1 tasks
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Sources | Done: mapped + guarded copies, chunked for remote files; [ADR-0007](adr/0007-source-access.md) |
+| 2 | Encodings | Done: detection, segmented transcoding with raw copy on save. ADR-0009 not yet written (needs a transcoding throughput number) |
+| 3 | Line index | Done; nth-break lookups are a binary search over prefix sums |
+| 4 | Piece tree | Done: persistent treap, proptests. ADR-0008 not yet written |
+| 5 | Editing model | Done: multi-cursor, column selection, wrap layout, undo/redo; proptest (undo exact, journal replay) |
+| 6 | Search and replace | Done: chunked parallel search (proptest vs. whole buffer), replace-all as one undo step |
+| 7 | Save pipeline | Done: two-phase atomic save with the §5.8 sequence; byte-exact round trips across 11 cases |
+| 8 | Journal | Done: kill test lost 0 of 953 keystrokes |
+| 9 | External changes | Done: stamp + fingerprint classification, reload/keep/compare, edit lock |
+| 10 | TXT surface spike | Decision made (DOM rows); ADR-0023 not yet written |
+| 11 | Host integration | Done (`src-tauri/src/txt.rs`) |
+| 12 | Editor frontend | Done (`src/txt/`); perf work in progress |
+| 13 | Fuzzing | Not started |
+| 14 | Benchmarks | Scenarios, budgets and `tools/bench/refsim-txt.ps1` written; ref-sim suite not yet run |
+| 15 | WebDriver UI flows | Done: 7/7 pass locally; no CI job yet |
+| 16 | M1 report | Not started |
+
+Open issue (2026-10-09): typing latency. An unpinned trial of `txt-2g` measured typing p95 84 ms (budget 16 ms, 10.7 ms effective) with a ~31 ms edit round trip, while the core's insert is 0.03 ms. Next step: time `view::build` in the core (`cargo run -p quire-text --release --example viewbench -- .cache/fixtures/mixed-lines-2gib.txt`) to split core cost from IPC. First paint was 179 ms against ≈172 ms effective (cold, unpinned). Other trial numbers: index 0.75 s, indexed jump 37 ms p50 / 87 ms p95, insert 0.03 ms, scrolling 7 ms frames, memory growth 8 MiB.
 
 ## M0 tasks
 

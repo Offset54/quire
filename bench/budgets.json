@@ -10,7 +10,8 @@
     "cpu": "pass if value × D_cpu ≤ budget",
     "io": "pass if value × D_io ≤ budget",
     "mixed": "pass if value × max(D_cpu, D_io) ≤ budget",
-    "zero": "pass if value is 0"
+    "zero": "pass if value is 0",
+    "ratio": "pass if value ≤ budget; a ratio of two measurements on this machine, not derated"
   },
   "budgets": [
     {
@@ -19,7 +20,8 @@
       "budget": 750,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4 warm start, revised from 0.4 s to 0.75 s on 2026-10-08 (ADR-0022)"
+      "ref": "§4 warm start, revised from 0.4 s to 0.75 s on 2026-10-08 (ADR-0022)",
+      "suite": "m0"
     },
     {
       "id": "startup.cold",
@@ -27,7 +29,8 @@
       "budget": 1700,
       "unit": "ms",
       "kind": "mixed",
-      "ref": "§4 cold start, revised from 1.0 s to 1.7 s on 2026-10-08 (ADR-0022)"
+      "ref": "§4 cold start, revised from 1.0 s to 1.7 s on 2026-10-08 (ADR-0022)",
+      "suite": "m0"
     },
     {
       "id": "scroll.steady.p99",
@@ -35,7 +38,8 @@
       "budget": 16.7,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: 60 fps"
+      "ref": "§4: 60 fps",
+      "suite": "m0"
     },
     {
       "id": "scroll.steady.max",
@@ -43,7 +47,8 @@
       "budget": 50,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: no frame over 50 ms"
+      "ref": "§4: no frame over 50 ms",
+      "suite": "m0"
     },
     {
       "id": "scroll.fling.p99",
@@ -51,7 +56,8 @@
       "budget": 16.7,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: 60 fps"
+      "ref": "§4: 60 fps",
+      "suite": "m0"
     },
     {
       "id": "scroll.fling.max",
@@ -59,7 +65,8 @@
       "budget": 50,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: no frame over 50 ms"
+      "ref": "§4: no frame over 50 ms",
+      "suite": "m0"
     },
     {
       "id": "scroll.drag.p99",
@@ -67,7 +74,8 @@
       "budget": 16.7,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: 60 fps"
+      "ref": "§4: 60 fps",
+      "suite": "m0"
     },
     {
       "id": "scroll.drag.max",
@@ -75,7 +83,8 @@
       "budget": 50,
       "unit": "ms",
       "kind": "raw",
-      "ref": "§4: no frame over 50 ms"
+      "ref": "§4: no frame over 50 ms",
+      "suite": "m0"
     },
     {
       "id": "scroll.composeWork.p95",
@@ -83,7 +92,8 @@
       "budget": 8,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§2: no UI-thread task over 8 ms"
+      "ref": "§2: no UI-thread task over 8 ms",
+      "suite": "m0"
     },
     {
       "id": "scroll.composeWork.max",
@@ -91,7 +101,8 @@
       "budget": 8,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§2: no UI-thread task over 8 ms"
+      "ref": "§2: no UI-thread task over 8 ms",
+      "suite": "m0"
     },
     {
       "id": "scroll.longTasks",
@@ -99,7 +110,197 @@
       "budget": 0,
       "unit": "tasks",
       "kind": "zero",
+      "ref": "§4: no UI-thread task over 50 ms, ever",
+      "suite": "m0"
+    },
+    {
+      "id": "txt.firstPaint",
+      "suite": "txt",
+      "metric": "txt2g.firstPaintMs",
+      "budget": 300,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 TXT 2 GB: first paint ≤ 300 ms (cold file)"
+    },
+    {
+      "id": "txt.index",
+      "suite": "txt",
+      "metric": "txt2g.indexMs",
+      "budget": 4000,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 TXT 2 GB: full line index ≤ 4 s in the background (cold file)"
+    },
+    {
+      "id": "txt.jumpBeforeIndex.max",
+      "suite": "txt",
+      "metric": "txt2g.jumpBeforeIndex.ms.max",
+      "budget": 300,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 TXT 2 GB: jump ≤ 300 ms, approximate, before indexing completes"
+    },
+    {
+      "id": "txt.jumpIndexed.p95",
+      "suite": "txt",
+      "metric": "txt2g.jumpIndexed.ms.p95",
+      "budget": 100,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT 2 GB: jump to any line ≤ 100 ms once indexed"
+    },
+    {
+      "id": "txt.jumpIndexed.max",
+      "suite": "txt",
+      "metric": "txt2g.jumpIndexed.ms.max",
+      "budget": 100,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT 2 GB: jump to any line ≤ 100 ms once indexed"
+    },
+    {
+      "id": "txt.search.total",
+      "suite": "txt",
+      "metric": "search.totalMs",
+      "budget": 3000,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 TXT 2 GB: literal search ≤ 3 s, results streaming from the first hit (cold file)"
+    },
+    {
+      "id": "txt.insert.p95",
+      "suite": "txt",
+      "metric": "txt2g.insertMs.p95",
+      "budget": 5,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT 2 GB: insert at any offset ≤ 5 ms"
+    },
+    {
+      "id": "txt.insert.max",
+      "suite": "txt",
+      "metric": "txt2g.insertMs.max",
+      "budget": 5,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT 2 GB: insert at any offset ≤ 5 ms"
+    },
+    {
+      "id": "txt.typing.p95",
+      "suite": "txt",
+      "metric": "txt2g.typing.latencyMs.p95",
+      "budget": 16,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4: input → visual response p95 ≤ 16 ms"
+    },
+    {
+      "id": "txt.typing.p99",
+      "suite": "txt",
+      "metric": "txt2g.typing.latencyMs.p99",
+      "budget": 33,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4: input → visual response p99 ≤ 33 ms"
+    },
+    {
+      "id": "txt.scroll.steady.p99",
+      "suite": "txt",
+      "metric": "txt2g.steady.frameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: scrolling at 60 fps"
+    },
+    {
+      "id": "txt.scroll.steady.max",
+      "suite": "txt",
+      "metric": "txt2g.steady.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "txt.scroll.fling.p99",
+      "suite": "txt",
+      "metric": "txt2g.fling.frameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: scrolling at 60 fps"
+    },
+    {
+      "id": "txt.scroll.fling.max",
+      "suite": "txt",
+      "metric": "txt2g.fling.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "txt.longTasks",
+      "suite": "txt",
+      "metric": "longTasks",
+      "budget": 0,
+      "unit": "tasks",
+      "kind": "zero",
       "ref": "§4: no UI-thread task over 50 ms, ever"
+    },
+    {
+      "id": "txt.save.ratio",
+      "suite": "txt",
+      "metric": "save.ratio",
+      "budget": 1.25,
+      "unit": "×",
+      "kind": "ratio",
+      "ref": "§4 saving 2 GB after a small edit: limited only by sequential write speed; read as save time ≤ 1.25 × a raw sequential write of the same bytes on the same volume"
+    },
+    {
+      "id": "txt.memory",
+      "suite": "txt",
+      "metric": "txt2g.memory.privateGrowthMiB",
+      "budget": 1536,
+      "unit": "MiB",
+      "kind": "raw",
+      "ref": "§4: resident memory beyond the mapped source ≤ 1.5 GB per document (private bytes growth)"
+    },
+    {
+      "id": "txt300.firstPaint",
+      "suite": "txt",
+      "metric": "txt300m.firstPaintMs",
+      "budget": 300,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 TXT one 300 MB line: first paint ≤ 300 ms (cold file)"
+    },
+    {
+      "id": "txt300.caret.max",
+      "suite": "txt",
+      "metric": "txt300m.caretMs.max",
+      "budget": 100,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT one 300 MB line: no hang on caret movement (read as each response ≤ 100 ms, M1_PLAN)"
+    },
+    {
+      "id": "txt300.wrapToggle.max",
+      "suite": "txt",
+      "metric": "txt300m.wrapToggleMs.max",
+      "budget": 100,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 TXT one 300 MB line: no hang toggling wrap (read as ≤ 100 ms, M1_PLAN)"
+    },
+    {
+      "id": "txt300.wrapScroll.max",
+      "suite": "txt",
+      "metric": "txt300m.wrappedScroll.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms (scrolling the wrapped 300 MB line)"
     }
   ]
 }

@@ -556,3 +556,11 @@ input {
   border: 0;
   background: transparent;
 }
+
+.txt-row.placeholder .txt-clip {
+  background: repeating-linear-gradient(90deg, var(--line) 0 40%, transparent 40% 100%);
+  background-size: 24ch 100%;
+  opacity: 0.5;
+  top: 30%;
+  bottom: 30%;
+}

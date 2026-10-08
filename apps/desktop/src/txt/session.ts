@@ -405,6 +405,14 @@ export class Session {
     }
   }
 
+  /** Closes without asking, dropping unsaved edits (benchmarks). */
+  async discard(): Promise<void> {
+    await invoke("txt_close", { doc: this.doc, discard: true });
+    this.view?.destroy();
+    this.view = undefined;
+    reset();
+  }
+
   /** Closes; asks first if there are unsaved edits. Returns false if kept open. */
   async close(): Promise<boolean> {
     if (getState().status?.dirty) {

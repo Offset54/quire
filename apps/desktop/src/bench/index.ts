@@ -9,6 +9,11 @@ const scenarios: Record<string, () => Promise<Scenario>> = {
   startup: () => import("./startup"),
   "scroll-list": () => import("./scroll-list"),
   hud: () => import("./hud"),
+  "txt-2g": () => import("./txt").then((m) => ({ run: m.txt2g })),
+  "txt-2g-search": () => import("./txt").then((m) => ({ run: m.txt2gSearch })),
+  "txt-save": () => import("./txt").then((m) => ({ run: m.txtSave })),
+  "txt-300m": () => import("./txt").then((m) => ({ run: m.txt300m })),
+  "launch-2g": () => import("./txt").then((m) => ({ run: m.launch2g })),
 };
 
 /**

@@ -104,6 +104,8 @@ export interface InputSample {
 }
 
 const TAB = 4;
+/** The first rows this process drew (startup and first-paint metrics). */
+let firstContentMarked = false;
 
 /** Code points in the first `upTo` UTF-16 units of `s`. */
 function codePoints(s: string, upTo: number): number {
@@ -223,6 +225,13 @@ export class TxtView {
   }
 
   /** Rows currently on screen (for tests and benchmarks). */
+  /** Rows on screen drawn as placeholders (not yet fetched). */
+  placeholderRows(): number {
+    return this.pool.filter(
+      (el) => el.root.classList.contains("placeholder") && el.root.style.display !== "none",
+    ).length;
+  }
+
   visibleText(): string[] {
     const first = Math.floor(this.top);
     return this.rows.slice(first, first + this.visibleRows).map((r) => r.text);
@@ -567,10 +576,23 @@ export class TxtView {
       const el = this.rowEl(k);
       const row = this.rows[first + k];
       if (!row) {
-        el.root.style.display = "none";
+        // Past the fetched window: a placeholder until the rows arrive
+        // (never a blank screen); past the document's end: nothing.
+        const beyondDoc = first + k >= this.rows.length ? this.atDocEnd() : this.atDocStart();
         el.key = "";
+        if (beyondDoc || k >= this.visibleRows + 1) {
+          el.root.style.display = "none";
+        } else {
+          el.root.style.display = "";
+          el.root.classList.add("placeholder");
+          el.root.style.transform = `translateY(${k * this.lineH}px)`;
+          el.tx.textContent = "";
+          el.ln.textContent = "";
+          el.overlay.replaceChildren();
+        }
         continue;
       }
+      el.root.classList.remove("placeholder");
       el.root.style.display = "";
       el.root.style.transform = `translateY(${k * this.lineH}px)`;
       el.root.dataset.index = String(first + k);
@@ -590,6 +612,10 @@ export class TxtView {
     }
     this.updateScrollbars();
     this.placeInput();
+    if (!firstContentMarked && this.rows.length > 0) {
+      firstContentMarked = true;
+      performance.mark("txt-first-content");
+    }
   }
 
   /** Draws selections, highlights and carets of one row (row-relative). */

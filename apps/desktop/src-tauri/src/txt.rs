@@ -525,6 +525,31 @@ impl TxtService {
     }
 }
 
+#[cfg(feature = "bench-fixtures")]
+impl TxtService {
+    /// Places a caret at `offset` (snapped to a character) and types
+    /// `text`; returns the core time of the typed edit in microseconds.
+    pub fn bench_insert(&self, doc: u64, offset: u64, text: &str) -> CmdResult<f64> {
+        let s = self.session(doc)?;
+        let mut f = s.file.lock();
+        let at = quire_text::document::snap_offset(&f.doc.snapshot(), offset).map_err(io_err)?;
+        f.doc
+            .apply(&Action::SetSelections {
+                ranges: vec![(at, at)],
+            })
+            .map_err(io_err)?;
+        let started = Instant::now();
+        f.doc
+            .apply(&Action::Type {
+                text: text.to_owned(),
+            })
+            .map_err(io_err)?;
+        let us = started.elapsed().as_secs_f64() * 1e6;
+        s.after_change(&mut f);
+        Ok(us)
+    }
+}
+
 fn view_message(s: &Session, f: &TextFile, req: &ViewRequest) -> CmdResult<Response> {
     let search = s.search.lock();
     let fresh = search.revision == f.doc.revision();

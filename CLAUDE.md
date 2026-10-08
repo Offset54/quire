@@ -13,27 +13,28 @@
 - Make small, focused commits and push to `origin main` (private repo Offset54/quire) as you go. Keep CI green.
 - Keep the user posted with short progress lines during long work.
 
-## State (2026-10-08)
+## State (2026-10-09)
 
-- **M0 is complete** (`docs/M0_REPORT.md`). M1 (TXT engine) is next.
-- Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s on the reference machine. Carried into later milestones:
-  - **M1 onwards:** when launched with a file, open and render it in parallel with WebView2 startup.
-  - **M7:** opt-in "fast start" resident process.
-- **Also carried into M1:**
-  - WebDriver UI-flow tests (ADR-0020).
-  - Report the webview tile-bitmap cache to the memory governor before M3 (PROGRESS.md known gaps).
+- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine) is in progress**; plan in `docs/M1_PLAN.md`, status in `docs/PROGRESS.md` ("M1 tasks").
+- Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
+- Still owed before M3: report the webview tile-bitmap cache to the memory governor (PROGRESS.md known gaps).
+- The user declined screen control (computer use) for checking the app: verify UI through the WebDriver flows (`pwsh tools/webdriver/run-ui-tests.ps1`) and the in-app bench scenarios instead.
 
 ## Layout and key pieces
 
 - `crates/core`: scheduler (priorities, generations, coalescing), memory governor + `LruCache`, tile types/`TileSource`, Chrome-trace recorder.
 - `crates/raster`: tiny-skia `TileCanvas`.
+- `crates/text` (M1): sources (mapped with guarded copies, chunked for remote), encodings + transcoding, line index, persistent piece tree, buffer, layout (wrap rows), document (editing, multi-cursor), history, search/replace, file (open, two-phase atomic save), journal, watch (external changes), view (binary row messages).
 - `apps/desktop`: Tauri host (`src-tauri`) and frontend.
   - Host: view service; SharedBuffer/Channel tile transport (ADR-0004); `bench-fixtures` feature with the synthetic list and in-app benchmarks.
-  - Frontend: `DocumentSurface` compositor and virtual scroller (ADR-0005), HUD (Ctrl+Shift+H), i18n `t()`.
+  - Host `src/txt.rs`: TXT sessions and `txt_*` commands.
+  - Frontend: `DocumentSurface` compositor and virtual scroller (ADR-0005), HUD (Ctrl+Shift+H), i18n `t()`; `src/txt/` TXT editor (`TxtView` DOM rows, session, chrome).
 - `tools/fixtures`: deterministic §4 fixtures → `.cache/fixtures`; `validate.ps1` checks them with qpdf, Word and PowerPoint.
 - `tools/refsim` + `tools/bench/refsim.ps1`: ref-sim profile (ADR-0021) and budget checks against `bench/budgets.json`.
 - `tools/bench/run-app-bench.ps1`: build the bench flavor (into `target/bench`) and run one scenario.
 - `tools/bench/compare.mjs`: regression comparison.
+- `tools/bench/refsim-txt.ps1`: M1 TXT scenarios in ref-sim against the `txt` budgets (`txt-2g`, `txt-2g-search`, `txt-save`, `txt-300m`, `launch-2g`).
+- `tools/webdriver/`: msedgedriver matching WebView2 + `run-ui-tests.ps1` (tauri-driver, `tests/ui/txt-flows.test.mjs`).
 - `spikes/`: measurement spikes (not shipped).
 
 ## Commands
@@ -51,3 +52,6 @@
 - The Windows SxS manifest (`apps/desktop/src-tauri/windows-app-manifest.xml`) must stay plain ASCII without comments.
 - Tauri Channel messages are ordered per invocation: one Channel per logical stream (ADR-0004).
 - Office automation (`tools/fixtures/validate.ps1`) skips if Word or PowerPoint is already running. Never touch the user's open Office session.
+- Under WebDriver, msedgedriver passes app arguments as `--<lowercased arg>`; the app accepts that form when it names an existing file.
+- Windows refuses to truncate a file we have mapped (os error 1224): tests that rewrite a file must drop the document first.
+- Python edits through bash heredocs mangle `\r`/`\n` escapes: write scripts with the file tools and run them.

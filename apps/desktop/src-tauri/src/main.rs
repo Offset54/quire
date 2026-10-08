@@ -229,6 +229,10 @@ fn main() {
         bench::bench_scenario,
         bench::bench_open_synthetic,
         bench::bench_report,
+        bench::bench_env,
+        bench::bench_txt_insert,
+        bench::bench_memory,
+        bench::bench_log,
     ]);
     #[cfg(not(feature = "bench-fixtures"))]
     let builder = builder.invoke_handler(tauri::generate_handler![

@@ -23,12 +23,35 @@ use std::time::Instant;
 
 fn usage() -> ! {
     eprintln!(
-        "usage: refsim info | run [--pcores] [--logical N] -- <program> [args...] | purge <file>... | seqread <file> | ballast <GiB> <seconds> | calibrate"
+        "usage: refsim info | run [--pcores] [--logical N] -- <program> [args...] | purge <file>... | seqread <file> | seqwrite <file> <bytes> | ballast <GiB> <seconds> | calibrate"
     );
     std::process::exit(2)
 }
 
 /// Sequential read with an 8 MiB buffer; returns MB/s (10^6 bytes).
+/// Sequential write of `bytes` with an 8 MiB buffer, then fsync; the file
+/// is deleted afterwards. The baseline for "saving is limited only by
+/// sequential write speed" (§4).
+fn seqwrite(path: &str, bytes: u64) -> std::io::Result<serde_json::Value> {
+    use std::io::Write;
+    let buf: Vec<u8> = (0..8usize << 20).map(|i| b'a' + (i % 26) as u8).collect();
+    let start = Instant::now();
+    let mut f = std::fs::File::create(path)?;
+    let mut left = bytes;
+    while left > 0 {
+        let n = (buf.len() as u64).min(left) as usize;
+        f.write_all(&buf[..n])?;
+        left -= n as u64;
+    }
+    f.sync_all()?;
+    let secs = start.elapsed().as_secs_f64();
+    drop(f);
+    std::fs::remove_file(path)?;
+    Ok(serde_json::json!({
+        "file": path, "bytes": bytes, "seconds": secs, "mbPerSecond": bytes as f64 / 1e6 / secs
+    }))
+}
+
 fn seqread(path: &str) -> std::io::Result<serde_json::Value> {
     let mut f = std::fs::File::open(path)?;
     let mut buf = vec![0u8; 8 << 20];
@@ -52,6 +75,10 @@ fn main() {
     let Some(cmd) = args.first() else { usage() };
     let result: Result<serde_json::Value, String> = match cmd.as_str() {
         "calibrate" => Ok(calibrate::run()),
+        "seqwrite" => match (args.get(1), args.get(2).and_then(|b| b.parse().ok())) {
+            (Some(p), Some(b)) => seqwrite(p, b).map_err(|e| e.to_string()),
+            _ => usage(),
+        },
         "seqread" => args
             .get(1)
             .map_or_else(|| usage(), |p| seqread(p).map_err(|e| e.to_string())),

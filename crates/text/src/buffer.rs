@@ -22,6 +22,8 @@ use crate::tree::{BufferId, Piece, PieceContext, PieceTree};
 
 pub const ORIGINAL: BufferId = 0;
 pub const ADD: BufferId = 1;
+/// Line bounds are first looked for this close, before using the index.
+const SHORT_SCAN: u64 = 4096;
 
 /// Append-only bytes in memory, in fixed blocks so appends never move data.
 pub struct AddBuffer {
@@ -372,24 +374,31 @@ impl Snapshot {
         (self.line_start_containing(target).unwrap_or(target), false)
     }
 
-    /// Start of the line holding `offset`: through the index when the lines
-    /// before it are indexed, else by scanning back for the previous break.
+    /// Start of the line holding `offset`. Ordinary lines are found by a
+    /// short scan back; long ones through the index once the lines before
+    /// them are indexed, else by scanning all the way.
     pub fn line_start_containing(&self, offset: u64) -> io::Result<u64> {
         let offset = offset.min(self.len());
+        if let Some(start) = self.scan_back_for_line_start(offset, Some(SHORT_SCAN))? {
+            return Ok(start);
+        }
         if let Some(line) = self.line_of(offset)
             && let Some(Some(start)) = self.line_start(line)
         {
             return Ok(start);
         }
-        self.scan_back_for_line_start(offset)
+        Ok(self.scan_back_for_line_start(offset, None)?.unwrap_or(0))
     }
 
-    fn scan_back_for_line_start(&self, offset: u64) -> io::Result<u64> {
+    /// Scans back from `offset` for the start of its line, at most `limit`
+    /// bytes (`None`: no limit). `Ok(None)`: not within the limit.
+    fn scan_back_for_line_start(&self, offset: u64, limit: Option<u64>) -> io::Result<Option<u64>> {
         const STEP: u64 = 64 * 1024;
+        let floor = limit.map_or(0, |l| offset.saturating_sub(l));
         let mut end = offset;
         // A break at offset-1 ends the previous line: `offset` starts one.
-        while end > 0 {
-            let start = end.saturating_sub(STEP);
+        while end > floor {
+            let start = end.saturating_sub(STEP).max(floor);
             let bytes = self.read(start..end)?;
             // Look for the last break position strictly before `offset`.
             let mut i = bytes.len();
@@ -406,22 +415,26 @@ impl Snapshot {
                     next != Some(b'\n')
                 };
                 if is_break && at < offset {
-                    return Ok(at + 1);
+                    return Ok(Some(at + 1));
                 }
                 i = p;
             }
             end = start;
         }
-        Ok(0)
+        Ok((floor == 0).then_some(0))
     }
 
     /// End of the line holding `offset`, excluding its break bytes, and the
-    /// offset where the next line starts (= len at the last line).
+    /// offset where the next line starts (= len at the last line). Short
+    /// scan first, then the index, then a full scan.
     pub fn line_end(&self, offset: u64) -> io::Result<(u64, u64)> {
-        const STEP: u64 = 64 * 1024;
         let len = self.len();
+        let offset = offset.min(len);
+        if let Some(r) = self.scan_line_end(offset, Some(SHORT_SCAN))? {
+            return Ok(r);
+        }
         // Through the index: the next line's start, minus its break bytes.
-        if let Some(line) = self.line_of(offset.min(len)) {
+        if let Some(line) = self.line_of(offset) {
             match self.line_start(line + 1) {
                 Some(Some(next)) => {
                     let crlf = next >= 2 && self.read(next - 2..next)? == b"\r\n";
@@ -431,9 +444,16 @@ impl Snapshot {
                 None => {}
             }
         }
-        let mut at = offset.min(len);
-        while at < len {
-            let end = (at + STEP).min(len);
+        Ok(self.scan_line_end(offset, None)?.unwrap_or((len, len)))
+    }
+
+    fn scan_line_end(&self, offset: u64, limit: Option<u64>) -> io::Result<Option<(u64, u64)>> {
+        const STEP: u64 = 64 * 1024;
+        let len = self.len();
+        let ceil = limit.map_or(len, |l| (offset + l).min(len));
+        let mut at = offset;
+        while at < ceil {
+            let end = (at + STEP).min(ceil);
             let bytes = self.read(at..end)?;
             if let Some(p) = memchr::memchr2(b'\n', b'\r', &bytes) {
                 let pos = at + p as u64;
@@ -446,13 +466,13 @@ impl Snapshot {
                         None
                     };
                     let skip = if next == Some(b'\n') { 2 } else { 1 };
-                    return Ok((pos, pos + skip));
+                    return Ok(Some((pos, pos + skip)));
                 }
-                return Ok((pos, pos + 1));
+                return Ok(Some((pos, pos + 1)));
             }
             at = end;
         }
-        Ok((len, len))
+        Ok((ceil == len).then_some((len, len)))
     }
 }
 

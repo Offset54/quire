@@ -2,5 +2,13 @@
   "identifier": "bench",
   "description": "Benchmark-only commands; added at runtime by builds with the bench-fixtures feature.",
   "windows": ["main"],
-  "permissions": ["allow-bench-scenario", "allow-bench-open-synthetic", "allow-bench-report"]
+  "permissions": [
+    "allow-bench-scenario",
+    "allow-bench-open-synthetic",
+    "allow-bench-report",
+    "allow-bench-env",
+    "allow-bench-txt-insert",
+    "allow-bench-memory",
+    "allow-bench-log"
+  ]
 }

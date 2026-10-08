@@ -150,7 +150,7 @@ function Get-Metric($obj, [string] $path) {
   $v
 }
 
-$rows = foreach ($b in $budgets.budgets) {
+$rows = foreach ($b in ($budgets.budgets | Where-Object { $_.suite -eq "m0" })) {
   $value = [double](Get-Metric $results $b.metric)
   $factor = switch ($b.kind) { "cpu" { $dCpu } "io" { $dIo } "mixed" { [Math]::Max($dCpu, $dIo) } default { 1.0 } }
   $pass = if ($b.kind -eq "zero") { $value -eq 0 } else { $value * $factor -le $b.budget }

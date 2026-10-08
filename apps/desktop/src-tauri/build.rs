@@ -35,7 +35,15 @@ fn main() {
         "txt_recovery_discard",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
-        commands.extend(["bench_scenario", "bench_open_synthetic", "bench_report"]);
+        commands.extend([
+            "bench_scenario",
+            "bench_open_synthetic",
+            "bench_report",
+            "bench_env",
+            "bench_txt_insert",
+            "bench_memory",
+            "bench_log",
+        ]);
     }
     let commands: &'static [&'static str] = Vec::leak(commands);
 

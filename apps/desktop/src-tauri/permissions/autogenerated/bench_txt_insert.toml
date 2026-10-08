@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bench-txt-insert"
+description = "Enables the bench_txt_insert command without any pre-configured scope."
+commands.allow = ["bench_txt_insert"]
+
+[[permission]]
+identifier = "deny-bench-txt-insert"
+description = "Denies the bench_txt_insert command without any pre-configured scope."
+commands.deny = ["bench_txt_insert"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bench-env"
+description = "Enables the bench_env command without any pre-configured scope."
+commands.allow = ["bench_env"]
+
+[[permission]]
+identifier = "deny-bench-env"
+description = "Denies the bench_env command without any pre-configured scope."
+commands.deny = ["bench_env"]
