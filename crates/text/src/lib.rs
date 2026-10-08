@@ -2,6 +2,7 @@
 //! index, the piece tree, editing, search, saving and the recovery journal.
 
 pub mod buffer;
+pub mod chars;
 pub mod encoding;
 pub mod index;
 pub mod source;

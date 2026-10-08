@@ -420,6 +420,17 @@ impl Snapshot {
     pub fn line_end(&self, offset: u64) -> io::Result<(u64, u64)> {
         const STEP: u64 = 64 * 1024;
         let len = self.len();
+        // Through the index: the next line's start, minus its break bytes.
+        if let Some(line) = self.line_of(offset.min(len)) {
+            match self.line_start(line + 1) {
+                Some(Some(next)) => {
+                    let crlf = next >= 2 && self.read(next - 2..next)? == b"\r\n";
+                    return Ok((next - if crlf { 2 } else { 1 }, next));
+                }
+                Some(None) => return Ok((len, len)),
+                None => {}
+            }
+        }
         let mut at = offset.min(len);
         while at < len {
             let end = (at + STEP).min(len);
