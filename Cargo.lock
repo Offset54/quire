@@ -2876,6 +2876,7 @@ dependencies = [
  "proptest",
  "quire-core",
  "regex-automata",
+ "regex-syntax",
  "serde",
  "tempfile",
  "tracing",

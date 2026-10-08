@@ -8,6 +8,8 @@ pub mod encoding;
 pub mod history;
 pub mod index;
 pub mod layout;
+pub mod replace;
+pub mod search;
 pub mod source;
 pub mod transcode;
 pub mod tree;

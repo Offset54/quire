@@ -456,6 +456,27 @@ impl Snapshot {
     }
 }
 
+/// Appends to a document's add buffer.
+#[derive(Clone, Debug)]
+pub struct Adder {
+    add: Arc<AddBuffer>,
+    index: Arc<ChunkIndex>,
+    pub buffers: Buffers,
+}
+
+impl Adder {
+    pub fn append(&self, bytes: &[u8]) -> io::Result<Piece> {
+        let start = self.add.append(bytes);
+        self.index.extend(&*self.add, self.add.len())?;
+        Ok(Piece {
+            buf: ADD,
+            start,
+            len: bytes.len() as u64,
+            breaks: self.buffers.breaks(ADD, start, bytes.len() as u64),
+        })
+    }
+}
+
 /// What an edit removed, for its inverse.
 #[derive(Clone, Debug)]
 pub struct Removed {
@@ -542,14 +563,17 @@ impl TextBuffer {
 
     /// Appends `bytes` to the add buffer and returns them as a piece.
     pub fn append(&self, bytes: &[u8]) -> io::Result<Piece> {
-        let start = self.add.append(bytes);
-        self.add_index.extend(&*self.add, self.add.len())?;
-        Ok(Piece {
-            buf: ADD,
-            start,
-            len: bytes.len() as u64,
-            breaks: self.buffers.breaks(ADD, start, bytes.len() as u64),
-        })
+        self.adder().append(bytes)
+    }
+
+    /// A handle that appends to the add buffer from another thread
+    /// (replace-all builds its result off the document lock).
+    pub fn adder(&self) -> Adder {
+        Adder {
+            add: Arc::clone(&self.add),
+            index: Arc::clone(&self.add_index),
+            buffers: self.buffers.clone(),
+        }
     }
 
     /// Replaces `from..to` with `text`. Returns what was removed.

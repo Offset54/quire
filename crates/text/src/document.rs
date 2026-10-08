@@ -199,10 +199,11 @@ pub enum Record {
         bom: bool,
         line_ending: Option<LineEnding>,
     },
-    /// The whole content replaced by a replace-all; carries the result's
-    /// operations relative to the previous content.
+    /// A replace-all: replaying the query on the same content gives the
+    /// same result.
     ReplaceAll {
-        ops: Vec<(u64, u64, Vec<u8>)>,
+        query: crate::search::Query,
+        replacement: String,
     },
 }
 
@@ -234,6 +235,8 @@ pub struct TextDocument {
     saved_format: SaveFormat,
     pub read_only: bool,
     pending: Vec<Record>,
+    /// Where large derived buffers (replace-all results) are written.
+    pub temp_dir: std::path::PathBuf,
 }
 
 fn kind_code(k: Kind) -> u8 {
@@ -301,6 +304,7 @@ impl TextDocument {
             saved_format: format,
             read_only: false,
             pending: Vec::new(),
+            temp_dir: std::env::temp_dir(),
         }
     }
 
@@ -770,9 +774,8 @@ impl TextDocument {
         Ok(true)
     }
 
-    /// Replaces the whole tree as one undoable step (replace-all). `ops`
-    /// describe the change for the journal.
-    pub fn swap_tree(&mut self, after: PieceTree, ops: Vec<(u64, u64, Vec<u8>)>) {
+    /// Replaces the whole tree as one undoable step (replace-all).
+    pub fn swap_tree(&mut self, after: PieceTree, record: Record) {
         let before = self.buf.tree().clone();
         let sel_before = self.sels.clone();
         self.buf.set_tree(after.clone());
@@ -787,7 +790,7 @@ impl TextDocument {
             at: Instant::now(),
         };
         self.history.push(tx);
-        self.pending.push(Record::ReplaceAll { ops });
+        self.pending.push(record);
         self.revision += 1;
     }
 
@@ -875,14 +878,28 @@ impl TextDocument {
                     line_ending: *line_ending,
                 });
             }
-            Record::ReplaceAll { ops } => {
-                let before = self.buf.tree().clone();
-                for (at, del, ins) in ops.iter().rev() {
-                    self.buf.replace(*at, at + del, ins)?;
+            Record::ReplaceAll { query, replacement } => {
+                let m = crate::search::Matcher::new(query).map_err(io::Error::other)?;
+                let snap = self.snapshot();
+                let adder = self.buf.adder();
+                let cancel = quire_core::scheduler::CancelToken::new();
+                if let Some(r) = crate::replace::compute(
+                    &snap,
+                    &adder,
+                    &m,
+                    replacement,
+                    &self.temp_dir,
+                    &cancel,
+                    &|_| {},
+                )? {
+                    self.swap_tree(
+                        r.tree,
+                        Record::ReplaceAll {
+                            query: query.clone(),
+                            replacement: replacement.clone(),
+                        },
+                    );
                 }
-                let after = self.buf.tree().clone();
-                self.buf.set_tree(before);
-                self.swap_tree(after, ops.clone());
             }
         }
         self.pending.clear();
