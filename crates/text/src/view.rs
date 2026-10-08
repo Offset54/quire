@@ -30,7 +30,11 @@ const HMARGIN: u32 = 256;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ViewRequest {
+    /// Offset whose row anchors the window.
     pub anchor: u64,
+    /// Anchor at the primary caret instead (after an edit, wherever it went).
+    #[serde(default)]
+    pub caret: bool,
     pub before: u32,
     pub after: u32,
     pub layout: Layout,
@@ -75,9 +79,14 @@ pub fn build(
     highlights: &dyn Fn(u64, u64) -> Vec<(u64, u64)>,
 ) -> io::Result<Vec<u8>> {
     let snap = doc.snapshot();
+    let anchor = if req.caret {
+        doc.primary().head
+    } else {
+        req.anchor
+    };
     let (rows, anchor_index) = rows_around(
         &snap,
-        req.anchor,
+        anchor,
         req.before as usize,
         req.after as usize,
         &req.layout,
@@ -191,6 +200,7 @@ mod tests {
         .unwrap();
         let req = ViewRequest {
             anchor: 5,
+            caret: false,
             before: 5,
             after: 5,
             layout: Layout::default(),

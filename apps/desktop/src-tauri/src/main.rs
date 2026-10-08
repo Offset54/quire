@@ -157,11 +157,21 @@ fn main() {
     // A file on the command line starts opening now, in parallel with
     // WebView2 startup (ADR-0022).
     let txt = TxtService::new(Arc::clone(&scheduler), governor.clone());
-    if let Some(path) = std::env::args_os()
-        .skip(1)
-        .find(|a| !a.to_string_lossy().starts_with('-'))
-    {
-        txt.preopen(path.into());
+    // Only an existing file counts. Under WebDriver, msedgedriver passes the
+    // app's arguments as `--<argument>` switches, so that form is accepted
+    // too when it names a file.
+    let file_arg = std::env::args_os().skip(1).find_map(|a| {
+        let p = std::path::PathBuf::from(&a);
+        if p.is_file() {
+            return Some(p);
+        }
+        let s = a.to_string_lossy();
+        let q = std::path::PathBuf::from(s.strip_prefix("--")?);
+        q.is_file().then_some(q)
+    });
+    tracing::info!(args = ?std::env::args_os().skip(1).collect::<Vec<_>>(), file = ?file_arg, "command line");
+    if let Some(path) = file_arg {
+        txt.preopen(path);
     }
 
     // Benchmarks fix the window size; a restored size would override it.

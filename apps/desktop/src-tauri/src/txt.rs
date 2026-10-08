@@ -359,6 +359,7 @@ impl TxtService {
                         &f.doc,
                         &ViewRequest {
                             anchor: 0,
+                            caret: false,
                             before: 0,
                             after: 80,
                             layout: f.doc.layout,
