@@ -24,6 +24,9 @@
   },
   "bundle": {
     "active": false,
-    "icon": ["../../../apps/desktop/src-tauri/icons/icon.ico"]
+    "icon": [
+      "../../../apps/desktop/src-tauri/icons/icon.png",
+      "../../../apps/desktop/src-tauri/icons/icon.ico"
+    ]
   }
 }
