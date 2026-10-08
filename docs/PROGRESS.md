@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1, 2, 3, 5 and 8 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1, 2, 3, 5, 6 and 8 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -25,10 +25,11 @@
 |---|---|---|
 | 1 | Workspace scaffold | Done (85ac033) |
 | 2 | License and dependency gates | Done (85ac033) |
-| 3 | CI | Done: [Offset54/quire](https://github.com/Offset54/quire) (private); Windows runs every gate, macOS and Linux build and test |
+| 3 | CI | Done: [Offset54/quire](https://github.com/Offset54/quire) (private); Windows runs every gate, macOS and Linux build and test; first run green on all three |
 | 8 | Tracing | Done: Chrome-trace recorder in `quire-core::trace`, frontend measures and long tasks merged (`QUIRE_TRACE=<file>`) |
 | 5 | Job scheduler | Done: `quire-core::scheduler`, 12 unit tests + a model-based property test, criterion benches |
-| 4, 6, 7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 6 | Memory governor | Done: `quire-core::memory` (per-document and global budgets, background-first and cheapest-class-first eviction, `LruCache`), 9 tests incl. a budget-invariant proptest and a concurrency accounting check |
+| 4, 7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
