@@ -30,6 +30,7 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0018 | i18n | ICU MessageFormat via `@formatjs/intl` (MIT) in the UI; ICU4X (Unicode-3.0) in the core | i18next (MIT; not ICU MessageFormat by default); Fluent (Apache/MIT; different syntax) | M0 |
 | 0019 | License gate | cargo-deny (MIT/Apache) with an explicit allowlist; `license-checker-rseidelsohn` (BSD-3) for JS | Manual review (doesn't scale) | M0 |
 | 0020 | Test and bench harness | [Accepted](0020-benchmark-and-test-harness.md): criterion + in-app scenario runner + ref-sim orchestration; WebDriver reserved for UI-flow tests (M1) | Playwright (Apache-2.0; can't drive WebView2 inside Tauri as directly) | M0 |
+| 0022 | Startup budget vs. the WebView2 floor | **Proposed, needs your decision** ([0022](0022-startup-budget-and-webview2-floor.md)): bare WebView2 needs ~450 ms to a first frame here; a resident browser process gets 137 ms | Native first frame; budget revision; overlap document work; change stack | M0 |
 | 0021 | Benchmarking without a reference machine | [Accepted](0021-reference-machine-emulation.md): ref-sim profile (exact viewport, core pinning, derated thresholds, cold-cache purge, RAM ballast) | Raw dev numbers; power-plan frequency cap (system-wide setting); Job Object CPU-rate cap (adds stalls); VM; buying a reference laptop | M0 |
 
 ## Template

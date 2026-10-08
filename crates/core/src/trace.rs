@@ -178,7 +178,12 @@ impl TraceRecorder {
         let doc = serde_json::json!({
             "traceEvents": events,
             "displayTimeUnit": "ms",
-            "otherData": { "droppedEvents": dropped },
+            "otherData": {
+                "droppedEvents": dropped,
+                // Lets tools align this trace with other clocks (e.g. OS
+                // process creation time).
+                "startEpochUs": self.inner.start_epoch_us,
+            },
         });
         serde_json::to_writer(&mut out, &doc)?;
         out.flush()

@@ -2796,6 +2796,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "quire-spike-webview2-floor"
+version = "0.0.0"
+dependencies = [
+ "serde_json",
+ "webview2-com",
+ "windows",
+ "windows-core",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"

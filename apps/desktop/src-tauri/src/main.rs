@@ -120,6 +120,7 @@ fn is_app_url(url: &Url) -> bool {
 }
 
 fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
+    let _span = tracing::info_span!("create_main_window").entered();
     let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
         .title("quire")
         .inner_size(1280.0, 800.0)
@@ -147,7 +148,8 @@ fn main() {
     let tracing = tracing_setup::init();
     let startup = tracing::info_span!("startup").entered();
 
-    let scheduler = Arc::new(Scheduler::new(SchedulerConfig::default()));
+    let scheduler = tracing::info_span!("init_scheduler")
+        .in_scope(|| Arc::new(Scheduler::new(SchedulerConfig::default())));
     let governor = MemoryGovernor::new(GovernorConfig::default());
 
     // Benchmarks fix the window size; a restored size would override it.
@@ -187,7 +189,11 @@ fn main() {
         perf_stats,
     ]);
 
+    let build_span = tracing::info_span!("tauri_build").entered();
     let app = builder
+        .on_page_load(|_, payload| {
+            tracing::info!(event = ?payload.event(), url = %payload.url(), "page load");
+        })
         .setup(|app| {
             #[cfg(feature = "bench-fixtures")]
             app.add_capability(include_str!("../dev-capabilities/bench.json"))?;
@@ -195,12 +201,13 @@ fn main() {
         })
         .build(tauri::generate_context!())
         .expect("failed to build the Tauri application");
+    drop(build_span);
     drop(startup);
 
-    app.run(|handle, event| {
-        if let RunEvent::Exit = event {
-            handle.state::<Tracing>().write_trace();
-        }
+    app.run(|handle, event| match event {
+        RunEvent::Ready => tracing::info!("event loop ready"),
+        RunEvent::Exit => handle.state::<Tracing>().write_trace(),
+        _ => {}
     });
 }
 

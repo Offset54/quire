@@ -1,0 +1,7 @@
+{
+  "note": "Bare WebView2 (spikes/webview2-floor), ms from OS process creation; p50 of 8 runs (unpinned: 5). Dev machine, AC, 2026-10-08. See ADR-0022.",
+  "pinnedPCores": { "mainMs": 19, "windowMs": 36, "environmentMs": 43, "controllerMs": 328, "firstFrameMs": 449, "firstFrameMinMax": [419, 912] },
+  "unpinned": { "mainMs": 17, "windowMs": 30, "environmentMs": 41, "controllerMs": 310, "firstFrameMs": 415, "firstFrameMinMax": [373, 501] },
+  "residentBrowserProcess": { "firstFrameMs": 137, "firstFrameMinMax": [132, 154], "controllerMs": 84, "runs": [137, 132, 134, 154, 132, 139, 147] },
+  "quireApp": { "pinnedWarmP50Ms": 489, "unpinnedWarmP50Ms": 488, "leanFlagsWarmP50Ms": 510 }
+}
