@@ -55,12 +55,16 @@ pub struct Origin {
     pub bom_len: u64,
     /// For non-UTF-8 files: the decoded text and its segment table.
     pub transcoded: Option<Arc<Transcoded>>,
+    /// False once another program changed the raw bytes in place: raw
+    /// copies would then copy their bytes, not ours.
+    pub raw_intact: bool,
 }
 
 impl Origin {
     /// Whether untouched original ranges can be copied raw in `format`.
     fn raw_copy(&self, format: &SaveFormat) -> bool {
-        format.encoding == self.encoding
+        self.raw_intact
+            && format.encoding == self.encoding
             && format.line_ending.is_none()
             && self
                 .transcoded
@@ -81,6 +85,8 @@ pub struct TextFile {
     pub remote: Option<RemoteKind>,
     pub governor: MemoryGovernor,
     pub doc_id: Option<DocId>,
+    /// Held while the document has unsaved edits (see `watch::EditLock`).
+    pub edit_lock: Option<crate::watch::EditLock>,
 }
 
 pub struct OpenSettings<'a> {
@@ -165,6 +171,7 @@ pub fn open(
         remote: opened.remote,
         governor: governor.clone(),
         doc_id,
+        edit_lock: None,
     })
 }
 
@@ -185,6 +192,7 @@ fn from_raw(
                 encoding: UTF_8,
                 bom_len: bom,
                 transcoded: None,
+                raw_intact: true,
             },
             buf,
         ));
@@ -205,6 +213,7 @@ fn from_raw(
             encoding: detection.encoding,
             bom_len: bom,
             transcoded: Some(t),
+            raw_intact: true,
         },
         buf,
     ))
@@ -231,6 +240,7 @@ impl TextFile {
             remote: None,
             governor: governor.clone(),
             doc_id: None,
+            edit_lock: None,
         }
     }
 
@@ -867,7 +877,9 @@ pub fn save(
         file.doc.history_mut().clear();
     }
 
-    // 3. Unmap the original: drop every reference we hold to it.
+    // 3. Unmap the original: drop every reference we hold to it (and the
+    //    write-deny handle, which would block the replace).
+    file.edit_lock = None;
     let utf8_original = file.origin.as_ref().is_some_and(|o| o.transcoded.is_none());
     let old_origin = if same_file { file.origin.take() } else { None };
     let old_index = Arc::clone(&old0.index);
@@ -936,6 +948,7 @@ pub fn save(
         encoding: format.encoding,
         bom_len: bom,
         transcoded,
+        raw_intact: true,
     });
     file.stamp = Some(opened.stamp);
     file.source_kind = opened.kind;
