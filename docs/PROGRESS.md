@@ -67,7 +67,7 @@ These are component costs, not §4 scenarios, so they aren't derated.
 
 ### Synthetic 10M-row list (raw dev machine, AC, 144 Hz, 2026-10-08; ADR-0005)
 
-| Phase | M0 done except one DoD item, which needs your decision: the startup budget ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)). Report: [M0_REPORT.md](M0_REPORT.md). |
+| Phase | Frame interval p95 / max | Dropped frames | Frames with placeholders |
 |---|---|---|---|
 | Steady scroll 2,400 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
 | Fling 24,000 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
