@@ -8,6 +8,7 @@ pub mod encoding;
 pub mod file;
 pub mod history;
 pub mod index;
+pub mod journal;
 pub mod layout;
 pub mod replace;
 pub mod search;

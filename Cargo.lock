@@ -2878,6 +2878,7 @@ dependencies = [
  "regex-automata",
  "regex-syntax",
  "serde",
+ "serde_json",
  "tempfile",
  "tracing",
  "unicode-segmentation",
