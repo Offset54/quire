@@ -1,0 +1,149 @@
+use proptest::prelude::*;
+
+use super::*;
+use crate::source::MemorySource;
+
+/// Line starts of a document: after each LF, and after each CR not
+/// followed by an LF.
+fn line_starts(doc: &[u8]) -> Vec<u64> {
+    let mut v = vec![0];
+    for i in 0..doc.len() {
+        if doc[i] == b'\n' || (doc[i] == b'\r' && doc.get(i + 1) != Some(&b'\n')) {
+            v.push(i as u64 + 1);
+        }
+    }
+    v
+}
+
+fn content(b: &TextBuffer) -> Vec<u8> {
+    b.snapshot().read(0..b.len()).unwrap()
+}
+
+#[derive(Debug, Clone)]
+struct Edit {
+    at: f64,
+    del: u64,
+    text: Vec<u8>,
+}
+
+fn edit() -> impl Strategy<Value = Edit> {
+    (
+        0.0..=1.0f64,
+        0..8u64,
+        prop::collection::vec(prop_oneof![Just(b'\n'), Just(b'\r'), Just(b'z')], 0..6),
+    )
+        .prop_map(|(at, del, text)| Edit { at, del, text })
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 400, ..ProptestConfig::default() })]
+
+    /// The buffer matches a plain byte vector, its line structure matches
+    /// the document's (CRLF counted once, even when an edit joins a CR and
+    /// an LF from different pieces), and putting removed pieces back
+    /// restores the previous content exactly.
+    #[test]
+    fn buffer_matches_model_and_removals_invert(
+        original in prop::collection::vec(prop_oneof![Just(b'\n'), Just(b'\r'), Just(b'o')], 0..120),
+        edits in prop::collection::vec(edit(), 0..40),
+    ) {
+        let mut buf = TextBuffer::from_bytes(&original);
+        let mut model = original;
+        for e in edits {
+            let at = (e.at * model.len() as f64) as u64;
+            let to = (at + e.del).min(model.len() as u64);
+            let before = model.clone();
+            let removed = buf.replace(at, to, &e.text).unwrap();
+            model.splice(at as usize..to as usize, e.text.iter().copied());
+            prop_assert_eq!(content(&buf), model.clone());
+
+            let starts = line_starts(&model);
+            let snap = buf.snapshot();
+            prop_assert_eq!(snap.line_count(), Some(starts.len() as u64));
+            for (line, &s) in starts.iter().enumerate() {
+                prop_assert_eq!(snap.line_start(line as u64), Some(Some(s)));
+                prop_assert_eq!(snap.line_of(s), Some(line as u64));
+                prop_assert_eq!(snap.line_start_containing(s).unwrap(), s);
+            }
+
+            // Undo then redo through the pieces.
+            if e.at < 0.3 {
+                buf.remove(at, at + e.text.len() as u64).unwrap();
+                buf.insert_pieces(at, &removed.pieces).unwrap();
+                prop_assert_eq!(content(&buf), before.clone());
+                prop_assert_eq!(buf.snapshot().line_count(), Some(line_starts(&before).len() as u64));
+                buf.replace(at, to, &e.text).unwrap();
+                prop_assert_eq!(content(&buf), model.clone());
+            }
+        }
+    }
+}
+
+#[test]
+fn line_ends_and_containing_starts() {
+    let buf = TextBuffer::from_bytes(b"ab\r\ncd\ref\n\ngh");
+    let s = buf.snapshot();
+    assert_eq!(s.line_end(0).unwrap(), (2, 4));
+    assert_eq!(s.line_end(4).unwrap(), (6, 7));
+    assert_eq!(s.line_end(7).unwrap(), (9, 10));
+    assert_eq!(s.line_end(10).unwrap(), (10, 11));
+    assert_eq!(s.line_end(11).unwrap(), (13, 13));
+    assert_eq!(s.line_start_containing(5).unwrap(), 4);
+    assert_eq!(s.line_start_containing(12).unwrap(), 11);
+    assert_eq!(s.line_count(), Some(5));
+}
+
+#[test]
+fn estimates_before_indexing_land_on_line_starts() {
+    let lines: Vec<String> = (0..20_000)
+        .map(|i| format!("{i:>8}| some text\n"))
+        .collect();
+    let doc = lines.concat().into_bytes();
+    let src: Arc<dyn Source> = Arc::new(MemorySource::new(doc.clone()));
+    let index = Arc::new(ChunkIndex::unindexed(src.len()));
+    let mut buf = TextBuffer::new(Arc::clone(&src), Arc::clone(&index));
+    let s = buf.snapshot();
+    assert_eq!(s.line_count(), None);
+    let est = s.line_count_estimate();
+    assert!(!est.exact);
+    let starts = line_starts(&doc);
+    for target in [0u64, 1, 5000, 12_345, 19_999, 50_000] {
+        let (off, exact) = s.line_start_estimate(target);
+        assert!(!exact || target == 0);
+        assert!(
+            starts.binary_search(&off).is_ok(),
+            "{off} is not a line start"
+        );
+        // Uniform lines: the estimate is close.
+        let got = starts.binary_search(&off).unwrap() as i64;
+        assert!(
+            (got - target.min(19_999) as i64).abs() <= 100,
+            "{target} -> {got}"
+        );
+    }
+    let l = s.line_of_estimate(doc.len() as u64 / 2);
+    assert!(!l.exact);
+    assert!((l.line as i64 - 10_000).abs() <= 100);
+
+    index
+        .scan_range(&*src, 0, index.chunk_count(), None)
+        .unwrap();
+    buf.refresh_index();
+    let s = buf.snapshot();
+    assert_eq!(s.line_count(), Some(20_001));
+    assert_eq!(s.line_start_estimate(12_345), (starts[12_345], true));
+    assert_eq!(s.line_start_estimate(99_999), (starts[20_000], true));
+}
+
+#[test]
+fn add_buffer_reads_across_blocks() {
+    let add = AddBuffer::default();
+    let a = vec![7u8; BLOCK - 3];
+    add.append(&a);
+    let at = add.append(b"0123456789");
+    assert_eq!(at, (BLOCK - 3) as u64);
+    let mut buf = [0u8; 10];
+    add.read_at(at, &mut buf).unwrap();
+    assert_eq!(&buf, b"0123456789");
+    assert!(add.read_at(at + 5, &mut buf).is_err());
+}
