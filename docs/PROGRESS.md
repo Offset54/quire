@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phase | M0 Foundations, in progress. Plan approved 2026-10-08. |
+| Phase | M0 done except one DoD item, which needs your decision: the startup budget ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)). Report: [M0_REPORT.md](M0_REPORT.md). |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
 | Last updated | 2026-10-08 |
 
@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1–12 done; see the task list below | Not yet |
+| M0 Foundations | All 14 tasks done; waiting on the startup-budget decision | 2 of 3 met (scroll at 60 fps, tile transport ADR); startup not met (ADR-0022) |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -35,7 +35,8 @@
 | 10 | Performance HUD | Done: Ctrl+Shift+H overlay (frame graph with 16.7/50 ms lines, long tasks, queue depths, job counters, memory caches, per-surface tile counters, last 10 jobs); verified live by the `hud` bench scenario |
 | 11 | Fixture generators | Done: `tools/fixtures`, all seven §4 fixtures, deterministic (verified), validated by qpdf, Word (1,000 pages) and PowerPoint (500 slides) |
 | 12 | Benchmark harness | Done: [ADR-0020](adr/0020-benchmark-and-test-harness.md), `tools/refsim` + `tools/bench/refsim.ps1` (ADR-0021 profile), `bench/budgets.json`, `compare.mjs`, CI A/B micro-benchmarks |
-| 13–14 | See [M0_PLAN.md](M0_PLAN.md) | 13 in progress |
+| 13 | Cold-start work | Investigated: startup spans; bare-WebView2 floor spike (449 ms pinned); resident-process variant 137 ms. Budget not reachable with the mandated stack, so the decision is yours ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)) |
+| 14 | M0 report | Done: [M0_REPORT.md](M0_REPORT.md); ADRs 0001–0006 and 0018–0022 written |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -66,7 +67,7 @@ These are component costs, not §4 scenarios, so they aren't derated.
 
 ### Synthetic 10M-row list (raw dev machine, AC, 144 Hz, 2026-10-08; ADR-0005)
 
-| Phase | Frame interval p95 / max | Dropped frames | Frames with placeholders |
+| Phase | M0 done except one DoD item, which needs your decision: the startup budget ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)). Report: [M0_REPORT.md](M0_REPORT.md). |
 |---|---|---|---|
 | Steady scroll 2,400 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
 | Fling 24,000 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |

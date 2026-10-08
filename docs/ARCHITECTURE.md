@@ -1,4 +1,6 @@
-# Architecture (draft, pending plan approval)
+# Architecture
+
+Status: M0 implemented. The parts that exist are the scheduler, memory governor, tracing, tile pipeline, virtual scroller and HUD; providers start in M1. Measured numbers are at the end.
 
 quire is a Tauri 2 app. A Rust core owns every document: it parses, lays out, rasterizes, searches, edits and saves. The webview is a thin compositor. It draws tiles the core has already rasterized, draws overlays from geometry the core supplies, and forwards input. The frontend never holds a whole document. Native code that can crash or isn't thread-safe (PDFium, the PPT converter) runs in child processes.
 
@@ -110,3 +112,20 @@ Budget: input to visual response p95 ≤ 16 ms (§4). While pagination converges
 - Saving writes a temp file, fsyncs it, then atomically replaces the original. The mapped-file sequence is in §5.8. Every save produces a save report.
 - Content the app doesn't understand is kept byte-for-byte. Spliced XML ranges and raw-copied zip entries are the default write path.
 - Every parser returns errors instead of panicking. Panics are caught at the provider boundary, and native code runs in worker processes.
+
+## Measured in M0
+
+Dev machine, AC power. "ref-sim" means the ADR-0021 profile: pinned to the 4 P-cores, 1920×1080 device px. Raw JSON is in `bench/results/m0/`.
+
+| Path | Number | Source |
+|---|---|---|
+| Scheduler hand-off (Interaction job) | 5.7 µs | criterion, ADR-0003 |
+| Rasterize one 512 px tile (rects + polygons) | 0.77 ms | `refsim calibrate`, ADR-0006 |
+| Core → canvas, one raw 512 px tile, WebView2 SharedBuffer | 2.7 ms p50 / 4.2 ms p95 | Spike, ADR-0004 |
+| Same over `invoke` (fallback), QOI text tile | 3.6 ms p50 | Spike, ADR-0004 |
+| Full 1920×1080 repaint, SharedBuffer raw | 26 ms | Spike, ADR-0004 |
+| 10M-row list, steady scroll / fling, ref-sim | p99 frame 8.6 / 8.7 ms, 0 placeholders, compose work 0.9 ms p95 | ADR-0005 |
+| Jump to a random row, until sharp, ref-sim | 56 ms p50, 407 ms max | `refsim-2026-10-08-*.json` |
+| App start, process creation → first frame, ref-sim warm | 480 ms p50 (bare WebView2 floor: 449 ms) | ADR-0022 |
+
+The bottleneck is at startup, in WebView2's own process launch, not in this pipeline. Once the app is running, tile delivery and composition stay well inside the frame budget.
