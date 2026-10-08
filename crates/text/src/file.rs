@@ -479,6 +479,7 @@ impl<W: Write> Sink<W> {
     }
 }
 
+#[derive(Debug)]
 struct WriteStats {
     written: u64,
     raw_copied: u64,
@@ -825,17 +826,54 @@ pub fn save(
     target: Option<&Path>,
     opts: &SaveOptions<'_>,
 ) -> Result<SaveReport, SaveError> {
+    let prepared = prepare_save(
+        &file.doc.snapshot(),
+        file.origin.as_ref(),
+        file.doc.format,
+        file.path.as_deref(),
+        target,
+        opts.on_unmappable,
+    )?;
+    commit_save(file, prepared, opts)
+}
+
+/// Phase 1 of a save, which needs no access to the live document: the new
+/// content is written to a temp file and fsynced. Dropping the result
+/// without committing deletes the temp file.
+#[derive(Debug)]
+pub struct PreparedSave {
+    temp: PathBuf,
+    target: PathBuf,
+    same_file: bool,
+    format: SaveFormat,
+    stats: Option<WriteStats>,
+    started: Instant,
+}
+
+impl Drop for PreparedSave {
+    fn drop(&mut self) {
+        if self.stats.is_some() {
+            let _ = std::fs::remove_file(&self.temp);
+        }
+    }
+}
+
+pub fn prepare_save(
+    snap: &Snapshot,
+    origin: Option<&Origin>,
+    format: SaveFormat,
+    current: Option<&Path>,
+    target: Option<&Path>,
+    on_unmappable: OnUnmappable,
+) -> Result<PreparedSave, SaveError> {
     let started = Instant::now();
-    let target = match target.or(file.path.as_deref()) {
+    let target = match target.or(current) {
         Some(t) => t.to_path_buf(),
         None => {
             return Err(io::Error::new(io::ErrorKind::InvalidInput, "no path to save to").into());
         }
     };
-    let same_file = file.path.as_deref().is_some_and(|p| same_path(p, &target));
-    let format = file.doc.format;
-    let snap = file.doc.snapshot();
-
+    let same_file = current.is_some_and(|p| same_path(p, &target));
     // 1. Stream into a temp file next to the target, then fsync it.
     let temp = temp_path(&target);
     let out = OpenOptions::new()
@@ -844,23 +882,49 @@ pub fn save(
         .open(&temp)?;
     let result = write_content(
         BufWriter::with_capacity(8 << 20, out),
-        &snap,
-        file.origin.as_ref(),
+        snap,
+        origin,
         &format,
-        opts.on_unmappable,
+        on_unmappable,
     )
     .and_then(|(stats, w)| {
         let f = w.into_inner().map_err(io::IntoInnerError::into_error)?;
         f.sync_all()?;
         Ok(stats)
     });
-    let stats = match result {
-        Ok(s) => s,
+    match result {
+        Ok(stats) => Ok(PreparedSave {
+            temp,
+            target,
+            same_file,
+            format,
+            stats: Some(stats),
+            started,
+        }),
         Err(e) => {
             let _ = std::fs::remove_file(&temp);
-            return Err(e);
+            Err(e)
         }
-    };
+    }
+}
+
+/// Phase 2: steps 2–5 of the mapped-file sequence, on the live document.
+/// The document must not have changed since `prepare_save` took its
+/// snapshot (callers block edits while a save runs).
+pub fn commit_save(
+    file: &mut TextFile,
+    mut prepared: PreparedSave,
+    opts: &SaveOptions<'_>,
+) -> Result<SaveReport, SaveError> {
+    let stats = prepared.stats.take().expect("prepared once");
+    let (temp, target, same_file, format, started) = (
+        prepared.temp.clone(),
+        prepared.target.clone(),
+        prepared.same_file,
+        prepared.format,
+        prepared.started,
+    );
+    drop(prepared);
     let changed_text =
         format.line_ending.is_some() || (stats.unmappable > 0) || (stats.invalid > 0);
 
@@ -894,7 +958,6 @@ pub fn save(
         );
     }
     drop(old0);
-    drop(snap);
 
     // 4. Replace.
     if let Err(e) = replace_file(&target, &temp) {

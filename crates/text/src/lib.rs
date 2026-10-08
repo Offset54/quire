@@ -15,4 +15,5 @@ pub mod search;
 pub mod source;
 pub mod transcode;
 pub mod tree;
+pub mod view;
 pub mod watch;
