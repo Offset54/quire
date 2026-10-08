@@ -1,0 +1,20 @@
+[package]
+name = "quire-spike-source-scan"
+description = "M1 task 1 spike: cold sequential scan of a large file through a mapping vs. positional reads (ADR-0007). Not shipped."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "source-scan"
+path = "src/main.rs"
+
+[dependencies]
+quire-core = { path = "../../crates/core" }
+quire-text = { path = "../../crates/text" }
+memchr = "2"
+serde_json = "1"
+
+[lints]
+workspace = true

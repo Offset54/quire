@@ -1,0 +1,218 @@
+[
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 3234.022336685146,
+    "seconds": 0.6640287,
+    "threads": 1,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 2999.1091956390733,
+    "seconds": 0.7160405,
+    "threads": 1,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 3191.849445223359,
+    "seconds": 0.6728023,
+    "threads": 1,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 6359.228986104646,
+    "seconds": 0.3376956,
+    "threads": 1,
+    "variant": "pread",
+    "cache": "warm"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1532.7960890311847,
+    "seconds": 1.4010237,
+    "threads": 4,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 2294.5669988213476,
+    "seconds": 0.9358993,
+    "threads": 4,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 2190.773552474246,
+    "seconds": 0.9802399,
+    "threads": 4,
+    "variant": "pread",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 6642.117650042636,
+    "seconds": 0.3233131,
+    "threads": 4,
+    "variant": "pread",
+    "cache": "warm"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1074.7988887070433,
+    "seconds": 1.998033,
+    "threads": 1,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1110.2635550511638,
+    "seconds": 1.9342107,
+    "threads": 1,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1127.3252266439663,
+    "seconds": 1.9049371000000002,
+    "threads": 1,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 2412.7373367963164,
+    "seconds": 0.8900611,
+    "threads": 1,
+    "variant": "mmap",
+    "cache": "warm"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1314.2920281813285,
+    "seconds": 1.6339470999999999,
+    "threads": 4,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1299.596331110255,
+    "seconds": 1.6524236,
+    "threads": 4,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1340.32043357933,
+    "seconds": 1.6022166,
+    "threads": 4,
+    "variant": "mmap",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 6169.102337784409,
+    "seconds": 0.3481031,
+    "threads": 4,
+    "variant": "mmap",
+    "cache": "warm"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1412.9671087702795,
+    "seconds": 1.5198398,
+    "threads": 1,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1313.5807903907912,
+    "seconds": 1.6348318,
+    "threads": 1,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 1414.3808011047995,
+    "seconds": 1.5183206999999999,
+    "threads": 1,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 2180.7977322374322,
+    "seconds": 0.9847239,
+    "threads": 1,
+    "variant": "mmap-prefetch",
+    "cache": "warm"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 4016.265762677376,
+    "seconds": 0.5346966,
+    "threads": 4,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 4347.325616257077,
+    "seconds": 0.4939781,
+    "threads": 4,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 4308.29025277769,
+    "seconds": 0.4984538,
+    "threads": 4,
+    "variant": "mmap-prefetch",
+    "cache": "cold"
+  },
+  {
+    "bytes": 2147483648,
+    "lines": 1662532,
+    "mbPerSecond": 6034.137173630774,
+    "seconds": 0.3558891,
+    "threads": 4,
+    "variant": "mmap-prefetch",
+    "cache": "warm"
+  }
+]

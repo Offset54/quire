@@ -1,0 +1,45 @@
+[package]
+name = "quire-text"
+description = "Text engine: sources, encodings, line index, piece tree, editing, search, save, journal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+quire-core = { path = "../core" }
+chardetng = "1"
+encoding_rs = "0.8"
+memchr = "2"
+memmap2 = "0.9"
+parking_lot = "0.12"
+regex-automata = "0.4"
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+unicode-segmentation = "1"
+unicode-width = "0.2"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Memory",
+  "Win32_System_Threading",
+  "Win32_Security",
+  "Win32_System_IO",
+] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = "1"
+
+[dev-dependencies]
+criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
+proptest = "1"
+tempfile = "3"
+
+[lints]
+workspace = true
