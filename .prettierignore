@@ -2,7 +2,7 @@ dist/
 target/
 .cache/
 pnpm-lock.yaml
-apps/desktop/src-tauri/gen/
+**/src-tauri/gen/
 apps/desktop/src-tauri/icons/
 docs/MASTER_PROMPT.md
 **/testdata/

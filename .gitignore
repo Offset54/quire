@@ -26,3 +26,6 @@ dist/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Tauri regenerates these on every build
+**/src-tauri/gen/
