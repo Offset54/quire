@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-open"
+description = "Enables the txt_open command without any pre-configured scope."
+commands.allow = ["txt_open"]
+
+[[permission]]
+identifier = "deny-txt-open"
+description = "Denies the txt_open command without any pre-configured scope."
+commands.deny = ["txt_open"]

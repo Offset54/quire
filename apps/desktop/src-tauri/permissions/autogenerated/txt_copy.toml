@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-copy"
+description = "Enables the txt_copy command without any pre-configured scope."
+commands.allow = ["txt_copy"]
+
+[[permission]]
+identifier = "deny-txt-copy"
+description = "Denies the txt_copy command without any pre-configured scope."
+commands.deny = ["txt_copy"]

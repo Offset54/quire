@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-disk-resolve"
+description = "Enables the txt_disk_resolve command without any pre-configured scope."
+commands.allow = ["txt_disk_resolve"]
+
+[[permission]]
+identifier = "deny-txt-disk-resolve"
+description = "Denies the txt_disk_resolve command without any pre-configured scope."
+commands.deny = ["txt_disk_resolve"]

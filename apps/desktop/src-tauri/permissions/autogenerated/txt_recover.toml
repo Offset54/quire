@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-recover"
+description = "Enables the txt_recover command without any pre-configured scope."
+commands.allow = ["txt_recover"]
+
+[[permission]]
+identifier = "deny-txt-recover"
+description = "Denies the txt_recover command without any pre-configured scope."
+commands.deny = ["txt_recover"]

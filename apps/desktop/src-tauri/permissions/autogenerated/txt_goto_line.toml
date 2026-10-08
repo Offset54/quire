@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-goto-line"
+description = "Enables the txt_goto_line command without any pre-configured scope."
+commands.allow = ["txt_goto_line"]
+
+[[permission]]
+identifier = "deny-txt-goto-line"
+description = "Denies the txt_goto_line command without any pre-configured scope."
+commands.deny = ["txt_goto_line"]

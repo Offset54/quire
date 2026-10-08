@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-set-format"
+description = "Enables the txt_set_format command without any pre-configured scope."
+commands.allow = ["txt_set_format"]
+
+[[permission]]
+identifier = "deny-txt-set-format"
+description = "Denies the txt_set_format command without any pre-configured scope."
+commands.deny = ["txt_set_format"]

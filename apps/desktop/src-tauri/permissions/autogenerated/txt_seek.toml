@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-seek"
+description = "Enables the txt_seek command without any pre-configured scope."
+commands.allow = ["txt_seek"]
+
+[[permission]]
+identifier = "deny-txt-seek"
+description = "Denies the txt_seek command without any pre-configured scope."
+commands.deny = ["txt_seek"]

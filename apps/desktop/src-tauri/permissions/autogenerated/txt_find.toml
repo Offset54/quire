@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-find"
+description = "Enables the txt_find command without any pre-configured scope."
+commands.allow = ["txt_find"]
+
+[[permission]]
+identifier = "deny-txt-find"
+description = "Denies the txt_find command without any pre-configured scope."
+commands.deny = ["txt_find"]

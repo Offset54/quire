@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-recovery-discard"
+description = "Enables the txt_recovery_discard command without any pre-configured scope."
+commands.allow = ["txt_recovery_discard"]
+
+[[permission]]
+identifier = "deny-txt-recovery-discard"
+description = "Denies the txt_recovery_discard command without any pre-configured scope."
+commands.deny = ["txt_recovery_discard"]

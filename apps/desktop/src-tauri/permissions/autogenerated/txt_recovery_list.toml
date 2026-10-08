@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-recovery-list"
+description = "Enables the txt_recovery_list command without any pre-configured scope."
+commands.allow = ["txt_recovery_list"]
+
+[[permission]]
+identifier = "deny-txt-recovery-list"
+description = "Denies the txt_recovery_list command without any pre-configured scope."
+commands.deny = ["txt_recovery_list"]

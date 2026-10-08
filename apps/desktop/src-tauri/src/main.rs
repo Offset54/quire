@@ -6,8 +6,9 @@ mod bench;
 #[cfg(feature = "bench-fixtures")]
 mod synthetic;
 mod tracing_setup;
-// The product build has no document provider until M1, so nothing opens a
-// view yet; only the bench-fixtures build exercises these paths today.
+mod txt;
+// Tile views: only the bench-fixtures build opens one today (TXT renders
+// DOM rows, ADR-0023).
 #[cfg_attr(not(feature = "bench-fixtures"), allow(dead_code))]
 mod transport;
 #[cfg_attr(not(feature = "bench-fixtures"), allow(dead_code))]
@@ -24,6 +25,7 @@ use tauri::webview::NewWindowResponse;
 use tauri::{Manager, RunEvent, State, Url, WebviewUrl, WebviewWindowBuilder};
 use tracing_setup::Tracing;
 use transport::{ChannelSink, TileSink};
+use txt::TxtService;
 use view::{TileRequest, ViewInfo, ViewService};
 
 /// Whether a Chrome trace is being recorded (set `QUIRE_TRACE=<file.json>`).
@@ -152,6 +154,16 @@ fn main() {
         .in_scope(|| Arc::new(Scheduler::new(SchedulerConfig::default())));
     let governor = MemoryGovernor::new(GovernorConfig::default());
 
+    // A file on the command line starts opening now, in parallel with
+    // WebView2 startup (ADR-0022).
+    let txt = TxtService::new(Arc::clone(&scheduler), governor.clone());
+    if let Some(path) = std::env::args_os()
+        .skip(1)
+        .find(|a| !a.to_string_lossy().starts_with('-'))
+    {
+        txt.preopen(path.into());
+    }
+
     // Benchmarks fix the window size; a restored size would override it.
     #[cfg(feature = "bench-fixtures")]
     let restore_window = bench::viewport_override().is_none();
@@ -163,9 +175,13 @@ fn main() {
         builder = builder.plugin(tauri_plugin_window_state::Builder::new().build());
     }
     let builder = builder
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init());
+    let builder = builder
         .manage(tracing)
         .manage(ViewService::new(scheduler))
-        .manage(governor);
+        .manage(governor)
+        .manage(txt);
 
     #[cfg(feature = "bench-fixtures")]
     let builder = builder.invoke_handler(tauri::generate_handler![
@@ -175,6 +191,31 @@ fn main() {
         view_relayout,
         view_close,
         perf_stats,
+        txt::txt_startup,
+        txt::txt_open,
+        txt::txt_new,
+        txt::txt_close,
+        txt::txt_view,
+        txt::txt_edit,
+        txt::txt_paste,
+        txt::txt_copy,
+        txt::txt_seek,
+        txt::txt_goto_line,
+        txt::txt_search,
+        txt::txt_search_cancel,
+        txt::txt_find,
+        txt::txt_replace_all,
+        txt::txt_cancel,
+        txt::txt_save,
+        txt::txt_set_format,
+        txt::txt_reopen,
+        txt::txt_allow_edit,
+        txt::txt_status,
+        txt::txt_check_disk,
+        txt::txt_disk_resolve,
+        txt::txt_recovery_list,
+        txt::txt_recover,
+        txt::txt_recovery_discard,
         bench::bench_scenario,
         bench::bench_open_synthetic,
         bench::bench_report,
@@ -187,6 +228,31 @@ fn main() {
         view_relayout,
         view_close,
         perf_stats,
+        txt::txt_startup,
+        txt::txt_open,
+        txt::txt_new,
+        txt::txt_close,
+        txt::txt_view,
+        txt::txt_edit,
+        txt::txt_paste,
+        txt::txt_copy,
+        txt::txt_seek,
+        txt::txt_goto_line,
+        txt::txt_search,
+        txt::txt_search_cancel,
+        txt::txt_find,
+        txt::txt_replace_all,
+        txt::txt_cancel,
+        txt::txt_save,
+        txt::txt_set_format,
+        txt::txt_reopen,
+        txt::txt_allow_edit,
+        txt::txt_status,
+        txt::txt_check_disk,
+        txt::txt_disk_resolve,
+        txt::txt_recovery_list,
+        txt::txt_recover,
+        txt::txt_recovery_discard,
     ]);
 
     let build_span = tracing::info_span!("tauri_build").entered();
@@ -206,7 +272,10 @@ fn main() {
 
     app.run(|handle, event| match event {
         RunEvent::Ready => tracing::info!("event loop ready"),
-        RunEvent::Exit => handle.state::<Tracing>().write_trace(),
+        RunEvent::Exit => {
+            txt::shutdown(&handle.state::<Arc<TxtService>>());
+            handle.state::<Tracing>().write_trace();
+        }
         _ => {}
     });
 }

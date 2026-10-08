@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-save"
+description = "Enables the txt_save command without any pre-configured scope."
+commands.allow = ["txt_save"]
+
+[[permission]]
+identifier = "deny-txt-save"
+description = "Denies the txt_save command without any pre-configured scope."
+commands.deny = ["txt_save"]

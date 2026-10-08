@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-status"
+description = "Enables the txt_status command without any pre-configured scope."
+commands.allow = ["txt_status"]
+
+[[permission]]
+identifier = "deny-txt-status"
+description = "Denies the txt_status command without any pre-configured scope."
+commands.deny = ["txt_status"]

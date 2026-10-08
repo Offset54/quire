@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-replace-all"
+description = "Enables the txt_replace_all command without any pre-configured scope."
+commands.allow = ["txt_replace_all"]
+
+[[permission]]
+identifier = "deny-txt-replace-all"
+description = "Denies the txt_replace_all command without any pre-configured scope."
+commands.deny = ["txt_replace_all"]

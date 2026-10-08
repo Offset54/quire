@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-new"
+description = "Enables the txt_new command without any pre-configured scope."
+commands.allow = ["txt_new"]
+
+[[permission]]
+identifier = "deny-txt-new"
+description = "Denies the txt_new command without any pre-configured scope."
+commands.deny = ["txt_new"]
