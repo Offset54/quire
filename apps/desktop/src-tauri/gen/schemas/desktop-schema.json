@@ -177,6 +177,30 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Enables the bench_open_synthetic command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-bench-open-synthetic",
+          "markdownDescription": "Enables the bench_open_synthetic command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the bench_report command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-bench-report",
+          "markdownDescription": "Enables the bench_report command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the bench_scenario command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-bench-scenario",
+          "markdownDescription": "Enables the bench_scenario command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the perf_stats command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-perf-stats",
+          "markdownDescription": "Enables the perf_stats command without any pre-configured scope."
+        },
+        {
           "description": "Enables the trace_ingest command without any pre-configured scope.",
           "type": "string",
           "const": "allow-trace-ingest",
@@ -189,6 +213,48 @@
           "markdownDescription": "Enables the trace_status command without any pre-configured scope."
         },
         {
+          "description": "Enables the view_close command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-view-close",
+          "markdownDescription": "Enables the view_close command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the view_relayout command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-view-relayout",
+          "markdownDescription": "Enables the view_relayout command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the view_request_tiles command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-view-request-tiles",
+          "markdownDescription": "Enables the view_request_tiles command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the bench_open_synthetic command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-bench-open-synthetic",
+          "markdownDescription": "Denies the bench_open_synthetic command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the bench_report command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-bench-report",
+          "markdownDescription": "Denies the bench_report command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the bench_scenario command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-bench-scenario",
+          "markdownDescription": "Denies the bench_scenario command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the perf_stats command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-perf-stats",
+          "markdownDescription": "Denies the perf_stats command without any pre-configured scope."
+        },
+        {
           "description": "Denies the trace_ingest command without any pre-configured scope.",
           "type": "string",
           "const": "deny-trace-ingest",
@@ -199,6 +265,24 @@
           "type": "string",
           "const": "deny-trace-status",
           "markdownDescription": "Denies the trace_status command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the view_close command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-view-close",
+          "markdownDescription": "Denies the view_close command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the view_relayout command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-view-relayout",
+          "markdownDescription": "Denies the view_relayout command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the view_request_tiles command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-view-request-tiles",
+          "markdownDescription": "Denies the view_request_tiles command without any pre-configured scope."
         },
         {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",

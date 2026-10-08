@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-view-relayout"
+description = "Enables the view_relayout command without any pre-configured scope."
+commands.allow = ["view_relayout"]
+
+[[permission]]
+identifier = "deny-view-relayout"
+description = "Denies the view_relayout command without any pre-configured scope."
+commands.deny = ["view_relayout"]

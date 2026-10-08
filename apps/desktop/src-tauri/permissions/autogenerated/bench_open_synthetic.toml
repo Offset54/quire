@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bench-open-synthetic"
+description = "Enables the bench_open_synthetic command without any pre-configured scope."
+commands.allow = ["bench_open_synthetic"]
+
+[[permission]]
+identifier = "deny-bench-open-synthetic"
+description = "Denies the bench_open_synthetic command without any pre-configured scope."
+commands.deny = ["bench_open_synthetic"]

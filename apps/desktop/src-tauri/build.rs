@@ -1,8 +1,21 @@
 fn main() {
+    // App commands that can be invoked at all; each window still needs a
+    // capability granting them (capabilities/, dev-capabilities/).
+    let mut commands = vec![
+        "trace_status",
+        "trace_ingest",
+        "view_request_tiles",
+        "view_relayout",
+        "view_close",
+        "perf_stats",
+    ];
+    if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
+        commands.extend(["bench_scenario", "bench_open_synthetic", "bench_report"]);
+    }
+    let commands: &'static [&'static str] = Vec::leak(commands);
+
     let attributes = tauri_build::Attributes::new()
-        // Only these app commands can be invoked, and only by windows whose
-        // capability grants them (capabilities/main.json).
-        .app_manifest(tauri_build::AppManifest::new().commands(&["trace_status", "trace_ingest"]))
+        .app_manifest(tauri_build::AppManifest::new().commands(commands))
         // Windows manifest (kept plain ASCII; the SxS parser is strict):
         // - Common Controls v6, needed by Tauri's native dialogs;
         // - longPathAware, so paths over 260 characters work (§9);

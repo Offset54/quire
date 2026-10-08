@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bench-scenario"
+description = "Enables the bench_scenario command without any pre-configured scope."
+commands.allow = ["bench_scenario"]
+
+[[permission]]
+identifier = "deny-bench-scenario"
+description = "Denies the bench_scenario command without any pre-configured scope."
+commands.deny = ["bench_scenario"]

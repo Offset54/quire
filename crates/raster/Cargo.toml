@@ -1,0 +1,13 @@
+[package]
+name = "quire-raster"
+description = "Display lists and CPU rasterization into tiles (tiny-skia)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+tiny-skia = { version = "0.12", default-features = false, features = ["std", "simd"] }
+
+[lints]
+workspace = true

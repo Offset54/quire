@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1–8 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1–9 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -31,7 +31,8 @@
 | 6 | Memory governor | Done: `quire-core::memory` (per-document and global budgets, background-first and cheapest-class-first eviction, `LruCache`), 9 tests incl. a budget-invariant proptest and a concurrency accounting check |
 | 4 | Shell hardening | Done: command allowlist + per-window capability, navigation/new-window/download blocking (unit-tested), Windows manifest (longPathAware, PerMonitorV2, UTF-8 code page), window-state restore, ICU MessageFormat catalog (`t()`) |
 | 7 | Tile transport spike | Done: [ADR-0004](adr/0004-tile-transport.md). Windows uses WebView2 SharedBuffer (raw 512 px tile 2.7 ms p50, full 1080p repaint 26 ms); fallback is `invoke` + QOI |
-| 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 9 | Compositor and virtual scroller | Done: [ADR-0005](adr/0005-virtual-scroll-model.md). `DocumentSurface` (tile + overlay canvases, custom scrollbar, LRU bitmaps), view service, synthetic 10M-row list behind `bench-fixtures`. Raw dev machine: steady scroll and fling 0 dropped frames at 144 Hz, 0 placeholders |
+| 10–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -59,6 +60,14 @@ These are component costs, not §4 scenarios, so they aren't derated.
 | WebView2 SharedBuffer, raw | 2.7 / 4.2 ms | 26 ms |
 | `invoke`, raw | 12.5 / 13.4 ms | 83 ms |
 | `invoke`, QOI (text tiles) | 3.6 / 5.2 ms | 34 ms |
+
+### Synthetic 10M-row list (raw dev machine, AC, 144 Hz, 2026-10-08; ADR-0005)
+
+| Phase | Frame interval p95 / max | Dropped frames | Frames with placeholders |
+|---|---|---|---|
+| Steady scroll 2,400 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
+| Fling 24,000 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
+| Thumb drag across all rows | 7.0 / 7.4 ms | 0 | 100 % (allowed) |
 
 ### §4 scenarios
 

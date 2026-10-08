@@ -1,0 +1,578 @@
+{
+  "drag": {
+    "composeWorkMs": {
+      "max": 1.3,
+      "mean": 0.59,
+      "n": 432,
+      "p50": 0.6,
+      "p95": 0.9,
+      "p99": 1.1
+    },
+    "droppedFrames": 0,
+    "frameIntervalMs": {
+      "max": 7.4,
+      "mean": 6.94,
+      "n": 433,
+      "p50": 6.9,
+      "p95": 7,
+      "p99": 7.1
+    },
+    "framesOver50ms": 0,
+    "framesWithPlaceholdersPct": 100,
+    "longTasks": 0,
+    "meanPlaceholderSharePct": 100,
+    "tileRequests": 432,
+    "tilesDroppedUnwanted": 2738,
+    "tilesReceived": 0
+  },
+  "env": {
+    "date": "2026-10-08T11:33:49.573Z",
+    "devicePixelRatio": 1.5,
+    "extentPx": 300000000,
+    "refreshMs": 6.9,
+    "rows": 10000000,
+    "tileSize": 512,
+    "transport": "shared-buffer",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+    "viewport": [
+      1902,
+      1080
+    ]
+  },
+  "firstPaintMs": 37.9,
+  "fling": {
+    "composeWorkMs": {
+      "max": 2.9,
+      "mean": 0.48,
+      "n": 576,
+      "p50": 0.4,
+      "p95": 0.8,
+      "p99": 1
+    },
+    "droppedFrames": 0,
+    "frameIntervalMs": {
+      "max": 7.3,
+      "mean": 6.94,
+      "n": 576,
+      "p50": 6.9,
+      "p95": 7.1,
+      "p99": 7.1
+    },
+    "framesOver50ms": 0,
+    "framesWithPlaceholdersPct": 0,
+    "longTasks": 0,
+    "meanPlaceholderSharePct": 0,
+    "tileRequests": 576,
+    "tilesDroppedUnwanted": 0,
+    "tilesReceived": 1120
+  },
+  "jumpToSharpMs": {
+    "max": 311.3,
+    "mean": 59.55,
+    "n": 15,
+    "p50": 42.6,
+    "p95": 311.3,
+    "p99": 311.3
+  },
+  "perf": {
+    "memory": {
+      "caches": [],
+      "global_budget": 3221225472,
+      "per_document_budget": 1610612736,
+      "total_bytes": 0
+    },
+    "recentJobs": [
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 5188,
+        "run_us": 1415
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 5744,
+        "run_us": 1109
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 5621,
+        "run_us": 1312
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 4893,
+        "run_us": 2911
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 57,
+        "run_us": 1284
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 59,
+        "run_us": 1390
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1311,
+        "run_us": 2738
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 61,
+        "run_us": 4096
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1449,
+        "run_us": 2932
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 27,
+        "run_us": 4561
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 44,
+        "run_us": 4758
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 56,
+        "run_us": 5322
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 4141,
+        "run_us": 1046
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 4054,
+        "run_us": 1236
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 4384,
+        "run_us": 1940
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 79,
+        "run_us": 6372
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 74,
+        "run_us": 1320
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 47,
+        "run_us": 1612
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 744,
+        "run_us": 1233
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1335,
+        "run_us": 1264
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 74,
+        "run_us": 2846
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 32,
+        "run_us": 3454
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 440,
+        "run_us": 2863
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1198,
+        "run_us": 1488
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 811,
+        "run_us": 2280
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1825,
+        "run_us": 1431
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 262,
+        "run_us": 6510
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 2085,
+        "run_us": 4300
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 46,
+        "run_us": 1484
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 35,
+        "run_us": 1566
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 92,
+        "run_us": 3800
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 99,
+        "run_us": 4035
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 6,
+        "run_us": 3492
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 31,
+        "run_us": 3880
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 10,
+        "run_us": 4428
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 18,
+        "run_us": 2132
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 104,
+        "run_us": 1199
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 121,
+        "run_us": 1568
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 7,
+        "run_us": 1773
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 6,
+        "run_us": 3106
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 54,
+        "run_us": 2147
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 45,
+        "run_us": 1930
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1590,
+        "run_us": 3041
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 65,
+        "run_us": 5633
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 49,
+        "run_us": 5318
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 28,
+        "run_us": 5386
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 60,
+        "run_us": 5403
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 16,
+        "run_us": 5519
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 5330,
+        "run_us": 1638
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1912,
+        "run_us": 5081
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 5097,
+        "run_us": 2126
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 4635,
+        "run_us": 2626
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 129,
+        "run_us": 2191
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 51,
+        "run_us": 2000
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 41,
+        "run_us": 2070
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1416,
+        "run_us": 1051
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1353,
+        "run_us": 1354
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 789,
+        "run_us": 2086
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 908,
+        "run_us": 2001
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 106,
+        "run_us": 4173
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 2701,
+        "run_us": 1448
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 2464,
+        "run_us": 2137
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 1486,
+        "run_us": 3453
+      },
+      {
+        "name": "render-tile",
+        "outcome": "Completed",
+        "priority": "Visible",
+        "queued_us": 2091,
+        "run_us": 2905
+      }
+    ],
+    "scheduler": {
+      "cancelled": 0,
+      "coalesced": 0,
+      "completed": 5581,
+      "panicked": 0,
+      "queued": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "running": 0,
+      "stale_dropped": 1339
+    }
+  },
+  "scenario": "scroll-list",
+  "steady": {
+    "composeWorkMs": {
+      "max": 2.1,
+      "mean": 0.62,
+      "n": 863,
+      "p50": 0.6,
+      "p95": 1.1,
+      "p99": 1.5
+    },
+    "droppedFrames": 0,
+    "frameIntervalMs": {
+      "max": 7.3,
+      "mean": 6.94,
+      "n": 864,
+      "p50": 6.9,
+      "p95": 7.1,
+      "p99": 7.1
+    },
+    "framesOver50ms": 0,
+    "framesWithPlaceholdersPct": 0,
+    "longTasks": 0,
+    "meanPlaceholderSharePct": 0,
+    "tileRequests": 863,
+    "tilesDroppedUnwanted": 0,
+    "tilesReceived": 176
+  },
+  "note": "Raw dev machine (Core Ultra 7 258V, AC, 144 Hz panel), not ref-sim; viewport 1902x1080 device px + 12 CSS px scrollbar."
+}

@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
-    "check:licenses": "node tools/check-js-licenses.mjs"
+    "check:licenses": "node tools/check-js-licenses.mjs",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

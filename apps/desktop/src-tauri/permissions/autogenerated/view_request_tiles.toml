@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-view-request-tiles"
+description = "Enables the view_request_tiles command without any pre-configured scope."
+commands.allow = ["view_request_tiles"]
+
+[[permission]]
+identifier = "deny-view-request-tiles"
+description = "Denies the view_request_tiles command without any pre-configured scope."
+commands.deny = ["view_request_tiles"]

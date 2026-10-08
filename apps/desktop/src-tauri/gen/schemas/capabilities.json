@@ -1,1 +1,1 @@
-{"main":{"identifier":"main","description":"Minimal permissions for the main window (§8: minimal Tauri capability permissions).","local":true,"windows":["main"],"permissions":["core:event:default","allow-trace-status","allow-trace-ingest"]}}
+{"main":{"identifier":"main","description":"Minimal permissions for the main window (§8: minimal Tauri capability permissions).","local":true,"windows":["main"],"permissions":["core:event:default","allow-trace-status","allow-trace-ingest","allow-view-request-tiles","allow-view-relayout","allow-view-close","allow-perf-stats"]}}
