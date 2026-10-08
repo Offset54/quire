@@ -1,6 +1,7 @@
 use encoding_rs::{BIG5, EUC_KR, GB18030, ISO_2022_JP, SHIFT_JIS, WINDOWS_1251};
 
 use super::*;
+use crate::encoding::is_stateful;
 use crate::encoding::tests::{JA, KO, RU, ZH_HANS, ZH_HANT, encode};
 
 fn sample(text: &str, target: usize) -> String {
@@ -40,10 +41,7 @@ fn check(encoding: &'static Encoding, raw: Vec<u8>, bom: u64) {
     for s in &t.segments {
         assert_eq!(t.raw_offset(s.utf8).unwrap(), s.raw);
     }
-    assert_eq!(
-        t.supports_raw_copy(),
-        !crate::encoding::is_stateful(encoding)
-    );
+    assert_eq!(t.supports_raw_copy(), !is_stateful(encoding));
     if !t.supports_raw_copy() {
         return;
     }

@@ -156,14 +156,14 @@ pub fn transcode(
 
     enum Out {
         Memory(Vec<u8>),
-        File(std::io::BufWriter<std::fs::File>, u64),
+        File(io::BufWriter<std::fs::File>, u64),
     }
     let mut out = if end - bom_len <= IN_MEMORY_MAX {
         Out::Memory(Vec::with_capacity((end - bom_len) as usize))
     } else {
         std::fs::create_dir_all(temp_dir)?;
         Out::File(
-            std::io::BufWriter::with_capacity(4 << 20, tempfile::tempfile_in(temp_dir)?),
+            io::BufWriter::with_capacity(4 << 20, tempfile::tempfile_in(temp_dir)?),
             0,
         )
     };

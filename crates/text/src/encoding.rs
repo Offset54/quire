@@ -140,7 +140,7 @@ fn utf16_without_bom(sample: &[u8]) -> Option<&'static Encoding> {
         return None;
     }
     let (mut even, mut odd) = (0usize, 0usize);
-    for pair in sample.chunks_exact(2) {
+    for pair in sample.as_chunks::<2>().0 {
         even += usize::from(pair[0] == 0);
         odd += usize::from(pair[1] == 0);
     }
