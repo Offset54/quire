@@ -1,6 +1,6 @@
 # 0022. Startup budget vs. the WebView2 floor
 
-- Status: **Proposed. Needs a product decision** (§2: budgets are never relaxed quietly)
+- Status: Accepted (decided by the product owner, 2026-10-08)
 - Date: 2026-10-08
 
 ## Context
@@ -67,4 +67,19 @@ Option 2 on its own would give the right number for the wrong reason.
 
 ## Decision
 
-Pending. Until it's made, M0's DoD item "the empty app starts within budget" is reported as **not met**, with this evidence.
+The product owner chose Options 3 + 4 + 1:
+
+1. **Budget revised to the stack's measured floor** (Option 3). On the reference machine:
+
+   | Start | Was | Now | Effective in ref-sim |
+   |---|---|---|---|
+   | Warm | ≤ 0.4 s | **≤ 0.75 s** | 500 ms (÷ 1.5) |
+   | Cold | ≤ 1.0 s | **≤ 1.7 s** | ≈ 980–1,020 ms (÷ max(D_cpu, D_io)) |
+
+   These replace the §4 "App cold start" row; `bench/budgets.json` records the change. The "e.g. 0.7 s / 1.4 s" in Option 3 was too low once derating applies: the measured warm p50 of 480 ms × 1.5 is 720 ms.
+2. **Overlap document opening with WebView2 startup** (Option 4), from M1. When the app is launched with a file, the core starts opening and rendering it before the webview is ready. The M1 TXT provider is the first to do this.
+3. **Opt-in "fast start" resident process** (Option 1), in M7: a setting plus an installer option, off by default, with its idle memory cost measured and shown to the user.
+
+Option 2 (counting a natively painted frame as "interactive") is not adopted.
+
+**Verification under the revised budgets** (`bench/results/m0/refsim-2026-10-08-215918.json`): warm 457 ms p50, effective budget 500 ms: pass. The cold samples are unreliable on a machine with other Edge/WebView2 processes running, because their mapped files can't be purged. That run's cold p50 was 441 ms (effectively warm). The colder earlier run, 936 ms p50, also passes its effective budget of about 977 ms. Every scroll budget passes.

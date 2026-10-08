@@ -16,18 +16,18 @@
     {
       "id": "startup.warm",
       "metric": "startup.warm.p50",
-      "budget": 400,
+      "budget": 750,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4 cold start row: warm ≤ 0.4 s"
+      "ref": "§4 warm start, revised from 0.4 s to 0.75 s on 2026-10-08 (ADR-0022)"
     },
     {
       "id": "startup.cold",
       "metric": "startup.cold.p50",
-      "budget": 1000,
+      "budget": 1700,
       "unit": "ms",
       "kind": "mixed",
-      "ref": "§4 cold start row: ≤ 1.0 s"
+      "ref": "§4 cold start, revised from 1.0 s to 1.7 s on 2026-10-08 (ADR-0022)"
     },
     {
       "id": "scroll.steady.p99",

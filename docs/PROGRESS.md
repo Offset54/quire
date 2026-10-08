@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phase | M0 done except one DoD item, which needs your decision: the startup budget ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)). Report: [M0_REPORT.md](M0_REPORT.md). |
+| Phase | M0 complete (2026-10-08). M1 (TXT engine) is next. |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
 | Last updated | 2026-10-08 |
 
@@ -10,8 +10,8 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | All 14 tasks done; waiting on the startup-budget decision | 2 of 3 met (scroll at 60 fps, tile transport ADR); startup not met (ADR-0022) |
-| M1 TXT engine | Not started | n/a |
+| M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
+| M1 TXT engine | Next | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
@@ -35,7 +35,7 @@
 | 10 | Performance HUD | Done: Ctrl+Shift+H overlay (frame graph with 16.7/50 ms lines, long tasks, queue depths, job counters, memory caches, per-surface tile counters, last 10 jobs); verified live by the `hud` bench scenario |
 | 11 | Fixture generators | Done: `tools/fixtures`, all seven §4 fixtures, deterministic (verified), validated by qpdf, Word (1,000 pages) and PowerPoint (500 slides) |
 | 12 | Benchmark harness | Done: [ADR-0020](adr/0020-benchmark-and-test-harness.md), `tools/refsim` + `tools/bench/refsim.ps1` (ADR-0021 profile), `bench/budgets.json`, `compare.mjs`, CI A/B micro-benchmarks |
-| 13 | Cold-start work | Investigated: startup spans; bare-WebView2 floor spike (449 ms pinned); resident-process variant 137 ms. Budget not reachable with the mandated stack, so the decision is yours ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)) |
+| 13 | Cold-start work | Investigated: startup spans; bare-WebView2 floor spike (449 ms pinned); resident-process variant 137 ms. Budget revised by decision ([ADR-0022](adr/0022-startup-budget-and-webview2-floor.md)): warm ≤ 0.75 s, cold ≤ 1.7 s; re-run passes (warm 457 ms) |
 | 14 | M0 report | Done: [M0_REPORT.md](M0_REPORT.md); ADRs 0001–0006 and 0018–0022 written |
 
 ## Decisions recorded on plan approval (2026-10-08)

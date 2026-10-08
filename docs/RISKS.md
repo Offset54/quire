@@ -15,7 +15,7 @@ Likelihood (L) and impact (I) are rated High, Medium or Low. "Retires" is the ea
 | 9 | **Benchmark validity.** The dev machine is faster than the reference machine, so raw numbers would look met when they aren't. | M | M | Ref-sim profile (ADR-0021): exact viewport, P-core pinning, derated pass thresholds (`D_cpu` 1.5, `D_io` measured), verified cold cache, RAM ballast. Every result labeled. The GPU isn't emulated: we also report a software-compositing run as a pessimistic bound. | M0 |
 | 10 | **Scope versus schedule.** Six formats, each a product in itself, plus three OSes. Late milestones get squeezed and v1 slips. | H | M | Strict DoD gates and capability flags so unfinished features stay hidden. v2 items stay v2. Re-estimate after each milestone from actuals. | Ongoing |
 
-| 11 | **Startup budget vs. WebView2.** Bare WebView2 needs ~450 ms to a first frame on this machine (~675 ms in ref-sim terms) against a 400 ms warm budget; Tauri adds only 30–40 ms. Measured in M0, ADR-0022. | H (occurred) | M | Decision pending: budget revision, plus overlapping document work with WebView2 startup, plus an opt-in resident "fast start" process (measured 137 ms). | Decision |
+| 11 | **Startup budget vs. WebView2.** Bare WebView2 needs ~450 ms to a first frame on this machine (~675 ms in ref-sim terms) against a 400 ms warm budget; Tauri adds only 30–40 ms. Measured in M0, ADR-0022. | Occurred | M | Decided (ADR-0022): budget revised to warm ≤ 0.75 s / cold ≤ 1.7 s; overlap document work with WebView2 startup from M1; opt-in fast-start process in M7 (measured 137 ms). | M0 (decided) |
 
 ## Watch list
 
