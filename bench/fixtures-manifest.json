@@ -1,0 +1,136 @@
+{
+  "fixtures": {
+    "docx-1000p": {
+      "bytes": 455885,
+      "description": "1,000-page DOCX: headings, paragraphs, tables and inline images, footer page numbers; each page starts with page-break-before",
+      "details": {
+        "distinctImages": 20,
+        "documentXmlBytes": 2573291,
+        "inlineImages": 334,
+        "pageSize": "A4",
+        "pages": 1000,
+        "tables": 333
+      },
+      "file": "report-1000-pages.docx",
+      "seed": 1685021560,
+      "sha256": "67b7c4d124132a1e7e4e1c5ca9b0e92318910000d908923966ee352bf2683f11"
+    },
+    "json-300m": {
+      "bytes": 314572568,
+      "description": "300 MiB minified JSON on a single line",
+      "details": {
+        "lines": 1,
+        "records": 797557
+      },
+      "file": "single-line-300mib.json",
+      "seed": 1785950062,
+      "sha256": "001e24d1a21d97d682de8d2700921904c9085e9cbbbc6ecd37e30a682c781cd5"
+    },
+    "md-20m": {
+      "bytes": 20972845,
+      "description": "20 MiB CommonMark + GFM: front matter, headings, lists, task lists, tables, code, math, Mermaid, footnotes",
+      "details": {
+        "sections": 16004
+      },
+      "file": "document-20mib.md",
+      "seed": 1835282992,
+      "sha256": "661273e6cf521c47592ff20b2ff4f940db8e2ae98ad28200c8d83f715dead16b"
+    },
+    "pdf-5000p": {
+      "bytes": 1010042958,
+      "description": "5,000-page, ~1 GB PDF: text plus a unique JPEG per page, outline every 50 pages (not linearized; validate.ps1 makes the linearized copy)",
+      "details": {
+        "imageSize": [
+          800,
+          600
+        ],
+        "imagesPerPage": 1,
+        "linearized": {
+          "bytes": 1000708412,
+          "file": "book-5000-pages-linearized.pdf",
+          "sha256": "12a44fa64206b7556670293728a9cc647bd52519c677f9d6def20e39a4bde20b"
+        },
+        "outlineEntries": 100,
+        "pages": 5000,
+        "searchToken": "each page contains 'token-NNNNN' with its page number"
+      },
+      "file": "book-5000-pages.pdf",
+      "seed": 1885627957,
+      "sha256": "16f358761923b5b7abb22f443af4efba0f7318f4130c1aee4296989d30aba699"
+    },
+    "pdf-scanned-1000p": {
+      "bytes": 489636189,
+      "description": "1,000-page scanned PDF: one 200 dpi grayscale JPEG per page, no text layer",
+      "details": {
+        "dpi": 200,
+        "imageSize": [
+          1654,
+          2339
+        ],
+        "pages": 1000,
+        "textLayer": false
+      },
+      "file": "scanned-1000-pages.pdf",
+      "seed": 1935892846,
+      "sha256": "3e5b865eb3bde3e8ab4a161648e02a6a366962e9f5b971d0f7c2dc84e0758944"
+    },
+    "pptx-500s": {
+      "bytes": 497058781,
+      "description": "500-slide PPTX: title, bullets and a unique ~1 MB JPEG per slide (~500 MB of media)",
+      "details": {
+        "mediaBytes": 496283011,
+        "mediaFiles": 500,
+        "slideSize": "16:9 (12192000 x 6858000 EMU)",
+        "slides": 500
+      },
+      "file": "deck-500-slides.pptx",
+      "seed": 1886418040,
+      "sha256": "ffe201075c868ac0836c383ce1288a1ac6e083dc6d4be90cd4b3522a6f81f1ea"
+    },
+    "txt-2g": {
+      "bytes": 2147483648,
+      "description": "2 GiB UTF-8 text, LF, mixed line lengths (0 B to 1 MiB); each line starts with its 1-based number",
+      "details": {
+        "lineEnding": "LF",
+        "lines": 1662532,
+        "longestLineBytes": 1048010
+      },
+      "file": "mixed-lines-2gib.txt",
+      "seed": 1954051122,
+      "sha256": "7c8b99633cc4430a97102de7f5d1d623c8cfb256770869e3c138ba5f7b49cac4"
+    }
+  },
+  "generatorVersion": 1,
+  "validation": {
+    "date": "2026-10-08T20:57:18.3621912+09:00",
+    "docx-1000p": {
+      "app": "Word 16.0",
+      "inlineImages": 334,
+      "ok": true,
+      "pages": 1000,
+      "tables": 333
+    },
+    "pdf-5000p": {
+      "ok": true,
+      "pages": 5000,
+      "qpdfCheck": true
+    },
+    "pdf-5000p-linearized": {
+      "linearization": true,
+      "ok": true,
+      "pages": 5000,
+      "qpdfCheck": true
+    },
+    "pdf-scanned-1000p": {
+      "ok": true,
+      "pages": 1000,
+      "qpdfCheck": true
+    },
+    "pptx-500s": {
+      "app": "PowerPoint 16.0",
+      "ok": true,
+      "picturesOnFirstAndLast": 2,
+      "slides": 500
+    }
+  }
+}

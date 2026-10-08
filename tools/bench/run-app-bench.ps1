@@ -1,3 +1,4 @@
+#Requires -Version 7
 <#
 .SYNOPSIS
   Builds the bench flavor of the desktop app and runs one in-app scenario.
