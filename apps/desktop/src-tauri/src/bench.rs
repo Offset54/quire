@@ -49,9 +49,55 @@ pub async fn bench_open_synthetic(
     Ok(views.open(Arc::new(SyntheticList::new(rows, row_height)), sink, width))
 }
 
+/// When the OS created this process, in Unix epoch milliseconds: the
+/// starting point for startup timings.
+fn process_created_epoch_ms() -> Option<f64> {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::Foundation::FILETIME;
+        use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+        let zero = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let (mut created, mut exited, mut kernel, mut user) = (zero, zero, zero, zero);
+        // SAFETY: valid out-parameters for the current process.
+        let ok = unsafe {
+            GetProcessTimes(
+                GetCurrentProcess(),
+                &mut created,
+                &mut exited,
+                &mut kernel,
+                &mut user,
+            )
+        };
+        if ok == 0 {
+            return None;
+        }
+        // FILETIME counts 100 ns intervals since 1601-01-01.
+        let ticks = (u64::from(created.dwHighDateTime) << 32) | u64::from(created.dwLowDateTime);
+        Some((ticks as f64 / 10_000.0) - 11_644_473_600_000.0)
+    }
+    #[cfg(not(windows))]
+    None
+}
+
 #[tauri::command]
-pub async fn bench_report(app: tauri::AppHandle, results: serde_json::Value) -> Result<(), String> {
+pub async fn bench_report(
+    app: tauri::AppHandle,
+    mut results: serde_json::Value,
+) -> Result<(), String> {
     let out = std::env::var("QUIRE_BENCH_OUT").unwrap_or_else(|_| "bench-result.json".into());
+    if let Some(obj) = results.as_object_mut() {
+        obj.insert(
+            "processCreatedEpochMs".into(),
+            process_created_epoch_ms().into(),
+        );
+        obj.insert(
+            "cpuLogicalOverride".into(),
+            std::env::var("QUIRE_CPU_LOGICAL").ok().into(),
+        );
+    }
     let json = serde_json::to_vec_pretty(&results).map_err(|e| e.to_string())?;
     std::fs::write(&out, json).map_err(|e| e.to_string())?;
     tracing::info!(%out, "benchmark results written");

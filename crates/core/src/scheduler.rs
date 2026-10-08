@@ -325,8 +325,15 @@ pub struct SchedulerConfig {
 }
 
 impl Default for SchedulerConfig {
+    /// One worker per logical CPU minus one (the UI and IPC threads need a
+    /// core). `QUIRE_CPU_LOGICAL` overrides the CPU count, so benchmarks can
+    /// size the pool for an emulated machine (ADR-0021).
     fn default() -> Self {
-        let cores = std::thread::available_parallelism().map_or(2, |n| n.get());
+        let cores = std::env::var("QUIRE_CPU_LOGICAL")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|&n| n > 0)
+            .unwrap_or_else(|| std::thread::available_parallelism().map_or(2, |n| n.get()));
         Self {
             threads: cores.saturating_sub(1).max(2),
             urgent_reserved: 1,

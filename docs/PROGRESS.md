@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1–10 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1–12 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -33,7 +33,9 @@
 | 7 | Tile transport spike | Done: [ADR-0004](adr/0004-tile-transport.md). Windows uses WebView2 SharedBuffer (raw 512 px tile 2.7 ms p50, full 1080p repaint 26 ms); fallback is `invoke` + QOI |
 | 9 | Compositor and virtual scroller | Done: [ADR-0005](adr/0005-virtual-scroll-model.md). `DocumentSurface` (tile + overlay canvases, custom scrollbar, LRU bitmaps), view service, synthetic 10M-row list behind `bench-fixtures`. Raw dev machine: steady scroll and fling 0 dropped frames at 144 Hz, 0 placeholders |
 | 10 | Performance HUD | Done: Ctrl+Shift+H overlay (frame graph with 16.7/50 ms lines, long tasks, queue depths, job counters, memory caches, per-surface tile counters, last 10 jobs); verified live by the `hud` bench scenario |
-| 11–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 11 | Fixture generators | Done: `tools/fixtures`, all seven §4 fixtures, deterministic (verified), validated by qpdf, Word (1,000 pages) and PowerPoint (500 slides) |
+| 12 | Benchmark harness | Done: [ADR-0020](adr/0020-benchmark-and-test-harness.md), `tools/refsim` + `tools/bench/refsim.ps1` (ADR-0021 profile), `bench/budgets.json`, `compare.mjs`, CI A/B micro-benchmarks |
+| 13–14 | See [M0_PLAN.md](M0_PLAN.md) | 13 in progress |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -69,6 +71,24 @@ These are component costs, not §4 scenarios, so they aren't derated.
 | Steady scroll 2,400 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
 | Fling 24,000 CSS px/s | 7.1 / 7.3 ms | 0 | 0 % |
 | Thumb drag across all rows | 7.0 / 7.4 ms | 0 | 100 % (allowed) |
+
+### Ref-sim, first run (2026-10-08, commit before task 13)
+
+Profile ref-sim-v1: P-cores 0–3 pinned, 8 logical CPUs reported, 1920×1080 device px, D_cpu 1.5, D_io 1.74 (cold read 3480 MB/s). Effective budget = budget ÷ factor.
+
+| Budget | Value | Kind | Effective budget | Result |
+|---|---|---|---|---|
+| startup.warm | 480.4 ms | cpu | 266.67 | **FAIL** |
+| startup.cold | 936.1 ms | mixed | 574.79 | **FAIL** |
+| scroll.steady.p99 | 8.6 ms | raw | 16.7 | pass |
+| scroll.steady.max | 8.9 ms | raw | 50.0 | pass |
+| scroll.fling.p99 | 8.7 ms | raw | 16.7 | pass |
+| scroll.fling.max | 8.9 ms | raw | 50.0 | pass |
+| scroll.drag.p99 | 8.5 ms | raw | 16.7 | pass |
+| scroll.drag.max | 8.8 ms | raw | 50.0 | pass |
+| scroll.composeWork.p95 | 0.9 ms | cpu | 5.33 | pass |
+| scroll.composeWork.max | 2.7 ms | cpu | 5.33 | pass |
+| scroll.longTasks | 0.0 tasks | zero | 0 | pass |
 
 ### §4 scenarios
 

@@ -1,0 +1,312 @@
+{
+  "profile": "ref-sim-v1",
+  "date": "2026-10-08T21:07:42.0067604+09:00",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 258V",
+    "ramGiB": 31.5,
+    "availableRamGiB": 10.5,
+    "performanceCores": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "power": {
+      "batteryPercent": 98,
+      "ok": true,
+      "onAc": true
+    },
+    "webview2": "154.0.4258.62",
+    "commit": "85deb1f"
+  },
+  "refSim": {
+    "pinning": "job object, performance cores 0,1,2,3",
+    "logicalCpusReported": 8,
+    "viewport": "1280x720 logical (1920x1080 device px at 150 %)",
+    "dCpu": 1.5,
+    "dIo": 1.74,
+    "coldReadMBps": 3479.5579492046427,
+    "coldStartPurge": {
+      "note": "pages mapped by other running Edge/WebView2 processes stay resident, so cold runs are partly warm when those exist",
+      "otherEdgeProcesses": 11,
+      "paths": [
+        "C:\\Users\\MSJin\\dev\\quire\\target\\bench\\release\\quire.exe",
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62",
+        "C:\\Users\\MSJin\\AppData\\Local\\dev.quire.app"
+      ],
+      "files": 1124,
+      "purged": 1124,
+      "failed": 0,
+      "sampleFailures": null
+    }
+  },
+  "calibration": {
+    "btreeChurn1M": {
+      "ms": 230.5406
+    },
+    "literalSearch256MiB": {
+      "ms": 90.1729
+    },
+    "newlineScan256MiB": {
+      "gbPerSecond": 3.770537470419571,
+      "ms": 71.0774
+    },
+    "newlineScan256MiBParallel": {
+      "ms": 15.099,
+      "threads": 8
+    },
+    "rasterize64Tiles512": {
+      "ms": 49.3183,
+      "msPerTile": 0.7705984375
+    },
+    "sort10M": {
+      "ms": 187.3673
+    }
+  },
+  "startup": {
+    "warm": {
+      "n": 7,
+      "p50": 480.4,
+      "min": 461.8,
+      "max": 516.6,
+      "runs": [
+        461.8,
+        470.7,
+        500.2,
+        480.4,
+        501.9,
+        467.1,
+        516.6
+      ]
+    },
+    "cold": {
+      "n": 5,
+      "p50": 936.1,
+      "min": 463.9,
+      "max": 1010.3,
+      "runs": [
+        962.3,
+        936.1,
+        464.6,
+        1010.3,
+        463.9
+      ]
+    }
+  },
+  "scroll": {
+    "steady": {
+      "composeWorkMs": {
+        "max": 1.8,
+        "mean": 0.66,
+        "n": 780,
+        "p50": 0.7,
+        "p95": 0.9,
+        "p99": 1.5
+      },
+      "droppedFrames": 0,
+      "frameIntervalMs": {
+        "max": 8.9,
+        "mean": 7.69,
+        "n": 781,
+        "p50": 7.7,
+        "p95": 8.2,
+        "p99": 8.6
+      },
+      "framesOver50ms": 0,
+      "framesWithPlaceholdersPct": 0,
+      "longTasks": 0,
+      "meanPlaceholderSharePct": 0,
+      "tileRequests": 780,
+      "tilesDroppedUnwanted": 0,
+      "tilesReceived": 176
+    },
+    "fling": {
+      "composeWorkMs": {
+        "max": 1.4,
+        "mean": 0.39,
+        "n": 521,
+        "p50": 0.4,
+        "p95": 0.6,
+        "p99": 0.7
+      },
+      "droppedFrames": 0,
+      "frameIntervalMs": {
+        "max": 8.9,
+        "mean": 7.69,
+        "n": 521,
+        "p50": 7.7,
+        "p95": 8.3,
+        "p99": 8.7
+      },
+      "framesOver50ms": 0,
+      "framesWithPlaceholdersPct": 0,
+      "longTasks": 0,
+      "meanPlaceholderSharePct": 0,
+      "tileRequests": 521,
+      "tilesDroppedUnwanted": 0,
+      "tilesReceived": 1124
+    },
+    "drag": {
+      "composeWorkMs": {
+        "max": 2.7,
+        "mean": 0.42,
+        "n": 386,
+        "p50": 0.4,
+        "p95": 0.7,
+        "p99": 1
+      },
+      "droppedFrames": 0,
+      "frameIntervalMs": {
+        "max": 8.8,
+        "mean": 7.76,
+        "n": 387,
+        "p50": 7.9,
+        "p95": 8.2,
+        "p99": 8.5
+      },
+      "framesOver50ms": 0,
+      "framesWithPlaceholdersPct": 100,
+      "longTasks": 0,
+      "meanPlaceholderSharePct": 100,
+      "tileRequests": 386,
+      "tilesDroppedUnwanted": 2507,
+      "tilesReceived": 0
+    },
+    "jumpToSharpMs": {
+      "max": 406.7,
+      "mean": 172.48,
+      "n": 15,
+      "p50": 55.9,
+      "p95": 406.7,
+      "p99": 406.7
+    },
+    "firstPaintMs": 260.1,
+    "longTasks": 0,
+    "env": {
+      "date": "2026-10-08T12:07:41.884Z",
+      "devicePixelRatio": 1.5,
+      "extentPx": 300000000,
+      "refreshMs": 8,
+      "rows": 10000000,
+      "tileSize": 512,
+      "transport": "shared-buffer",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+      "viewport": [
+        1902,
+        1080
+      ]
+    }
+  },
+  "budgets": [
+    {
+      "id": "startup.warm",
+      "value": 480.4,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 266.67,
+      "budget": 400,
+      "pass": false
+    },
+    {
+      "id": "startup.cold",
+      "value": 936.1,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.74,
+      "effectiveBudget": 574.79,
+      "budget": 1000,
+      "pass": false
+    },
+    {
+      "id": "scroll.steady.p99",
+      "value": 8.6,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true
+    },
+    {
+      "id": "scroll.steady.max",
+      "value": 8.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true
+    },
+    {
+      "id": "scroll.fling.p99",
+      "value": 8.7,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true
+    },
+    {
+      "id": "scroll.fling.max",
+      "value": 8.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true
+    },
+    {
+      "id": "scroll.drag.p99",
+      "value": 8.5,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true
+    },
+    {
+      "id": "scroll.drag.max",
+      "value": 8.8,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true
+    },
+    {
+      "id": "scroll.composeWork.p95",
+      "value": 0.9,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 5.33,
+      "budget": 8,
+      "pass": true
+    },
+    {
+      "id": "scroll.composeWork.max",
+      "value": 2.7,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 5.33,
+      "budget": 8,
+      "pass": true
+    },
+    {
+      "id": "scroll.longTasks",
+      "value": 0.0,
+      "unit": "tasks",
+      "kind": "zero",
+      "factor": 1.0,
+      "effectiveBudget": 0,
+      "budget": 0,
+      "pass": true
+    }
+  ]
+}

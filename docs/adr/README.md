@@ -29,7 +29,7 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0017 | PPT import | External `soffice --headless` (MPL-2.0, user-installed, out of process) + own CFB quick look via `cfb` (MIT) | Apache POI HSLF (Apache-2.0; needs a JVM); native Rust parser (v2); commercial SDKs (not permissive) | M6 |
 | 0018 | i18n | ICU MessageFormat via `@formatjs/intl` (MIT) in the UI; ICU4X (Unicode-3.0) in the core | i18next (MIT; not ICU MessageFormat by default); Fluent (Apache/MIT; different syntax) | M0 |
 | 0019 | License gate | cargo-deny (MIT/Apache) with an explicit allowlist; `license-checker-rseidelsohn` (BSD-3) for JS | Manual review (doesn't scale) | M0 |
-| 0020 | Test and bench harness | criterion (MIT/Apache), proptest (MIT/Apache), cargo-fuzz (MIT/Apache), WebDriver via tauri-driver (MIT/Apache) + msedgedriver | Playwright (Apache-2.0; can't drive WebView2 inside Tauri as directly) | M0 |
+| 0020 | Test and bench harness | [Accepted](0020-benchmark-and-test-harness.md): criterion + in-app scenario runner + ref-sim orchestration; WebDriver reserved for UI-flow tests (M1) | Playwright (Apache-2.0; can't drive WebView2 inside Tauri as directly) | M0 |
 | 0021 | Benchmarking without a reference machine | [Accepted](0021-reference-machine-emulation.md): ref-sim profile (exact viewport, core pinning, derated thresholds, cold-cache purge, RAM ballast) | Raw dev numbers; power-plan frequency cap (system-wide setting); Job Object CPU-rate cap (adds stalls); VM; buying a reference laptop | M0 |
 
 ## Template

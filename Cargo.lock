@@ -2751,6 +2751,7 @@ dependencies = [
  "tracing-subscriber",
  "webview2-com",
  "windows-core",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2769,6 +2770,15 @@ name = "quire-raster"
 version = "0.0.0"
 dependencies = [
  "tiny-skia",
+]
+
+[[package]]
+name = "quire-refsim"
+version = "0.0.0"
+dependencies = [
+ "quire-raster",
+ "serde_json",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

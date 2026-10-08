@@ -50,6 +50,33 @@ jobs:
       - name: Tests
         run: cargo test --workspace --locked
 
+  bench-regression:
+    # A/B on the same runner: benchmarks of the PR's base and head run back to
+    # back in one job, so runner-to-runner variance cancels out (§10: fail
+    # on regressions over 10 %).
+    name: Micro-benchmark regressions (A/B)
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Benchmarks on the base commit
+        shell: bash
+        run: |
+          git checkout --quiet ${{ github.event.pull_request.base.sha }}
+          if [ -d crates/core/benches ]; then cargo bench -p quire-core -- --save-baseline base --noplot; fi
+      - name: Benchmarks on the PR head
+        shell: bash
+        run: |
+          git checkout --quiet ${{ github.event.pull_request.head.sha }}
+          cargo bench -p quire-core -- --save-baseline head --noplot
+      - name: Compare
+        run: node tools/bench/compare.mjs criterion base head --threshold 10
+
   cargo-deny:
     name: Licenses and advisories
     runs-on: ubuntu-latest

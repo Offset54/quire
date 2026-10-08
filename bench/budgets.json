@@ -1,0 +1,105 @@
+{
+  "profile": "ref-sim-v1",
+  "source": "MASTER_PROMPT §4, §2 (8 ms UI task rule); derating per ADR-0021",
+  "factors": {
+    "cpu": 1.5,
+    "ioReferenceMBps": 2000
+  },
+  "kinds": {
+    "raw": "measured as-is under ref-sim pinning; frame intervals are quantized by vsync and can't be scaled",
+    "cpu": "pass if value × D_cpu ≤ budget",
+    "io": "pass if value × D_io ≤ budget",
+    "mixed": "pass if value × max(D_cpu, D_io) ≤ budget",
+    "zero": "pass if value is 0"
+  },
+  "budgets": [
+    {
+      "id": "startup.warm",
+      "metric": "startup.warm.p50",
+      "budget": 400,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 cold start row: warm ≤ 0.4 s"
+    },
+    {
+      "id": "startup.cold",
+      "metric": "startup.cold.p50",
+      "budget": 1000,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 cold start row: ≤ 1.0 s"
+    },
+    {
+      "id": "scroll.steady.p99",
+      "metric": "scroll.steady.frameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: 60 fps"
+    },
+    {
+      "id": "scroll.steady.max",
+      "metric": "scroll.steady.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "scroll.fling.p99",
+      "metric": "scroll.fling.frameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: 60 fps"
+    },
+    {
+      "id": "scroll.fling.max",
+      "metric": "scroll.fling.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "scroll.drag.p99",
+      "metric": "scroll.drag.frameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: 60 fps"
+    },
+    {
+      "id": "scroll.drag.max",
+      "metric": "scroll.drag.frameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "scroll.composeWork.p95",
+      "metric": "scroll.steady.composeWorkMs.p95",
+      "budget": 8,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§2: no UI-thread task over 8 ms"
+    },
+    {
+      "id": "scroll.composeWork.max",
+      "metric": "scroll.drag.composeWorkMs.max",
+      "budget": 8,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§2: no UI-thread task over 8 ms"
+    },
+    {
+      "id": "scroll.longTasks",
+      "metric": "scroll.longTasks",
+      "budget": 0,
+      "unit": "tasks",
+      "kind": "zero",
+      "ref": "§4: no UI-thread task over 50 ms, ever"
+    }
+  ]
+}

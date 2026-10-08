@@ -40,10 +40,7 @@
       "bytes": 1010042958,
       "description": "5,000-page, ~1 GB PDF: text plus a unique JPEG per page, outline every 50 pages (not linearized; validate.ps1 makes the linearized copy)",
       "details": {
-        "imageSize": [
-          800,
-          600
-        ],
+        "imageSize": [800, 600],
         "imagesPerPage": 1,
         "linearized": {
           "bytes": 1000708412,
@@ -63,10 +60,7 @@
       "description": "1,000-page scanned PDF: one 200 dpi grayscale JPEG per page, no text layer",
       "details": {
         "dpi": 200,
-        "imageSize": [
-          1654,
-          2339
-        ],
+        "imageSize": [1654, 2339],
         "pages": 1000,
         "textLayer": false
       },

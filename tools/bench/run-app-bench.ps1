@@ -21,7 +21,9 @@ param(
   # "auto" (SharedBuffer on Windows) or "channel" (cross-platform fallback).
   [ValidateSet("auto", "channel")] [string] $Transport = "auto",
   [int] $TimeoutSeconds = 300,
-  [switch] $NoBuild
+  [switch] $NoBuild,
+  # Build the bench flavor and stop.
+  [switch] $BuildOnly
 )
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
@@ -40,6 +42,8 @@ if (-not $NoBuild) {
     Remove-Item Env:CARGO_TARGET_DIR
   }
 }
+
+if ($BuildOnly) { return $exe }
 
 if (-not $Out) {
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss"

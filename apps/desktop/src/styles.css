@@ -98,3 +98,8 @@ body {
 .perf-hud pre {
   margin: 0;
 }
+
+.bench-host {
+  position: fixed;
+  inset: 0;
+}

@@ -10,3 +10,6 @@ docs/MASTER_PROMPT.md
 fuzz/regressions/
 # Hand-written prose; table padding would make every edit a large diff.
 *.md
+
+# Generated benchmark results
+bench/results/
