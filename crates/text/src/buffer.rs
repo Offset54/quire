@@ -461,6 +461,8 @@ impl Snapshot {
 pub struct Removed {
     pub at: u64,
     pub pieces: PieceTree,
+    /// What took its place.
+    pub inserted: PieceTree,
 }
 
 /// The current document: a tree over the buffer table, plus the add buffer.
@@ -556,8 +558,10 @@ impl TextBuffer {
         let from = from.min(to);
         let (rest, removed) = self.tree.remove(from, to, &self.buffers);
         self.tree = rest;
+        let mut inserted = PieceTree::new();
         if !text.is_empty() {
             let piece = self.append(text)?;
+            inserted = PieceTree::from_pieces(&[piece]);
             self.tree = match self.tree.extend_at(from, &piece, &self.buffers) {
                 Some(t) => t,
                 None => self
@@ -569,7 +573,15 @@ impl TextBuffer {
         Ok(Removed {
             at: from,
             pieces: removed,
+            inserted,
         })
+    }
+
+    /// Replaces `from..to` with existing pieces (undo and redo).
+    pub fn replace_pieces(&mut self, from: u64, to: u64, pieces: &PieceTree) -> io::Result<()> {
+        let (rest, _) = self.tree.remove(from, to, &self.buffers);
+        self.tree = rest.insert(from, pieces, &self.buffers);
+        self.fix_junctions(from, from + pieces.len())
     }
 
     /// Inserts existing pieces at `at` (undo of a removal).

@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc aa406e4e5d6deabe655ba23b5e09c07c324da5e57567aa9d2c248f629697bf9e # shrinks to original = "\n  한한", actions = [SetSelections { ranges: [(0, 4)] }]
