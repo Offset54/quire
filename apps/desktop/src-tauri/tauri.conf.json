@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "quire",
+  "version": "0.0.0",
+  "identifier": "dev.quire.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "quire",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 640,
+        "minHeight": 400
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self'",
+        "img-src": "'self' blob: data:",
+        "font-src": "'self'",
+        "connect-src": "ipc: http://ipc.localhost",
+        "object-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'",
+        "frame-ancestors": "'none'"
+      },
+      "freezePrototype": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

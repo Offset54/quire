@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Minimal permissions for the main window (§8: minimal Tauri capability permissions).",
+  "windows": ["main"],
+  "permissions": ["core:event:default"]
+}

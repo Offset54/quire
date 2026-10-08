@@ -1,0 +1,1 @@
+{"main":{"identifier":"main","description":"Minimal permissions for the main window (§8: minimal Tauri capability permissions).","local":true,"windows":["main"],"permissions":["core:event:default"]}}

@@ -1,0 +1,57 @@
+# cargo-deny policy (MASTER_PROMPT §0, §2; ADR-0019).
+# Run: cargo deny check
+
+[graph]
+# Check every platform we ship on, not just the host.
+targets = [
+  "x86_64-pc-windows-msvc",
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+]
+all-features = true
+
+[advisories]
+ignore = [
+  # Unmaintained proc macro (compile time only), pulled in by the gtk-rs 0.18
+  # stack that Tauri uses on Linux. Revisit when Tauri moves to gtk4-rs.
+  { id = "RUSTSEC-2024-0370", reason = "build-time only; Tauri Linux deps" },
+]
+
+[licenses]
+# §0 permissive list, plus the additions approved on 2026-10-08:
+# Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD. (OFL-1.1 is approved for bundled
+# fonts and FTL for FreeType inside PDFium; neither ships as a crate.)
+allow = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "MPL-2.0",
+  "Unicode-3.0",
+  "BSL-1.0",
+  "CC0-1.0",
+  "0BSD",
+]
+confidence-threshold = 0.9
+exceptions = []
+
+[licenses.private]
+# Our own crates are unpublished and carry no license field.
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

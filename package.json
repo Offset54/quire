@@ -1,0 +1,25 @@
+{
+  "name": "quire-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "check:licenses": "node tools/check-js-licenses.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
+  }
+}

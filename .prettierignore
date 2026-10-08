@@ -1,0 +1,12 @@
+dist/
+target/
+.cache/
+pnpm-lock.yaml
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/icons/
+docs/MASTER_PROMPT.md
+**/testdata/
+**/tests/data/
+fuzz/regressions/
+# Hand-written prose; table padding would make every edit a large diff.
+*.md
