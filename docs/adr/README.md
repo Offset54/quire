@@ -6,7 +6,7 @@ Every dependency gets a line in an ADR, including its license (see MASTER_PROMPT
 
 ## Index
 
-All entries are **Proposed** until the plan is approved. Each gets its own file when it's decided, with evidence. "Spike" means the decision waits on a time-boxed measurement. Licenses were checked from memory and must be re-verified, along with maintenance status, when a dependency is adopted.
+The plan was approved on 2026-10-08. Entries stay **Proposed** until their own file records the decision and evidence. Each gets its own file when it's decided, with evidence. "Spike" means the decision waits on a time-boxed measurement. Licenses were checked from memory and must be re-verified, along with maintenance status, when a dependency is adopted.
 
 | # | Decision | Proposed choice | Alternatives considered (license) | Decided in |
 |---|---|---|---|---|
@@ -30,6 +30,7 @@ All entries are **Proposed** until the plan is approved. Each gets its own file 
 | 0018 | i18n | ICU MessageFormat via `@formatjs/intl` (MIT) in the UI; ICU4X (Unicode-3.0) in the core | i18next (MIT; not ICU MessageFormat by default); Fluent (Apache/MIT; different syntax) | M0 |
 | 0019 | License gate | cargo-deny (MIT/Apache) with an explicit allowlist; `license-checker-rseidelsohn` (BSD-3) for JS | Manual review (doesn't scale) | M0 |
 | 0020 | Test and bench harness | criterion (MIT/Apache), proptest (MIT/Apache), cargo-fuzz (MIT/Apache), WebDriver via tauri-driver (MIT/Apache) + msedgedriver | Playwright (Apache-2.0; can't drive WebView2 inside Tauri as directly) | M0 |
+| 0021 | Benchmarking without a reference machine | [Accepted](0021-reference-machine-emulation.md): ref-sim profile (exact viewport, core pinning, derated thresholds, cold-cache purge, RAM ballast) | Raw dev numbers; power-plan frequency cap (system-wide setting); Job Object CPU-rate cap (adds stalls); VM; buying a reference laptop | M0 |
 
 ## Template
 

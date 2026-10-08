@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phase | Pre-M0. The §13 plan is delivered (ARCHITECTURE.md, adr/README.md, RISKS.md, M0_PLAN.md) and waiting for approval. No application code. |
+| Phase | M0 Foundations, in progress. Plan approved 2026-10-08. |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
 | Last updated | 2026-10-08 |
 
@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | Not started; waiting on plan approval | n/a |
+| M0 Foundations | In progress: tasks 1 (scaffold) and 2 (license gates) done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -18,6 +18,22 @@
 | M5 PPTX | Not started | n/a |
 | M6 PPT, export and print | Not started | n/a |
 | M7 Hardening and release | Not started | n/a |
+
+## M0 tasks
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Workspace scaffold | Done (85ac033) |
+| 2 | License and dependency gates | Done (85ac033) |
+| 3 | CI | Blocked: needs `gh auth login` (you) to create the private repo |
+| 4–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+
+## Decisions recorded on plan approval (2026-10-08)
+
+- License allowlist extended with Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD; OFL-1.1 for bundled fonts and FTL for PDFium's FreeType. MIT-0 and `Apache-2.0 WITH LLVM-exception` are also allowed, since both are strictly more permissive than an already-allowed license.
+- Hosting: private GitHub repo with Actions.
+- Benchmarking: ref-sim profile on this machine (ADR-0021) instead of a reference laptop.
+- TypeScript is pinned to 6.0.x: typescript-eslint 8.71 supports `<6.1`, so TS 7 waits for it.
 
 ## Benchmarks vs. budget
 
@@ -51,7 +67,7 @@ Needed later and not installed yet: PDFium prebuilt binaries and `qpdf` (M3), th
 | Storage | NVMe SSD | NVMe SSD |
 | Display | 2560×1600 at 150 % | 1920×1080 at 150 % |
 
-Benchmarks run on this machine are not reference-machine numbers. They will be labeled with this spec until a reference-class machine or a calibrated throttle is decided on (to be raised in the §13 plan).
+Benchmarks that count against §4 run in the ref-sim profile ([ADR-0021](adr/0021-reference-machine-emulation.md)) and are labeled "ref-sim", never "reference".
 
 ## Known gaps
 

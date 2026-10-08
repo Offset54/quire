@@ -17,12 +17,12 @@ DoD (§11): the empty app starts within budget (cold ≤ 1.0 s, warm ≤ 0.4 s);
 | 9 | Compositor and virtual scroller | Canvas tile layer + overlay layer; custom scrollbar over a (unit, offset) model with 64-bit extents; placeholders, never blank; the synthetic 10M-row list with core-rendered tiles; **ADR-0005** | 5 | 5, 7 |
 | 10 | Performance HUD | Developer toggle showing frame times, queue depths, cache sizes and the last N jobs | 2 | 5, 6, 8, 9 |
 | 11 | Fixture generators | `tools/fixtures`, deterministic seeds, output to `/.cache/fixtures`: 2 GB mixed TXT, 300 MB one-line JSON, 20 MB Markdown, 1,000-page DOCX, 500-slide PPTX with ~500 MB media, 5,000-page PDF (linearized and not, via qpdf), 1,000-page scanned PDF. Each fixture is validated (opens in its authoring app or passes `qpdf --check`) | 5 | 1 |
-| 12 | Benchmark harness | criterion setup; end-to-end runner over WebDriver (tauri-driver + msedgedriver) recording §4 metrics; cold-cache helper (elevated standby-list flush); results as JSON with machine spec; compare against baseline, fail CI on > 10 % regression | 4 | 3, 8 |
+| 12 | Benchmark harness | criterion setup; end-to-end runner over WebDriver (tauri-driver + msedgedriver) recording §4 metrics; ref-sim profile per ADR-0021 (job object P-core pinning, derating, verified cold cache, RAM ballast, power check, `quire-calibrate`); results as JSON with profile and machine spec; compare against baseline, fail CI on > 10 % regression | 6 | 3, 8 |
 | 13 | Cold-start work | Measure and meet cold ≤ 1.0 s / warm ≤ 0.4 s for the empty app; lazy-load non-critical UI | 1.5 | 4, 12 |
 | 14 | M0 report | ADRs 0001–0006, 0018–0020 finalized; ARCHITECTURE.md updated with measured numbers; PROGRESS.md and RISKS.md updated; DoD evidence | 1 | all |
-| | **Total** | | **37.5** | |
+| | **Total** | | **39.5** | |
 
-With a 20 % contingency, M0 takes about 45 working days (roughly 9 weeks) of one engineer's time.
+With a 20 % contingency, M0 takes about 47 working days (roughly 9.5 weeks) of one engineer's time.
 
 ## Order
 
