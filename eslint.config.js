@@ -22,7 +22,14 @@ export default tseslint.config(
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
     plugins: { "react-hooks": reactHooks },
-    rules: reactHooks.configs.recommended.rules,
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      // Numbers in template strings are fine.
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      // With noUncheckedIndexedAccess, `!` is the idiomatic way to index
+      // typed arrays in pixel and buffer code.
+      "@typescript-eslint/no-non-null-assertion": "off",
+    },
   },
   {
     files: ["**/*.{js,mjs}"],

@@ -1,0 +1,28 @@
+[package]
+name = "quire-spike-tile-transport"
+description = "M0 task 7 spike: core-to-canvas tile transport (ADR-0004). Not shipped."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "spike-tile-transport"
+path = "src/main.rs"
+
+[dependencies]
+lz4_flex = "0.14"
+qoi = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows-core = "0.62"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[lints]
+workspace = true

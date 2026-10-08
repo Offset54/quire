@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-tile-channel"
+description = "Enables the tile_channel command without any pre-configured scope."
+commands.allow = ["tile_channel"]
+
+[[permission]]
+identifier = "deny-tile-channel"
+description = "Denies the tile_channel command without any pre-configured scope."
+commands.deny = ["tile_channel"]
