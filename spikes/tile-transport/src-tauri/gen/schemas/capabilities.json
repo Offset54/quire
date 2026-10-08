@@ -1,1 +1,16 @@
-{"main":{"identifier":"main","description":"","local":true,"windows":["main"],"permissions":["core:default","allow-tile-invoke","allow-tile-channel","allow-tile-shared","allow-report"]}}
+{
+  "main": {
+    "identifier": "main",
+    "description": "",
+    "local": true,
+    "windows": ["main"],
+    "permissions": [
+      "core:default",
+      "allow-tile-invoke",
+      "allow-tile-channel",
+      "allow-tile-shared",
+      "allow-progress",
+      "allow-report"
+    ]
+  }
+}

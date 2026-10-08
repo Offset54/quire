@@ -4,6 +4,7 @@ fn main() {
             "tile_invoke",
             "tile_channel",
             "tile_shared",
+            "progress",
             "report",
         ]));
     tauri_build::try_build(attributes).expect("tauri-build failed");

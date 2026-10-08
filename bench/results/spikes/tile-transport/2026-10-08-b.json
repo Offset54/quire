@@ -1,0 +1,3229 @@
+{
+  "results": {
+    "burst": [
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 149,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 68.6,
+          "mean": 65.353,
+          "n": 15,
+          "p50": 65.4,
+          "p95": 68.6
+        },
+        "rgbaMBps": 160,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 179,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 83.5,
+          "mean": 78.213,
+          "n": 15,
+          "p50": 78.3,
+          "p95": 83.5
+        },
+        "rgbaMBps": 161,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 159,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 77.7,
+          "mean": 69.573,
+          "n": 15,
+          "p50": 70.7,
+          "p95": 77.7
+        },
+        "rgbaMBps": 148,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 187,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 84.5,
+          "mean": 81.027,
+          "n": 15,
+          "p50": 80.8,
+          "p95": 84.5
+        },
+        "rgbaMBps": 156,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 102,
+          "maxGapMs": 32,
+          "over20ms": 5
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 63.6,
+          "mean": 56.527,
+          "n": 15,
+          "p50": 56.6,
+          "p95": 63.6
+        },
+        "rgbaMBps": 185,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 81,
+          "maxGapMs": 70.1,
+          "over20ms": 3
+        },
+        "longTasks": 1,
+        "repaintMs": {
+          "max": 119,
+          "mean": 47.473,
+          "n": 15,
+          "p50": 42.1,
+          "p95": 119
+        },
+        "rgbaMBps": 299,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 163,
+          "maxGapMs": 31.3,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 91.4,
+          "mean": 74.74,
+          "n": 15,
+          "p50": 73.2,
+          "p95": 91.4
+        },
+        "rgbaMBps": 143,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 186,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 86.2,
+          "mean": 81.027,
+          "n": 15,
+          "p50": 81,
+          "p95": 86.2
+        },
+        "rgbaMBps": 155,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 94,
+          "maxGapMs": 38,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 73.8,
+          "mean": 50.54,
+          "n": 15,
+          "p50": 49.3,
+          "p95": 73.8
+        },
+        "rgbaMBps": 213,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 66,
+          "maxGapMs": 16,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 35.7,
+          "mean": 33,
+          "n": 15,
+          "p50": 32.9,
+          "p95": 35.7
+        },
+        "rgbaMBps": 382,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 181,
+          "maxGapMs": 31.8,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 104.4,
+          "mean": 85.34,
+          "n": 15,
+          "p50": 82.6,
+          "p95": 104.4
+        },
+        "rgbaMBps": 127,
+        "size": 256,
+        "tiles": 40,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 192,
+          "maxGapMs": 9,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 93.9,
+          "mean": 85.007,
+          "n": 15,
+          "p50": 83.7,
+          "p95": 93.9
+        },
+        "rgbaMBps": 150,
+        "size": 512,
+        "tiles": 12,
+        "transport": "uri",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 157,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 81,
+          "mean": 69.807,
+          "n": 15,
+          "p50": 68.8,
+          "p95": 81
+        },
+        "rgbaMBps": 152,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 201,
+          "maxGapMs": 23.4,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 98.6,
+          "mean": 91.013,
+          "n": 15,
+          "p50": 91.1,
+          "p95": 98.6
+        },
+        "rgbaMBps": 138,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 164,
+          "maxGapMs": 30.8,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 98,
+          "mean": 75.52,
+          "n": 15,
+          "p50": 72.9,
+          "p95": 98
+        },
+        "rgbaMBps": 144,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 193,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 93.9,
+          "mean": 85.227,
+          "n": 15,
+          "p50": 84.7,
+          "p95": 93.9
+        },
+        "rgbaMBps": 149,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 80,
+          "maxGapMs": 40.2,
+          "over20ms": 15
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 72.4,
+          "mean": 63.64,
+          "n": 15,
+          "p50": 64.8,
+          "p95": 72.4
+        },
+        "rgbaMBps": 162,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 72,
+          "maxGapMs": 94,
+          "over20ms": 8
+        },
+        "longTasks": 1,
+        "repaintMs": {
+          "max": 106.5,
+          "mean": 50.5,
+          "n": 15,
+          "p50": 47.9,
+          "p95": 106.5
+        },
+        "rgbaMBps": 263,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 172,
+          "maxGapMs": 37.6,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 104.4,
+          "mean": 78.107,
+          "n": 15,
+          "p50": 76.1,
+          "p95": 104.4
+        },
+        "rgbaMBps": 138,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 194,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 92,
+          "mean": 85.5,
+          "n": 15,
+          "p50": 85.5,
+          "p95": 92
+        },
+        "rgbaMBps": 147,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 81,
+          "maxGapMs": 31.3,
+          "over20ms": 8
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 59.3,
+          "mean": 50.52,
+          "n": 15,
+          "p50": 50.9,
+          "p95": 59.3
+        },
+        "rgbaMBps": 206,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 64,
+          "maxGapMs": 16.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 42.7,
+          "mean": 34.887,
+          "n": 15,
+          "p50": 33.9,
+          "p95": 42.7
+        },
+        "rgbaMBps": 371,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 178,
+          "maxGapMs": 24,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 102.5,
+          "mean": 90.587,
+          "n": 15,
+          "p50": 91.4,
+          "p95": 102.5
+        },
+        "rgbaMBps": 115,
+        "size": 256,
+        "tiles": 40,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 196,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 94.6,
+          "mean": 87.153,
+          "n": 15,
+          "p50": 86.3,
+          "p95": 94.6
+        },
+        "rgbaMBps": 146,
+        "size": 512,
+        "tiles": 12,
+        "transport": "invoke",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 200,
+          "maxGapMs": 15.9,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 97.1,
+          "mean": 90.52,
+          "n": 15,
+          "p50": 89.9,
+          "p95": 97.1
+        },
+        "rgbaMBps": 117,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 218,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 104.8,
+          "mean": 96.013,
+          "n": 15,
+          "p50": 97,
+          "p95": 104.8
+        },
+        "rgbaMBps": 130,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 201,
+          "maxGapMs": 16,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 105.4,
+          "mean": 88.933,
+          "n": 15,
+          "p50": 87.2,
+          "p95": 105.4
+        },
+        "rgbaMBps": 120,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 214,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 102.5,
+          "mean": 94.373,
+          "n": 15,
+          "p50": 95.4,
+          "p95": 102.5
+        },
+        "rgbaMBps": 132,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 116,
+          "maxGapMs": 63.1,
+          "over20ms": 18
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 99.6,
+          "mean": 87.18,
+          "n": 15,
+          "p50": 87,
+          "p95": 99.6
+        },
+        "rgbaMBps": 121,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 86,
+          "maxGapMs": 31.8,
+          "over20ms": 7
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 60.8,
+          "mean": 54.78,
+          "n": 15,
+          "p50": 54,
+          "p95": 60.8
+        },
+        "rgbaMBps": 233,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 207,
+          "maxGapMs": 23.8,
+          "over20ms": 3
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 125.9,
+          "mean": 104.68,
+          "n": 15,
+          "p50": 101.5,
+          "p95": 125.9
+        },
+        "rgbaMBps": 103,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 217,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 101.7,
+          "mean": 95.867,
+          "n": 15,
+          "p50": 94.5,
+          "p95": 101.7
+        },
+        "rgbaMBps": 133,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 117,
+          "maxGapMs": 39.7,
+          "over20ms": 12
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 96.2,
+          "mean": 77.833,
+          "n": 15,
+          "p50": 74.9,
+          "p95": 96.2
+        },
+        "rgbaMBps": 140,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 88,
+          "maxGapMs": 75,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 53,
+          "mean": 46.593,
+          "n": 15,
+          "p50": 47.3,
+          "p95": 53
+        },
+        "rgbaMBps": 266,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 217,
+          "maxGapMs": 46.4,
+          "over20ms": 5
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 160.4,
+          "mean": 118.967,
+          "n": 15,
+          "p50": 118.7,
+          "p95": 160.4
+        },
+        "rgbaMBps": 88,
+        "size": 256,
+        "tiles": 40,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 222,
+          "maxGapMs": 8.9,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 116.8,
+          "mean": 98.08,
+          "n": 15,
+          "p50": 97.2,
+          "p95": 116.8
+        },
+        "rgbaMBps": 129,
+        "size": 512,
+        "tiles": 12,
+        "transport": "channel",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 54,
+          "maxGapMs": 47,
+          "over20ms": 14
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 59.3,
+          "mean": 48.633,
+          "n": 15,
+          "p50": 47.9,
+          "p95": 59.3
+        },
+        "rgbaMBps": 219,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "raw",
+        "frames": {
+          "frames": 58,
+          "maxGapMs": 100.4,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 111.9,
+          "mean": 32.833,
+          "n": 15,
+          "p50": 26,
+          "p95": 111.9
+        },
+        "rgbaMBps": 484,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 53,
+          "maxGapMs": 45.6,
+          "over20ms": 9
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 59.7,
+          "mean": 45.76,
+          "n": 15,
+          "p50": 44.4,
+          "p95": 59.7
+        },
+        "rgbaMBps": 236,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "raw",
+        "frames": {
+          "frames": 56,
+          "maxGapMs": 16.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 29.5,
+          "mean": 25.047,
+          "n": 15,
+          "p50": 25.2,
+          "p95": 29.5
+        },
+        "rgbaMBps": 499,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 49,
+          "maxGapMs": 53.4,
+          "over20ms": 25
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 81.7,
+          "mean": 63.687,
+          "n": 15,
+          "p50": 62.8,
+          "p95": 81.7
+        },
+        "rgbaMBps": 167,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 42,
+          "maxGapMs": 94.7,
+          "over20ms": 18
+        },
+        "longTasks": 1,
+        "repaintMs": {
+          "max": 117.6,
+          "mean": 52.707,
+          "n": 15,
+          "p50": 47.7,
+          "p95": 117.6
+        },
+        "rgbaMBps": 264,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 57,
+          "maxGapMs": 45.8,
+          "over20ms": 18
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 61.3,
+          "mean": 54.173,
+          "n": 15,
+          "p50": 53.5,
+          "p95": 61.3
+        },
+        "rgbaMBps": 196,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "lz4",
+        "frames": {
+          "frames": 55,
+          "maxGapMs": 23.3,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 36,
+          "mean": 32.313,
+          "n": 15,
+          "p50": 32.6,
+          "p95": 36
+        },
+        "rgbaMBps": 386,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 49,
+          "maxGapMs": 46.4,
+          "over20ms": 18
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 62.1,
+          "mean": 53.073,
+          "n": 15,
+          "p50": 50.4,
+          "p95": 62.1
+        },
+        "rgbaMBps": 208,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "text",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 43,
+          "maxGapMs": 38.2,
+          "over20ms": 16
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 44.7,
+          "mean": 38.02,
+          "n": 15,
+          "p50": 37.7,
+          "p95": 44.7
+        },
+        "rgbaMBps": 334,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 52,
+          "maxGapMs": 55.5,
+          "over20ms": 28
+        },
+        "longTasks": 0,
+        "repaintMs": {
+          "max": 83,
+          "mean": 71.333,
+          "n": 15,
+          "p50": 68.8,
+          "p95": 83
+        },
+        "rgbaMBps": 152,
+        "size": 256,
+        "tiles": 40,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      {
+        "content": "photo",
+        "encoding": "qoi",
+        "frames": {
+          "frames": 54,
+          "maxGapMs": 102,
+          "over20ms": 22
+        },
+        "longTasks": 1,
+        "repaintMs": {
+          "max": 143.8,
+          "mean": 62.073,
+          "n": 15,
+          "p50": 55.5,
+          "p95": 143.8
+        },
+        "rgbaMBps": 227,
+        "size": 512,
+        "tiles": 12,
+        "transport": "shared",
+        "viewport": [
+          1920,
+          1080
+        ]
+      }
+    ],
+    "decodersVerified": {
+      "lz4/photo/256": true,
+      "lz4/photo/512": true,
+      "lz4/text/256": true,
+      "lz4/text/512": true,
+      "qoi/photo/256": true,
+      "qoi/photo/512": true,
+      "qoi/text/256": true,
+      "qoi/text/512": true
+    },
+    "env": {
+      "canvas": [
+        1920,
+        1080
+      ],
+      "date": "2026-10-08T10:45:07.853Z",
+      "devicePixelRatio": 1.5,
+      "hardwareConcurrency": 8,
+      "transports": [
+        "uri",
+        "invoke",
+        "channel",
+        "shared"
+      ],
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0"
+    },
+    "failures": [],
+    "latency": [
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.003,
+          "n": 80,
+          "p50": 0,
+          "p95": 0
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 56,
+          "maxGapMs": 486.2,
+          "over20ms": 1
+        },
+        "longTasks": 1,
+        "size": 256,
+        "totalMs": {
+          "max": 6.4,
+          "mean": 4.333,
+          "n": 80,
+          "p50": 4.1,
+          "p95": 5.7
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 6.3,
+          "mean": 4.201,
+          "n": 80,
+          "p50": 4,
+          "p95": 5.5
+        },
+        "uploadMs": {
+          "max": 0.3,
+          "mean": 0.129,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.006,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 143,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 18.3,
+          "mean": 12.496,
+          "n": 80,
+          "p50": 12.4,
+          "p95": 13
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 17.8,
+          "mean": 12.101,
+          "n": 80,
+          "p50": 12,
+          "p95": 12.6
+        },
+        "uploadMs": {
+          "max": 0.6,
+          "mean": 0.389,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.008,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 45,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 8,
+          "mean": 3.894,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 4.4
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 7.8,
+          "mean": 3.772,
+          "n": 80,
+          "p50": 3.7,
+          "p95": 4.2
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.114,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.012,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 139,
+          "maxGapMs": 70.5,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 50.9,
+          "mean": 12.987,
+          "n": 80,
+          "p50": 12.4,
+          "p95": 14.1
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 50.3,
+          "mean": 12.577,
+          "n": 80,
+          "p50": 12,
+          "p95": 13.7
+        },
+        "uploadMs": {
+          "max": 0.5,
+          "mean": 0.398,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.7,
+          "mean": 0.475,
+          "n": 80,
+          "p50": 0.5,
+          "p95": 0.6
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 29,
+          "maxGapMs": 8.3,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3.6,
+          "mean": 2.389,
+          "n": 80,
+          "p50": 2.2,
+          "p95": 3
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 2.9,
+          "mean": 1.826,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.4
+        },
+        "uploadMs": {
+          "max": 0.3,
+          "mean": 0.087,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 2.5,
+          "mean": 1.661,
+          "n": 80,
+          "p50": 1.6,
+          "p95": 1.8
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 53,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 6.5,
+          "mean": 4.591,
+          "n": 80,
+          "p50": 4.4,
+          "p95": 5.9
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 4.6,
+          "mean": 2.55,
+          "n": 80,
+          "p50": 2.4,
+          "p95": 3.5
+        },
+        "uploadMs": {
+          "max": 0.7,
+          "mean": 0.38,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.2,
+          "mean": 0.099,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 47,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 5.5,
+          "mean": 4.071,
+          "n": 80,
+          "p50": 4,
+          "p95": 4.6
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 5.3,
+          "mean": 3.849,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 4.4
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.124,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.6,
+          "mean": 0.308,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.5
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 143,
+          "maxGapMs": 45.8,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 19.2,
+          "mean": 12.86,
+          "n": 80,
+          "p50": 12.7,
+          "p95": 13.6
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 18.6,
+          "mean": 12.165,
+          "n": 80,
+          "p50": 12,
+          "p95": 12.9
+        },
+        "uploadMs": {
+          "max": 0.6,
+          "mean": 0.387,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.4,
+          "mean": 0.241,
+          "n": 80,
+          "p50": 0.2,
+          "p95": 0.3
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 24,
+          "maxGapMs": 8.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3,
+          "mean": 2.035,
+          "n": 80,
+          "p50": 2,
+          "p95": 2.6
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 2.5,
+          "mean": 1.69,
+          "n": 80,
+          "p50": 1.6,
+          "p95": 2.2
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.104,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 1.5,
+          "mean": 0.879,
+          "n": 80,
+          "p50": 0.9,
+          "p95": 1
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 41,
+          "maxGapMs": 23.9,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 23.4,
+          "mean": 3.815,
+          "n": 80,
+          "p50": 3.3,
+          "p95": 4.6
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 22.2,
+          "mean": 2.582,
+          "n": 80,
+          "p50": 2.1,
+          "p95": 3.3
+        },
+        "uploadMs": {
+          "max": 0.5,
+          "mean": 0.354,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.4
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.7,
+          "mean": 0.444,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 52,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 10.4,
+          "mean": 4.422,
+          "n": 80,
+          "p50": 4.3,
+          "p95": 5
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 9.8,
+          "mean": 3.863,
+          "n": 80,
+          "p50": 3.7,
+          "p95": 4.5
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.116,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 2.4,
+          "mean": 1.659,
+          "n": 80,
+          "p50": 1.6,
+          "p95": 2
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 155,
+          "maxGapMs": 24,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 15.9,
+          "mean": 13.601,
+          "n": 80,
+          "p50": 13.5,
+          "p95": 14.7
+        },
+        "transport": "uri",
+        "transportMs": {
+          "max": 13.7,
+          "mean": 11.529,
+          "n": 80,
+          "p50": 11.4,
+          "p95": 12.3
+        },
+        "uploadMs": {
+          "max": 2.7,
+          "mean": 0.414,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.009,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 45,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 4.4,
+          "mean": 3.833,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 4.2
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 4.3,
+          "mean": 3.711,
+          "n": 80,
+          "p50": 3.7,
+          "p95": 4.1
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.113,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.012,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 143,
+          "maxGapMs": 32,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 16.9,
+          "mean": 12.681,
+          "n": 80,
+          "p50": 12.5,
+          "p95": 13.6
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 16.5,
+          "mean": 12.275,
+          "n": 80,
+          "p50": 12.1,
+          "p95": 13.2
+        },
+        "uploadMs": {
+          "max": 0.8,
+          "mean": 0.394,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.009,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 48,
+          "maxGapMs": 8.2,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 9.9,
+          "mean": 4.189,
+          "n": 80,
+          "p50": 3.7,
+          "p95": 7.6
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 9.6,
+          "mean": 4.06,
+          "n": 80,
+          "p50": 3.6,
+          "p95": 7.4
+        },
+        "uploadMs": {
+          "max": 0.3,
+          "mean": 0.12,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.01,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 145,
+          "maxGapMs": 69.7,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 48,
+          "mean": 13.266,
+          "n": 80,
+          "p50": 12.6,
+          "p95": 13.9
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 47.6,
+          "mean": 12.849,
+          "n": 80,
+          "p50": 12.2,
+          "p95": 13.4
+        },
+        "uploadMs": {
+          "max": 1.3,
+          "mean": 0.407,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.9,
+          "mean": 0.456,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 29,
+          "maxGapMs": 16.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 23.4,
+          "mean": 2.674,
+          "n": 80,
+          "p50": 2.3,
+          "p95": 3.3
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 22.9,
+          "mean": 2.104,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.7
+        },
+        "uploadMs": {
+          "max": 0.6,
+          "mean": 0.114,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 2.9,
+          "mean": 1.736,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.3
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 56,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 7.4,
+          "mean": 4.823,
+          "n": 80,
+          "p50": 4.5,
+          "p95": 6.9
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 5.5,
+          "mean": 2.672,
+          "n": 80,
+          "p50": 2.4,
+          "p95": 4.6
+        },
+        "uploadMs": {
+          "max": 1.2,
+          "mean": 0.414,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.3,
+          "mean": 0.101,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 48,
+          "maxGapMs": 8.4,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 5.3,
+          "mean": 4.126,
+          "n": 80,
+          "p50": 4,
+          "p95": 4.9
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 5.1,
+          "mean": 3.892,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 4.7
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.133,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 1.1,
+          "mean": 0.306,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.4
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 147,
+          "maxGapMs": 46.5,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 27.4,
+          "mean": 13.199,
+          "n": 80,
+          "p50": 12.9,
+          "p95": 14
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 26.7,
+          "mean": 12.511,
+          "n": 80,
+          "p50": 12.2,
+          "p95": 13.3
+        },
+        "uploadMs": {
+          "max": 0.6,
+          "mean": 0.381,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.9,
+          "mean": 0.269,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.4
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 26,
+          "maxGapMs": 8.2,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 9.5,
+          "mean": 2.131,
+          "n": 80,
+          "p50": 1.9,
+          "p95": 2.9
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 9.1,
+          "mean": 1.769,
+          "n": 80,
+          "p50": 1.5,
+          "p95": 2.6
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.094,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 2.3,
+          "mean": 1.019,
+          "n": 80,
+          "p50": 0.9,
+          "p95": 1.5
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 46,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 9,
+          "mean": 3.951,
+          "n": 80,
+          "p50": 3.7,
+          "p95": 5.1
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 7.7,
+          "mean": 2.536,
+          "n": 80,
+          "p50": 2.3,
+          "p95": 3.8
+        },
+        "uploadMs": {
+          "max": 1,
+          "mean": 0.396,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 1.2,
+          "mean": 0.45,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 52,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 6.5,
+          "mean": 4.406,
+          "n": 80,
+          "p50": 4.3,
+          "p95": 5.2
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 5.8,
+          "mean": 3.835,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 4.6
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.121,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 2.8,
+          "mean": 1.756,
+          "n": 80,
+          "p50": 1.6,
+          "p95": 2.4
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 162,
+          "maxGapMs": 46.4,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 20.4,
+          "mean": 14.861,
+          "n": 80,
+          "p50": 14.5,
+          "p95": 17.2
+        },
+        "transport": "invoke",
+        "transportMs": {
+          "max": 17.9,
+          "mean": 12.621,
+          "n": 80,
+          "p50": 12.3,
+          "p95": 14.6
+        },
+        "uploadMs": {
+          "max": 2.3,
+          "mean": 0.484,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.8
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.01,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 61,
+          "maxGapMs": 16,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 11.6,
+          "mean": 5.43,
+          "n": 80,
+          "p50": 5.2,
+          "p95": 6.7
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 11.4,
+          "mean": 5.303,
+          "n": 80,
+          "p50": 5,
+          "p95": 6.6
+        },
+        "uploadMs": {
+          "max": 0.3,
+          "mean": 0.117,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.012,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 161,
+          "maxGapMs": 47.6,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 25.8,
+          "mean": 14.24,
+          "n": 80,
+          "p50": 13.6,
+          "p95": 15.9
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 25.4,
+          "mean": 13.83,
+          "n": 80,
+          "p50": 13.2,
+          "p95": 15.6
+        },
+        "uploadMs": {
+          "max": 0.7,
+          "mean": 0.398,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.015,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 61,
+          "maxGapMs": 16.3,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 10.1,
+          "mean": 5.391,
+          "n": 80,
+          "p50": 5.2,
+          "p95": 6.6
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 10,
+          "mean": 5.237,
+          "n": 80,
+          "p50": 5.1,
+          "p95": 6.4
+        },
+        "uploadMs": {
+          "max": 0.7,
+          "mean": 0.139,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.011,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 162,
+          "maxGapMs": 37.8,
+          "over20ms": 2
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 30.2,
+          "mean": 14.559,
+          "n": 80,
+          "p50": 14.2,
+          "p95": 16.1
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 29.7,
+          "mean": 14.134,
+          "n": 80,
+          "p50": 13.8,
+          "p95": 15.8
+        },
+        "uploadMs": {
+          "max": 1.2,
+          "mean": 0.414,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 1.5,
+          "mean": 0.546,
+          "n": 80,
+          "p50": 0.5,
+          "p95": 1
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 42,
+          "maxGapMs": 15.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 5.2,
+          "mean": 3.626,
+          "n": 80,
+          "p50": 3.6,
+          "p95": 4.8
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 4.6,
+          "mean": 2.981,
+          "n": 80,
+          "p50": 2.9,
+          "p95": 4.1
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.099,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 3,
+          "mean": 1.799,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.5
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 74,
+          "maxGapMs": 46.3,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 41.4,
+          "mean": 6.849,
+          "n": 80,
+          "p50": 6.1,
+          "p95": 8.9
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 39.3,
+          "mean": 4.641,
+          "n": 80,
+          "p50": 4.1,
+          "p95": 6.8
+        },
+        "uploadMs": {
+          "max": 1.1,
+          "mean": 0.409,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.3,
+          "mean": 0.114,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 64,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 7.7,
+          "mean": 5.526,
+          "n": 80,
+          "p50": 5.4,
+          "p95": 6.8
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 7.4,
+          "mean": 5.294,
+          "n": 80,
+          "p50": 5.1,
+          "p95": 6.6
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.119,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.5,
+          "mean": 0.279,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.4
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 173,
+          "maxGapMs": 48,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 27.6,
+          "mean": 15.272,
+          "n": 80,
+          "p50": 14.8,
+          "p95": 17.6
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 26.9,
+          "mean": 14.595,
+          "n": 80,
+          "p50": 14.2,
+          "p95": 16.9
+        },
+        "uploadMs": {
+          "max": 0.9,
+          "mean": 0.399,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.7,
+          "mean": 0.269,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.4
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 37,
+          "maxGapMs": 30.7,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 35.8,
+          "mean": 3.532,
+          "n": 80,
+          "p50": 2.8,
+          "p95": 4.5
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 35.4,
+          "mean": 3.151,
+          "n": 80,
+          "p50": 2.5,
+          "p95": 4.1
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.112,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 2.6,
+          "mean": 1.013,
+          "n": 80,
+          "p50": 0.9,
+          "p95": 1.4
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 64,
+          "maxGapMs": 8.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 15.4,
+          "mean": 5.537,
+          "n": 80,
+          "p50": 5.1,
+          "p95": 7.6
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 13.3,
+          "mean": 4.119,
+          "n": 80,
+          "p50": 3.8,
+          "p95": 5.4
+        },
+        "uploadMs": {
+          "max": 1.1,
+          "mean": 0.406,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.6
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 1.4,
+          "mean": 0.459,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.7
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 67,
+          "maxGapMs": 8.4,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 8.4,
+          "mean": 5.804,
+          "n": 80,
+          "p50": 5.6,
+          "p95": 7.5
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 7.8,
+          "mean": 5.221,
+          "n": 80,
+          "p50": 5,
+          "p95": 7
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.124,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 3.4,
+          "mean": 1.771,
+          "n": 80,
+          "p50": 1.6,
+          "p95": 2.7
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 186,
+          "maxGapMs": 31.1,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 26.3,
+          "mean": 16.405,
+          "n": 80,
+          "p50": 15.6,
+          "p95": 21
+        },
+        "transport": "channel",
+        "transportMs": {
+          "max": 24.3,
+          "mean": 14.204,
+          "n": 80,
+          "p50": 13.5,
+          "p95": 17.5
+        },
+        "uploadMs": {
+          "max": 1.2,
+          "mean": 0.43,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.7
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.2,
+          "mean": 0.007,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 20,
+          "maxGapMs": 8.3,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3.2,
+          "mean": 1.816,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.8
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 2.9,
+          "mean": 1.515,
+          "n": 80,
+          "p50": 1.3,
+          "p95": 2.5
+        },
+        "uploadMs": {
+          "max": 0.9,
+          "mean": 0.294,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.013,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 35,
+          "maxGapMs": 8.8,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 6.4,
+          "mean": 3.008,
+          "n": 80,
+          "p50": 2.7,
+          "p95": 4.6
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 4.8,
+          "mean": 2.055,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 3.7
+        },
+        "uploadMs": {
+          "max": 1.7,
+          "mean": 0.94,
+          "n": 80,
+          "p50": 0.9,
+          "p95": 1.4
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.011,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 18,
+          "maxGapMs": 8.5,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3,
+          "mean": 1.614,
+          "n": 80,
+          "p50": 1.4,
+          "p95": 2.5
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 2.7,
+          "mean": 1.343,
+          "n": 80,
+          "p50": 1.2,
+          "p95": 2.3
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.26,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.3
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.1,
+          "mean": 0.014,
+          "n": 80,
+          "p50": 0,
+          "p95": 0.1
+        },
+        "encoding": "raw",
+        "frames": {
+          "frames": 36,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 6.7,
+          "mean": 3.134,
+          "n": 80,
+          "p50": 2.8,
+          "p95": 4.8
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 5.2,
+          "mean": 2.116,
+          "n": 80,
+          "p50": 1.8,
+          "p95": 3.7
+        },
+        "uploadMs": {
+          "max": 1.9,
+          "mean": 1.004,
+          "n": 80,
+          "p50": 0.9,
+          "p95": 1.5
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 5.7,
+          "mean": 0.618,
+          "n": 80,
+          "p50": 0.5,
+          "p95": 1.1
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 31,
+          "maxGapMs": 8.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 10.6,
+          "mean": 2.729,
+          "n": 80,
+          "p50": 2,
+          "p95": 7.7
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 9.9,
+          "mean": 1.949,
+          "n": 80,
+          "p50": 1.2,
+          "p95": 6.8
+        },
+        "uploadMs": {
+          "max": 0.5,
+          "mean": 0.162,
+          "n": 80,
+          "p50": 0.2,
+          "p95": 0.3
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 5,
+          "mean": 2.059,
+          "n": 80,
+          "p50": 1.9,
+          "p95": 3.2
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 50,
+          "maxGapMs": 8.6,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 8.4,
+          "mean": 4.231,
+          "n": 80,
+          "p50": 3.9,
+          "p95": 6.6
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 5.1,
+          "mean": 1.669,
+          "n": 80,
+          "p50": 1.4,
+          "p95": 3.6
+        },
+        "uploadMs": {
+          "max": 1.2,
+          "mean": 0.504,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 1
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 0.6,
+          "mean": 0.241,
+          "n": 80,
+          "p50": 0.2,
+          "p95": 0.4
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 22,
+          "maxGapMs": 8.2,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3.4,
+          "mean": 1.84,
+          "n": 80,
+          "p50": 1.7,
+          "p95": 2.8
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 3,
+          "mean": 1.415,
+          "n": 80,
+          "p50": 1.2,
+          "p95": 2.4
+        },
+        "uploadMs": {
+          "max": 0.4,
+          "mean": 0.184,
+          "n": 80,
+          "p50": 0.2,
+          "p95": 0.3
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 2,
+          "mean": 0.759,
+          "n": 80,
+          "p50": 0.7,
+          "p95": 1.4
+        },
+        "encoding": "lz4",
+        "frames": {
+          "frames": 46,
+          "maxGapMs": 39.2,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 47.1,
+          "mean": 4.211,
+          "n": 80,
+          "p50": 3.2,
+          "p95": 6.1
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 44.8,
+          "mean": 2.836,
+          "n": 80,
+          "p50": 1.9,
+          "p95": 4.6
+        },
+        "uploadMs": {
+          "max": 1.4,
+          "mean": 0.616,
+          "n": 80,
+          "p50": 0.6,
+          "p95": 1.1
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 0.4,
+          "mean": 0.298,
+          "n": 80,
+          "p50": 0.3,
+          "p95": 0.4
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 22,
+          "maxGapMs": 8.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 2.9,
+          "mean": 1.634,
+          "n": 80,
+          "p50": 1.4,
+          "p95": 2.8
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 2.4,
+          "mean": 1.205,
+          "n": 80,
+          "p50": 1,
+          "p95": 2.3
+        },
+        "uploadMs": {
+          "max": 0.2,
+          "mean": 0.131,
+          "n": 80,
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      {
+        "content": "text",
+        "decodeMs": {
+          "max": 2.9,
+          "mean": 1.281,
+          "n": 80,
+          "p50": 1.2,
+          "p95": 1.8
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 43,
+          "maxGapMs": 30.4,
+          "over20ms": 1
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 33.7,
+          "mean": 3.806,
+          "n": 80,
+          "p50": 3.1,
+          "p95": 5.8
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 31.2,
+          "mean": 2.046,
+          "n": 80,
+          "p50": 1.4,
+          "p95": 3.4
+        },
+        "uploadMs": {
+          "max": 1.3,
+          "mean": 0.479,
+          "n": 80,
+          "p50": 0.4,
+          "p95": 0.7
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 1.7,
+          "mean": 0.65,
+          "n": 80,
+          "p50": 0.6,
+          "p95": 0.9
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 27,
+          "maxGapMs": 8.1,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 256,
+        "totalMs": {
+          "max": 3.6,
+          "mean": 2.282,
+          "n": 80,
+          "p50": 2.1,
+          "p95": 3.3
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 2.8,
+          "mean": 1.45,
+          "n": 80,
+          "p50": 1.2,
+          "p95": 2.5
+        },
+        "uploadMs": {
+          "max": 0.5,
+          "mean": 0.183,
+          "n": 80,
+          "p50": 0.2,
+          "p95": 0.3
+        }
+      },
+      {
+        "content": "photo",
+        "decodeMs": {
+          "max": 7.4,
+          "mean": 2.661,
+          "n": 80,
+          "p50": 2.4,
+          "p95": 4.2
+        },
+        "encoding": "qoi",
+        "frames": {
+          "frames": 65,
+          "maxGapMs": 8.7,
+          "over20ms": 0
+        },
+        "longTasks": 0,
+        "size": 512,
+        "totalMs": {
+          "max": 10.9,
+          "mean": 5.453,
+          "n": 80,
+          "p50": 5.1,
+          "p95": 7.3
+        },
+        "transport": "shared",
+        "transportMs": {
+          "max": 7.6,
+          "mean": 2.17,
+          "n": 80,
+          "p50": 1.9,
+          "p95": 3.3
+        },
+        "uploadMs": {
+          "max": 1.9,
+          "mean": 0.621,
+          "n": 80,
+          "p50": 0.6,
+          "p95": 1
+        }
+      }
+    ]
+  },
+  "tileSizes": [
+    {
+      "avgBytes": 69504,
+      "content": "text",
+      "encoding": "lz4",
+      "size": 512
+    },
+    {
+      "avgBytes": 56140,
+      "content": "text",
+      "encoding": "qoi",
+      "size": 512
+    },
+    {
+      "avgBytes": 262144,
+      "content": "photo",
+      "encoding": "raw",
+      "size": 256
+    },
+    {
+      "avgBytes": 13989,
+      "content": "text",
+      "encoding": "qoi",
+      "size": 256
+    },
+    {
+      "avgBytes": 1048576,
+      "content": "text",
+      "encoding": "raw",
+      "size": 512
+    },
+    {
+      "avgBytes": 1052691,
+      "content": "photo",
+      "encoding": "lz4",
+      "size": 512
+    },
+    {
+      "avgBytes": 1048576,
+      "content": "photo",
+      "encoding": "raw",
+      "size": 512
+    },
+    {
+      "avgBytes": 263176,
+      "content": "photo",
+      "encoding": "lz4",
+      "size": 256
+    },
+    {
+      "avgBytes": 246808,
+      "content": "photo",
+      "encoding": "qoi",
+      "size": 256
+    },
+    {
+      "avgBytes": 262144,
+      "content": "text",
+      "encoding": "raw",
+      "size": 256
+    },
+    {
+      "avgBytes": 986881,
+      "content": "photo",
+      "encoding": "qoi",
+      "size": 512
+    },
+    {
+      "avgBytes": 17246,
+      "content": "text",
+      "encoding": "lz4",
+      "size": 256
+    }
+  ]
+}

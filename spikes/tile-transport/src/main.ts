@@ -52,13 +52,20 @@ const ctx = canvas.getContext("2d", { alpha: false })!;
 let nextId = 1;
 const pending = new Map<number, (f: Fetched) => void>();
 
-const channel = new Channel<ArrayBuffer>();
-channel.onmessage = (buf) => {
-  const u = new Uint8Array(buf);
-  const id = (u[0]! | (u[1]! << 8) | (u[2]! << 16) | (u[3]! << 24)) >>> 0;
-  pending.get(id)?.({ bytes: u.subarray(4) });
-  pending.delete(id);
-};
+// Tauri numbers channel messages per command invocation, and the JS side
+// delivers them in that order. Reusing one Channel across invocations makes
+// every later message look out of order (it is buffered forever), so each
+// request gets its own Channel.
+function newChannel(): Channel<ArrayBuffer> {
+  const channel = new Channel<ArrayBuffer>();
+  channel.onmessage = (buf) => {
+    const u = new Uint8Array(buf);
+    const id = (u[0]! | (u[1]! << 8) | (u[2]! << 16) | (u[3]! << 24)) >>> 0;
+    pending.get(id)?.({ bytes: u.subarray(4) });
+    pending.delete(id);
+  };
+  return channel;
+}
 
 webview2?.addEventListener("sharedbufferreceived", (e) => {
   const buffer = e.getBuffer();
@@ -72,10 +79,19 @@ webview2?.addEventListener("sharedbufferreceived", (e) => {
   pending.delete(id);
 });
 
+const TILE_TIMEOUT_MS = 5000;
+
 function viaPush(command: string, req: TileReq, extra: Record<string, unknown>): Promise<Fetched> {
   return new Promise((resolve, reject) => {
     const id = nextId++;
-    pending.set(id, resolve);
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error(`${command} timed out after ${TILE_TIMEOUT_MS} ms`));
+    }, TILE_TIMEOUT_MS);
+    pending.set(id, (f) => {
+      clearTimeout(timer);
+      resolve(f);
+    });
     invoke(command, { req, id, ...extra }).catch((err: unknown) => {
       pending.delete(id);
       reject(err instanceof Error ? err : new Error(String(err)));
@@ -83,17 +99,37 @@ function viaPush(command: string, req: TileReq, extra: Record<string, unknown>):
   });
 }
 
+function withTimeout<T>(p: Promise<T>, what: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => {
+        reject(new Error(`${what} timed out after ${TILE_TIMEOUT_MS} ms`));
+      }, TILE_TIMEOUT_MS),
+    ),
+  ]);
+}
+
+function log(message: string) {
+  statusEl.textContent = message;
+  void invoke("progress", { message });
+}
+
 async function fetchTile(t: Transport, req: TileReq): Promise<Fetched> {
   switch (t) {
     case "uri": {
       const url = `http://tile.localhost/${req.encoding}/${req.content}/${req.size}/${req.index}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(TILE_TIMEOUT_MS) });
       return { bytes: new Uint8Array(await res.arrayBuffer()) };
     }
     case "invoke":
-      return { bytes: new Uint8Array(await invoke<ArrayBuffer>("tile_invoke", { req })) };
+      return {
+        bytes: new Uint8Array(
+          await withTimeout(invoke<ArrayBuffer>("tile_invoke", { req }), "tile_invoke"),
+        ),
+      };
     case "channel":
-      return viaPush("tile_channel", req, { channel });
+      return viaPush("tile_channel", req, { channel: newChannel() });
     case "shared":
       return viaPush("tile_shared", req, {});
   }
@@ -262,24 +298,42 @@ async function run() {
     transports,
     date: new Date().toISOString(),
   };
-  statusEl.textContent = "verifying decoders…";
+  log("verifying decoders");
   const decodersVerified = await verifyDecoders();
 
-  const latencyResults = [];
-  const burstResults = [];
+  const latencyResults: unknown[] = [];
+  const burstResults: unknown[] = [];
   const combos = transports.flatMap((t) =>
     ENCODINGS.flatMap((e) => CONTENTS.flatMap((c) => SIZES.map((s) => [t, e, c, s] as const))),
   );
   let done = 0;
+  const failures: {
+    transport: Transport;
+    encoding: Encoding;
+    content: Content;
+    size: number;
+    scenario: string;
+    error: string;
+  }[] = [];
   for (const [t, e, c, s] of combos) {
-    statusEl.textContent = `${++done}/${combos.length}  ${t} ${e} ${c} ${s}px`;
+    log(`${++done}/${combos.length}  ${t} ${e} ${c} ${s}px`);
     await nextFrame();
-    latencyResults.push(await latency(t, e, c, s));
-    burstResults.push(await burst(t, e, c, s));
+    for (const [scenario, fn, out] of [
+      ["latency", latency, latencyResults],
+      ["burst", burst, burstResults],
+    ] as const) {
+      try {
+        out.push(await fn(t, e, c, s));
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        log(`FAILED ${scenario} ${t} ${e} ${c} ${s}px: ${error}`);
+        failures.push({ transport: t, encoding: e, content: c, size: s, scenario, error });
+      }
+    }
   }
   statusEl.textContent = "reporting…";
   await invoke("report", {
-    results: { env, decodersVerified, latency: latencyResults, burst: burstResults },
+    results: { env, decodersVerified, failures, latency: latencyResults, burst: burstResults },
   });
 }
 

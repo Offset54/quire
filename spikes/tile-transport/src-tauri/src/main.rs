@@ -122,6 +122,22 @@ mod shared {
     }
 }
 
+/// Progress lines from the runner, so a stuck run shows where it stopped.
+#[tauri::command]
+fn progress(message: String) {
+    eprintln!("[spike] {message}");
+    let log =
+        std::env::var("SPIKE_OUT").unwrap_or_else(|_| "spike-tile-transport.json".into()) + ".log";
+    if let Ok(mut f) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log)
+    {
+        use std::io::Write;
+        let _ = writeln!(f, "{message}");
+    }
+}
+
 #[tauri::command]
 async fn report(
     app: tauri::AppHandle,
@@ -167,6 +183,7 @@ fn main() {
             tile_invoke,
             tile_channel,
             tile_shared,
+            progress,
             report
         ])
         .setup(|app| {

@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1–6 and 8 done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1–8 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -30,7 +30,8 @@
 | 5 | Job scheduler | Done: `quire-core::scheduler`, 12 unit tests + a model-based property test, criterion benches |
 | 6 | Memory governor | Done: `quire-core::memory` (per-document and global budgets, background-first and cheapest-class-first eviction, `LruCache`), 9 tests incl. a budget-invariant proptest and a concurrency accounting check |
 | 4 | Shell hardening | Done: command allowlist + per-window capability, navigation/new-window/download blocking (unit-tested), Windows manifest (longPathAware, PerMonitorV2, UTF-8 code page), window-state restore, ICU MessageFormat catalog (`t()`) |
-| 7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 7 | Tile transport spike | Done: [ADR-0004](adr/0004-tile-transport.md). Windows uses WebView2 SharedBuffer (raw 512 px tile 2.7 ms p50, full 1080p repaint 26 ms); fallback is `invoke` + QOI |
+| 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -50,6 +51,14 @@ These are component costs, not §4 scenarios, so they aren't derated.
 | Scheduler: submit + wait, Interaction, idle pool | 5.7 µs | Hand-off cost on the input path; 0.04 % of the 16 ms budget |
 | Scheduler: 10k no-op jobs, mixed priorities | 16.7 ms (≈ 598k jobs/s) | 4 workers, 1 reserved |
 | Scheduler: coalescing hit | 130 ns | Duplicate tile request while queued |
+
+### Tile transport (spike, raw dev machine, AC, 2026-10-08; details in ADR-0004)
+
+| Path | Single 512 px tile p50 / p95 | Full 1920×1080 repaint p50 |
+|---|---|---|
+| WebView2 SharedBuffer, raw | 2.7 / 4.2 ms | 26 ms |
+| `invoke`, raw | 12.5 / 13.4 ms | 83 ms |
+| `invoke`, QOI (text tiles) | 3.6 / 5.2 ms | 34 ms |
 
 ### §4 scenarios
 
