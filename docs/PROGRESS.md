@@ -10,7 +10,7 @@
 
 | Milestone | Status | DoD |
 |---|---|---|
-| M0 Foundations | In progress: tasks 1 (scaffold) and 2 (license gates) done; see the task list below | Not yet |
+| M0 Foundations | In progress: tasks 1, 2 and 8 done; see the task list below | Not yet |
 | M1 TXT engine | Not started | n/a |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
@@ -26,7 +26,8 @@
 | 1 | Workspace scaffold | Done (85ac033) |
 | 2 | License and dependency gates | Done (85ac033) |
 | 3 | CI | Blocked: needs `gh auth login` (you) to create the private repo |
-| 4–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
+| 8 | Tracing | Done: Chrome-trace recorder in `quire-core::trace`, frontend measures and long tasks merged (`QUIRE_TRACE=<file>`) |
+| 4–7, 9–14 | See [M0_PLAN.md](M0_PLAN.md) | Not started |
 
 ## Decisions recorded on plan approval (2026-10-08)
 
@@ -37,7 +38,9 @@
 
 ## Benchmarks vs. budget
 
-None yet. The benchmark harness is part of M0.
+No official results yet: the harness and ref-sim profile come in task 12.
+
+Early signal (one unofficial run, raw dev machine, not ref-sim, 2026-10-08): the empty release app's first frame landed **~525 ms** after core start on a warm launch. The warm budget is ≤ 400 ms (and ≤ ~267 ms after the ref-sim derating), so task 13 has real work to do.
 
 ## Dev environment (as of 2026-10-08)
 

@@ -7,6 +7,11 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+parking_lot = "0.12"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
 
 [lints]
 workspace = true
