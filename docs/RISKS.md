@@ -1,0 +1,22 @@
+# Risk register
+
+Likelihood (L) and impact (I) are rated High, Medium or Low. "Retires" is the earliest milestone whose evidence can close the risk. Reviewed at every milestone report.
+
+| # | Risk | L | I | Mitigation | Retires |
+|---|---|---|---|---|---|
+| 1 | **DOCX layout fidelity.** Word's layout rules are undocumented (compat settings, auto line spacing, table autofit, float wrapping), so pages drift and page counts differ. | H | H | Build the fidelity harness in M0 so the baseline exists before layout code does. Flow view ships first. Spike the hardest features (autofit tables, floats, kinsoku) early in M4a. Honor `w:compat` settings. Track per-file SSIM on the corpus and only raise thresholds. | M4 |
+| 2 | **Typing latency in paginated documents.** p95 ≤ 16 ms needs model edit, paragraph relayout, raster, IPC and composite inside one frame, page 600 included. | M | H | Relayout only the edited paragraph; repaginate in the background with convergence. Re-raster only dirty tiles at Interaction priority. Instrument every stage with `tracing` from day one. The M0 IPC spike sets the transport cost budget. | M4 |
+| 3 | **IPC tile throughput.** A full repaint at 2560×1600 is 16 MB of BGRA. Tauri's transports differ per OS and may copy several times. | M | H | M0 spike measures every transport and encoding (ADR-0004). Repaint only dirty tiles; reuse tiles across zoom. Use WebView2 SharedBuffer on Windows if it wins. | M0 |
+| 4 | **IME on canvas surfaces.** Composition for Korean, Japanese and Chinese must work where the text isn't DOM. EditContext exists in WebView2 but not in WKWebView or WebKitGTK. | H | H | Prototype EditContext and a positioned hidden-textarea fallback in M1 and M4a with the Microsoft IMEs. Keep TXT/MD source views on virtualized DOM text. Add an IME test matrix to every milestone's manual QA. | M4 (Windows), M7 (macOS/Linux) |
+| 5 | **WebKitGTK and WKWebView performance.** Canvas and scrolling may miss 60 fps on Linux without GPU compositing. Some transports are slower there. | M | M | Run the M0 scroll benchmark on all three OSes in CI and on hardware. Keep the compositor to `drawImage` of ready tiles. Record per-OS results in the IPC ADR. | M0 (measured), M7 (accepted) |
+| 6 | **PDFium process model.** Workers multiply memory. Form-fill and annotation state is per process, so edits made in one worker must reach the others. Linearized loading through callbacks is fiddly. | M | H | One "editor" worker owns mutable state; render workers reload from the incremental-save stream or replay edits. Worker count comes from measurement (hybrid CPUs). Test crash and restart with fault injection. | M3 |
+| 7 | **Mapped-file faults.** I/O errors on mapped views (OneDrive, SMB, a file truncated by another process) raise `EXCEPTION_IN_PAGE_ERROR` or `SIGBUS`, which Rust can't catch normally. | M | H | Detect network and cloud-placeholder files and use pread. Elsewhere, use a vectored exception handler (Windows) or SIGBUS handler scoped to the mapped range that turns the fault into an I/O error. Fault-injection tests. | M1 |
+| 8 | **OOXML round trip.** Writing DOCX/PPTX that Word or PowerPoint opens without a repair prompt after edits (rels, content types, ids, `mc:Ignorable`). | M | H | Splice writer with unchanged ranges byte-exact. OpenXmlValidator in CI. Check against Word and PowerPoint with the 30-file checklist each milestone. | M4 / M5 |
+| 9 | **Benchmark validity.** The dev machine is faster than the reference machine, and Windows cold-cache runs need admin rights to flush the standby list. Numbers could look met when they aren't. | H | M | Label every result with its machine. Get a reference-class machine (open question). Add an elevated cache-flush helper for cold runs, with a reboot-based fallback. | M0 |
+| 10 | **Scope versus schedule.** Six formats, each a product in itself, plus three OSes. Late milestones get squeezed and v1 slips. | H | M | Strict DoD gates and capability flags so unfinished features stay hidden. v2 items stay v2. Re-estimate after each milestone from actuals. | Ongoing |
+
+## Watch list
+
+- **License creep.** ICU4X (Unicode-3.0) and the bundled fonts (OFL-1.1) aren't on §0's list. cargo-deny will catch new cases.
+- **EMF/WMF and chart coverage** in real PPTX decks (M5).
+- **Hybrid CPUs.** On P/E-core machines, "physical cores minus one" may overcommit slow cores (M3).

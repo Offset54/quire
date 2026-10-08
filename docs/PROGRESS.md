@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phase | Pre-M0. The workspace is set up; the §13 plan hasn't been delivered yet. No application code. |
+| Phase | Pre-M0. The §13 plan is delivered (ARCHITECTURE.md, adr/README.md, RISKS.md, M0_PLAN.md) and waiting for approval. No application code. |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
 | Last updated | 2026-10-08 |
 
