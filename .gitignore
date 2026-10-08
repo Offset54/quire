@@ -1,0 +1,28 @@
+# Rust
+/target/
+fuzz/target/
+fuzz/corpus/
+fuzz/artifacts/
+
+# Frontend
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Generated fixtures (tools/fixtures) and fetched corpora: multi-GB, never committed (§10)
+/.cache/
+
+# Local secrets and signing material
+.env
+.env.*
+*.pfx
+*.p12
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+Thumbs.db
+desktop.ini
+.DS_Store

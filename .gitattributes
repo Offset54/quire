@@ -1,0 +1,42 @@
+# Source text is LF in the repo and in every working tree, on every OS.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Test inputs are byte-exact: encodings, BOMs and line endings are what the tests check.
+# Never let git normalize them.
+**/testdata/** -text -diff
+**/tests/data/** -text -diff
+fuzz/regressions/** -text -diff
+
+# Document and media formats
+*.pdf   binary
+*.docx  binary
+*.docm  binary
+*.dotx  binary
+*.pptx  binary
+*.pptm  binary
+*.potx  binary
+*.ppsx  binary
+*.ppt   binary
+*.doc   binary
+*.xlsx  binary
+*.odt   binary
+*.emf   binary
+*.wmf   binary
+*.odttf binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.icns  binary
+*.zip   binary
+*.dll   binary
+*.exe   binary

@@ -1,0 +1,6 @@
+[toolchain]
+# Pinned per MASTER_PROMPT §2 ("pin versions"). Bump deliberately, in its own commit.
+# Fuzzing uses `cargo +nightly fuzz` separately; nightly is not pinned here.
+channel = "1.99.0"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
