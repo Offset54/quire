@@ -1,0 +1,15 @@
+{
+  "what": "cargo bench -p quire-text --bench text (criterion, raw dev machine, AC power)",
+  "date": "2026-10-09",
+  "commit": "7f65422",
+  "medians": {
+    "tree/insert_1_byte/198802_pieces_us": 46.2,
+    "tree/delete_1_byte/198802_pieces_us": 13.3,
+    "tree/line_start/198802_pieces_us": 2.72,
+    "tree/line_of/198802_pieces_us": 2.69,
+    "tree/snapshot_ns": 21.7,
+    "view/display_text_8k_row_us": 21.5,
+    "view/rows_around_175/wrap_0_us": 45.8,
+    "view/rows_around_175/wrap_120_us": 134.6
+  }
+}

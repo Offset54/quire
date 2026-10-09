@@ -50,3 +50,9 @@ WebDriver is still the right tool for **UI-flow tests** (click Open, type, check
 
 - **Ref-sim scenario runs are local**, on the dev machine with AC power. CI runs only the A/B micro-benchmarks. The committed ref-sim results (`bench/results/m0/`) are the record of the §4 checks.
 - **"Cold" is best effort on a machine in use.** Purging can't evict pages that other Edge or WebView2 processes have mapped. Each cold result records how many such processes were running.
+
+## Addendum (M1, 2026-10-09): UI flows and fuzzing
+
+- **UI flows** run through tauri-driver 2.1.0 (MIT/Apache-2.0) and the msedgedriver that matches the installed WebView2 (`tools/webdriver/`), with a minimal W3C client in `tests/ui/webdriver.mjs`. A CI job on Windows runs them against the release build.
+- **Fuzzing** uses cargo-fuzz 0.13.2 (MIT/Apache-2.0) on a pinned nightly, with `libfuzzer-sys` 0.4 (`(MIT OR Apache-2.0) AND NCSA`; NCSA is LLVM's BSD-style license for libFuzzer). The `fuzz/` crate is its own workspace, outside the cargo-deny gate, and is never part of the shipped app. `cfg(fuzzing)` shrinks the search chunk and transcoding segment sizes so small inputs cross many seams. Seeds (`fuzz/seeds/`) and fixed crash inputs (`fuzz/regressions/`) are committed byte-exact; a nightly workflow runs each target for 10 minutes.
+- **Bench diagnostics.** In-app scenarios also record long animation frames and the worst frame of short scrolls after idle periods, so frames lost outside our code (RISKS #12) can be told apart from our own work.

@@ -11,7 +11,7 @@
 | Milestone | Status | DoD |
 |---|---|---|
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
-| M1 TXT engine | In progress ([plan](M1_PLAN.md)) | Not yet measured in ref-sim |
+| M1 TXT engine | Report written, one decision open ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | Ref-sim run 1: 19 of 21 TXT budgets; both misses fixed since. Run 2 hit platform frame stalls (RISKS #12), decision pending |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
@@ -24,23 +24,23 @@
 | # | Task | Status |
 |---|---|---|
 | 1 | Sources | Done: mapped + guarded copies, chunked for remote files; [ADR-0007](adr/0007-source-access.md) |
-| 2 | Encodings | Done: detection, segmented transcoding with raw copy on save. ADR-0009 not yet written (needs a transcoding throughput number) |
+| 2 | Encodings | Done: detection, segmented transcoding with raw copy on save, decode progress and cancel; [ADR-0009](adr/0009-encodings-and-transcoding.md) (350–560 MB/s cold) |
 | 3 | Line index | Done; nth-break lookups are a binary search over prefix sums |
-| 4 | Piece tree | Done: persistent treap, proptests. ADR-0008 not yet written |
+| 4 | Piece tree | Done: persistent treap, proptests, criterion benches; [ADR-0008](adr/0008-text-buffer-piece-tree.md) |
 | 5 | Editing model | Done: multi-cursor, column selection, wrap layout, undo/redo; proptest (undo exact, journal replay) |
 | 6 | Search and replace | Done: chunked parallel search (proptest vs. whole buffer), replace-all as one undo step |
-| 7 | Save pipeline | Done: two-phase atomic save with the §5.8 sequence; byte-exact round trips across 11 cases |
+| 7 | Save pipeline | Done: two-phase atomic save with the §5.8 sequence; byte-exact round trips across 11 cases; writes overlap reads (0.90–1.05× a raw write in the core) |
 | 8 | Journal | Done: kill test lost 0 of 953 keystrokes |
 | 9 | External changes | Done: stamp + fingerprint classification, reload/keep/compare, edit lock |
-| 10 | TXT surface spike | Decision made (DOM rows); ADR-0023 not yet written |
+| 10 | TXT surface spike | Done: DOM rows with local echo; [ADR-0023](adr/0023-txt-surface-dom-rows.md) |
 | 11 | Host integration | Done (`src-tauri/src/txt.rs`) |
-| 12 | Editor frontend | Done (`src/txt/`); perf work in progress |
-| 13 | Fuzzing | Not started |
-| 14 | Benchmarks | Scenarios, budgets and `tools/bench/refsim-txt.ps1` written; ref-sim suite not yet run |
-| 15 | WebDriver UI flows | Done: 7/7 pass locally; no CI job yet |
-| 16 | M1 report | Not started |
+| 12 | Editor frontend | Done (`src/txt/`): local echo, offset-independent row keys, latest-wins fetch queue |
+| 13 | Fuzzing | Done: 4 cargo-fuzz targets, 10 min each (1 bug found and fixed), nightly workflow |
+| 14 | Benchmarks | Done: two ref-sim runs (`bench/results/m1/`), criterion, transcoding, Edge idle probe |
+| 15 | WebDriver UI flows | Done: 9/9 pass locally; CI job added, failing on the runner (WebView2 session not created), being diagnosed |
+| 16 | M1 report | Written ([M1_REPORT.md](M1_REPORT.md)); awaiting the decision on platform frame stalls |
 
-Open issue (2026-10-09): typing latency. An unpinned trial of `txt-2g` measured typing p95 84 ms (budget 16 ms, 10.7 ms effective) with a ~31 ms edit round trip, while the core's insert is 0.03 ms. Next step: time `view::build` in the core (`cargo run -p quire-text --release --example viewbench -- .cache/fixtures/mixed-lines-2gib.txt`) to split core cost from IPC. First paint was 179 ms against ≈172 ms effective (cold, unpinned). Other trial numbers: index 0.75 s, indexed jump 37 ms p50 / 87 ms p95, insert 0.03 ms, scrolling 7 ms frames, memory growth 8 MiB.
+Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, the earlier open issue, is fixed: ref-sim p95 8.1–9.4 ms with local echo (ADR-0023).
 
 ## M0 tasks
 
@@ -153,5 +153,9 @@ Benchmarks that count against §4 run in the ref-sim profile ([ADR-0021](adr/002
 ## Known gaps
 
 - The webview's tile bitmap cache (LRU, ten viewports of tiles) is capped by count but not reported to the core memory governor, so the HUD's cache memory excludes it. To be fixed when the governor gets a frontend-reported budget (before M3, where PDF tiles dominate memory).
+
+- A command-line file that fails to open (not cancelled) rejects `Session.startup()` without a message: the welcome screen doesn't render notices. Found in M1, not fixed.
+- The Microsoft IMEs (Korean, Japanese, Chinese) haven't been checked by hand; the UI flow replays the Korean IME's composition events.
+- Reopening with another encoding (`txt_reopen`) decodes without progress or cancel; only opening reports them.
 
 - Windows long paths are enabled on this PC, and git uses `core.longpaths = true` for this repo. The app must still declare `longPathAware` in its manifest (§9), because users' machines may have the setting off.

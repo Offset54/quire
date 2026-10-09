@@ -1,6 +1,6 @@
 # Architecture
 
-Status: M0 implemented. The parts that exist are the scheduler, memory governor, tracing, tile pipeline, virtual scroller and HUD; providers start in M1. Measured numbers are at the end.
+Status: M0 and M1 implemented. The parts that exist are the scheduler, memory governor, tracing, tile pipeline, virtual scroller, HUD, and the TXT engine and editor (`crates/text`, `src-tauri/src/txt.rs`, `src/txt/`). Measured numbers are at the end.
 
 quire is a Tauri 2 app. A Rust core owns every document: it parses, lays out, rasterizes, searches, edits and saves. The webview is a thin compositor. It draws tiles the core has already rasterized, draws overlays from geometry the core supplies, and forwards input. The frontend never holds a whole document. Native code that can crash or isn't thread-safe (PDFium, the PPT converter) runs in child processes.
 
@@ -106,6 +106,29 @@ sequenceDiagram
 
 Budget: input to visual response p95 ≤ 16 ms (§4). While pagination converges, the status bar shows an estimated page count ("~1,240 pages").
 
+## Data flow 3: type a character in a 2 GB TXT file
+
+TXT is the exception to core-rendered tiles that §5.4 allows: the core lays out rows and the webview draws them as DOM text (ADR-0023).
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant V as TxtView (TS)
+  participant H as Host (txt.rs)
+  participant T as quire-text
+  participant J as Journal thread
+  U->>V: keystroke (beforeinput) or IME commit
+  V->>V: local echo when certain to match: insert into the caret row,<br/>shift later rows and the caret, draw in the next frame
+  V->>H: txt_edit(action, view request around the caret)
+  H->>T: apply: append to the add buffer, split/merge pieces (O(log n)),<br/>record the inverse; CRLF junctions rejoined
+  H->>J: records (written at once, fsync at most 1/s)
+  H->>T: view::build: rows around the caret, one binary message
+  T-->>V: header (selections, counts, host time) + rows
+  V->>V: adopt the rows (re-echo keystrokes still queued),<br/>redraw rows whose text or decorations changed
+```
+
+The original stays mapped (ADR-0007); a 64 KiB-chunk line index fills in the background, and line lookups before it reaches a region are estimates labelled as such. Search, save and replace-all read immutable snapshots (one `Arc` clone of the persistent piece tree, ADR-0008) on the scheduler while editing continues. Non-UTF-8 files are decoded once in parallel segments; untouched ranges are copied raw on save (ADR-0009).
+
 ## Invariants
 
 - No task on the UI thread runs longer than 8 ms. Bulk data never crosses IPC as JSON or base64.
@@ -129,3 +152,18 @@ Dev machine, AC power. "ref-sim" means the ADR-0021 profile: pinned to the 4 P-c
 | App start, process creation → first frame, ref-sim warm | 480 ms p50 (bare WebView2 floor: 449 ms) | ADR-0022 |
 
 The bottleneck is at startup, in WebView2's own process launch, not in this pipeline. Once the app is running, tile delivery and composition stay well inside the frame budget.
+
+## Measured in M1
+
+Ref-sim profile unless noted; raw JSON in `bench/results/m1/`. Run 1 is `refsim-txt-2026-10-09-102220.json` (ffa3e55), run 2 `refsim-txt-2026-10-09-104421.json` (51e0a14).
+
+| Path | Number | Source |
+|---|---|---|
+| `view::build`, 175 rows of the 2 GiB fixture, core only (raw) | 1.1 ms p50 unwrapped, 0.4 ms wrapped | `viewbench` example |
+| Edit round trip: host time / IPC | ≈ 2 ms / ≈ 5.5 ms | `typing.coreMs`, `roundTripMs` |
+| Typing → visual response (local echo), ref-sim | p95 8.1 / 9.4 ms, p99 8.4 / 10.1 ms (runs 1 / 2) | ADR-0023 |
+| 2 GiB first paint, cold | 149 ms (run 1); run 2 hit platform frame stalls | RISKS #12 |
+| Line index, 2 GiB cold | 0.58–0.76 s (all six runs) | |
+| Literal search, 2 GiB cold, full pass | 1.14 s / 0.38 s (medians, runs 1 / 2) | |
+| Save after a small edit, 2 GiB, core only (raw) | 0.90–1.05 × a raw sequential write | `savebench` example |
+| 300 MiB single line, first paint (unpinned) | ≈ 146 ms | after the parallel long-line scan |

@@ -15,7 +15,9 @@
 
 ## State (2026-10-09)
 
-- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine) is in progress**; plan in `docs/M1_PLAN.md`, status in `docs/PROGRESS.md` ("M1 tasks").
+- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver CI job fails on the runner (diagnosis in progress).
+- Platform frame stalls: on this machine the display path stalls 90–340 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). Ref-sim runs that start right after the screen has been static are affected; check `longFrames`/`worstFrame` in results before blaming our code.
+- Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
 - Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
 - Still owed before M3: report the webview tile-bitmap cache to the memory governor (PROGRESS.md known gaps).
 - The user declined screen control (computer use) for checking the app: verify UI through the WebDriver flows (`pwsh tools/webdriver/run-ui-tests.ps1`) and the in-app bench scenarios instead.
