@@ -16,7 +16,7 @@ import { getLongTaskCount } from "../perf/trace";
 import { summarize } from "../perf/stats";
 import { getState } from "../txt/doc-store";
 import { Session } from "../txt/session";
-import type { InputSample, TxtView } from "../txt/txt-view";
+import type { EditSample, InputSample, TxtView } from "../txt/txt-view";
 
 const log = (message: string) => {
   void invoke("bench_log", { message });
@@ -80,6 +80,9 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
     line: number;
     ms: number;
     coreMs: number;
+    viewCoreMs: number;
+    invokeMs: number;
+    revealMs: number;
     exact: boolean;
     landed: boolean;
     top: string | undefined;
@@ -95,6 +98,9 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
       line,
       ms,
       coreMs: r.ms,
+      viewCoreMs: (view.currentHeader?.coreUs ?? 0) / 1000,
+      invokeMs: r.invokeMs,
+      revealMs: r.revealMs,
       exact: r.exact,
       landed,
       top: view.visibleText()[0]?.slice(0, 24),
@@ -116,19 +122,37 @@ async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: n
   let blank = 0;
   let frames = 0;
   const long0 = getLongTaskCount();
+  // Long animation frames: where a slow frame's time went (script, style
+  // and layout, or nothing on the main thread).
+  const loafs: unknown[] = [];
+  const po = new PerformanceObserver((l) => {
+    for (const e of l.getEntries()) {
+      if (e.duration > 50) loafs.push(e.toJSON());
+    }
+  });
+  try {
+    po.observe({ type: "long-animation-frame", buffered: false });
+  } catch {
+    // not supported
+  }
   const start = await nextFrame();
   let last = start;
+  let worst = { gapMs: 0, atMs: 0 };
   while (last - start < durationMs) {
     const t = await nextFrame();
     gaps.push(t - last);
+    if (t - last > worst.gapMs) worst = { gapMs: t - last, atMs: Math.round(last - start) };
     view.scrollByRows((rowsPerSecond * (t - last)) / 1000);
     frames++;
     if (view.placeholderRows() > 0) blank++;
     last = t;
   }
+  po.disconnect();
   return {
     frameIntervalMs: summarize(gaps),
     framesOver50ms: gaps.filter((g) => g > 50).length,
+    worstFrame: worst,
+    longFrames: loafs.slice(0, 5),
     placeholderFramesPct: Math.round((blank / Math.max(1, frames)) * 1000) / 10,
     longTasks: getLongTaskCount() - long0,
   };
@@ -136,7 +160,9 @@ async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: n
 
 async function typing(view: TxtView, count: number, intervalMs: number) {
   const samples: InputSample[] = [];
+  const edits: EditSample[] = [];
   const stop = view.onInputSample((s) => samples.push(s));
+  const stopEdits = view.onEditSample((s) => edits.push(s));
   const ta = document.querySelector<HTMLTextAreaElement>(".txt-input")!;
   ta.focus();
   const long0 = getLongTaskCount();
@@ -148,11 +174,24 @@ async function typing(view: TxtView, count: number, intervalMs: number) {
     await sleep(intervalMs);
   }
   await until(() => samples.length >= count * 0.9, 10_000, "typing samples");
+  await sleep(500); // the last confirmations
   stop();
+  stopEdits();
+  const checked = edits.filter((e) => e.echoMatched !== undefined);
   return {
+    // Keystroke to the first frame showing it (a local echo when possible).
     latencyMs: summarize(samples.map((s) => s.latencyMs)),
-    roundTripMs: summarize(samples.map((s) => s.roundTripMs)),
+    echoed: samples.filter((s) => s.echo).length,
+    // Per request to the core: to the frame with its result, and the parts.
+    confirmMs: summarize(edits.map((s) => s.confirmMs)),
+    roundTripMs: summarize(edits.map((s) => s.roundTripMs)),
+    waitMs: summarize(edits.map((s) => s.waitMs)),
+    adoptMs: summarize(edits.map((s) => s.adoptMs)),
+    coreMs: summarize(edits.map((s) => s.coreMs)),
+    echoChecks: checked.length,
+    echoMismatches: checked.filter((e) => !e.echoMatched).length,
     samples: samples.length,
+    requests: edits.length,
     longTasks: getLongTaskCount() - long0,
   };
 }
@@ -203,6 +242,14 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
   const lineH = 20;
   const steady = await measureFrames(view, 5000, 2400 / lineH);
   const fling = await measureFrames(view, 3000, 24_000 / lineH);
+  // Scrolling that starts after the screen has been static for a while:
+  // the worst frame of a short scroll after each idle period.
+  const scrollAfterIdle: { idleMs: number; worstMs: number }[] = [];
+  for (const idleMs of [100, 300, 500, 700, 1000, 2000, 300]) {
+    await sleep(idleMs);
+    const m = await measureFrames(view, 250, 2400 / lineH);
+    scrollAfterIdle.push({ idleMs, worstMs: Math.round(m.worstFrame.gapMs * 10) / 10 });
+  }
   const mem1 = await memory();
   await session.discard();
   return {
@@ -221,6 +268,7 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
     },
     insertMs: summarize(insertUs.map((u) => u / 1000)),
     typing: type,
+    scrollAfterIdle,
     steady,
     fling,
     memory: {

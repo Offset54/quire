@@ -370,14 +370,19 @@ export class Session {
     await invoke("txt_cancel", { doc: this.doc });
   }
 
-  async gotoLine(line: number): Promise<{ exact: boolean; ms: number }> {
+  /** Jumps to 1-based `line`; `ms` is the core's lookup, the others the steps. */
+  async gotoLine(
+    line: number,
+  ): Promise<{ exact: boolean; ms: number; invokeMs: number; revealMs: number }> {
+    const t0 = performance.now();
     const r = await invoke<{ offset: number; exact: boolean; ms: number }>("txt_goto_line", {
       doc: this.doc,
       line: Math.max(0, line - 1),
     });
+    const t1 = performance.now();
     await this.view?.reveal(r.offset);
     this.view?.focus();
-    return r;
+    return { ...r, invokeMs: t1 - t0, revealMs: performance.now() - t1 };
   }
 
   // ---- disk --------------------------------------------------------------------

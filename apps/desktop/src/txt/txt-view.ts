@@ -97,13 +97,52 @@ export interface TxtCallbacks {
 /** Latency of one input, for the HUD and benchmarks. */
 export interface InputSample {
   kind: string;
-  /** Event time to the frame that shows the result, ms. */
+  /** Event time to the first frame that shows the result, ms. */
   latencyMs: number;
+  /** That frame showed a local echo (the core's result came later). */
+  echo: boolean;
+}
+
+/** One edit request to the core, for the HUD and benchmarks. */
+export interface EditSample {
+  kind: string;
+  /** Event time to the frame that shows the core's result, ms. */
+  confirmMs: number;
   /** Time in the core command (round trip), ms. */
   roundTripMs: number;
+  /** Event time to the request being sent (queued behind earlier edits), ms. */
+  waitMs: number;
+  /** Decoding and adopting the response, ms. */
+  adoptMs: number;
+  /** Host time within the round trip (the rest is IPC), ms. */
+  coreMs: number;
+  /** Whether the echoed caret row matched the core's (when checkable). */
+  echoMatched: boolean | undefined;
+}
+
+interface QueuedEdit {
+  action: Action;
+  at: number;
+  kind: string;
+  /** Already drawn as a local echo. */
+  echo: boolean;
 }
 
 const TAB = 4;
+/** Text a local echo may insert: no controls, separators or line breaks. */
+const ECHO_TEXT = /^[^\p{C}\p{Zl}\p{Zp}\t]+$/u;
+/** Text that adds no wrap opportunity (no spaces or wide characters). */
+const NO_BREAK_TEXT = /^[\x21-\x7e]+$/;
+
+/** Columns `s` takes at most (tabs to the next stop, non-ASCII as wide). */
+function maxColumns(s: string): number {
+  let col = 0;
+  for (const ch of s) {
+    if (ch === "\t") col += TAB - (col % TAB);
+    else col += ch.charCodeAt(0) < 0x80 ? 1 : 2;
+  }
+  return col;
+}
 /** The first rows this process drew (startup and first-paint metrics). */
 let firstContentMarked = false;
 
@@ -140,6 +179,7 @@ export class TxtView {
   private readonly hthumb: HTMLDivElement;
   private readonly pool: RowEl[] = [];
   private readonly sampleListeners = new Set<(s: InputSample) => void>();
+  private readonly editListeners = new Set<(s: EditSample) => void>();
 
   private rows: Row[] = [];
   private header: ViewHeader | undefined;
@@ -153,10 +193,19 @@ export class TxtView {
   private viewH = 0;
   wrap = false;
   private fetching = false;
-  private refetch = false;
+  private pendingFetch:
+    | {
+        a: { anchor: number; caret: boolean };
+        screenRow: number;
+        frac: number;
+        explicit: boolean;
+        waiters: (() => void)[];
+      }
+    | undefined;
   private dirty = true;
   private frame = 0;
-  private queue: { action: Action; at: number; kind: string }[] = [];
+  private queue: QueuedEdit[] = [];
+  private inflight: QueuedEdit | undefined;
   private sending = false;
   private composing = false;
   private composeText = "";
@@ -242,6 +291,11 @@ export class TxtView {
     return () => this.sampleListeners.delete(l);
   }
 
+  onEditSample(l: (s: EditSample) => void): () => void {
+    this.editListeners.add(l);
+    return () => this.editListeners.delete(l);
+  }
+
   setWrap(wrap: boolean): void {
     if (wrap === this.wrap) return;
     this.wrap = wrap;
@@ -268,19 +322,109 @@ export class TxtView {
 
   /** Sends an action; resolves when it has been applied and drawn. */
   send(action: Action, kind: string = action.type): void {
+    const at = performance.now();
+    const echo = action.type === "type" && this.echoAllowed() && this.echo(action.text);
+    if (echo) {
+      requestAnimationFrame(() => {
+        const latencyMs = performance.now() - at;
+        for (const l of this.sampleListeners) l({ kind, latencyMs, echo: true });
+      });
+    }
     const last = this.queue[this.queue.length - 1];
     // Coalesce queued typing: fewer round trips, same result.
-    if (last && action.type === "type" && last.action.type === "type") {
+    if (last && action.type === "type" && last.action.type === "type" && last.echo === echo) {
       last.action = { type: "type", text: last.action.text + action.text };
     } else {
-      this.queue.push({ action, at: performance.now(), kind });
+      this.queue.push({ action, at, kind, echo });
     }
     void this.pump();
   }
 
+  /**
+   * Whether typing may be echoed now: only on top of the core's state plus
+   * other echoes (no other edit pending, no window being fetched).
+   */
+  private echoAllowed(): boolean {
+    return (
+      !this.fetching &&
+      !this.composing &&
+      (this.inflight?.echo ?? true) &&
+      this.queue.every((q) => q.echo)
+    );
+  }
+
+  /**
+   * Draws `text` inserted at the caret before the core confirms it (local
+   * echo), when the result is certain to match: one empty selection, an
+   * ordinary row, and with wrapping on, no row can reflow. Returns whether
+   * it did.
+   */
+  private echo(text: string): boolean {
+    const h = this.header;
+    if (!h || h.readOnly || h.selectionCount !== 1 || !ECHO_TEXT.test(text)) return false;
+    const [anchor, head] = h.primary;
+    if (anchor !== head) return false;
+    const i = this.rowIndexOf(head);
+    if (i === undefined) return false;
+    const row = this.rows[i]!;
+    const bytes = new TextEncoder().encode(text).length;
+    if (row.textStart !== row.start || row.end - row.start + bytes > LONG_ROW_BYTES) return false;
+    const wrap = this.layout().wrap;
+    if (wrap !== null) {
+      // The last row of its line, with room to spare; and unless it is the
+      // line's only row, no new break opportunity that could pull text up.
+      const only = (row.flags & FLAG_FIRST) !== 0;
+      if (!(row.flags & FLAG_LAST) || (!only && !NO_BREAK_TEXT.test(text))) return false;
+      if (maxColumns(row.text) + maxColumns(text) >= wrap) return false;
+    }
+    const u = indexOf(row, head);
+    const shifted = (o: number) => (o >= head ? o + bytes : o);
+    this.rows[i] = {
+      ...row,
+      end: row.end + bytes,
+      text: row.text.slice(0, u) + text + row.text.slice(u),
+      subst: row.subst.map((s) => (s >= u ? s + text.length : s)),
+    };
+    for (let k = i + 1; k < this.rows.length; k++) {
+      const r = this.rows[k]!;
+      this.rows[k] = {
+        ...r,
+        start: r.start + bytes,
+        end: r.end + bytes,
+        textStart: r.textStart + bytes,
+      };
+    }
+    this.header = {
+      ...h,
+      len: h.len + bytes,
+      primary: [head + bytes, head + bytes],
+      selections: h.selections.map(([a, b]) => [shifted(a), shifted(b)]),
+      // The core drops matches after an edit until the search reruns.
+      highlights: [],
+      dirty: true,
+    };
+    const cols = this.rows[i].col0 + this.rows[i].text.length;
+    if (cols > this.maxCols) this.maxCols = cols;
+    this.revealCaretX();
+    this.invalidate();
+    return true;
+  }
+
+  /** Text of the row holding the primary caret, if it is in the window. */
+  private caretRowText(): string | undefined {
+    const head = this.header?.primary[1];
+    const i = head === undefined ? undefined : this.rowIndexOf(head);
+    return i === undefined ? undefined : this.rows[i]!.text;
+  }
+
   /** Pastes text (sent as a raw request body). */
   paste(text: string): void {
-    this.queue.push({ action: { type: "paste", text }, at: performance.now(), kind: "paste" });
+    this.queue.push({
+      action: { type: "paste", text },
+      at: performance.now(),
+      kind: "paste",
+      echo: false,
+    });
     void this.pump();
   }
 
@@ -318,39 +462,58 @@ export class TxtView {
     return this.rows[Math.floor(this.top)]?.start ?? 0;
   }
 
+  /** Keeps the current position (scrolling, refreshes, layout changes). */
   private fetchAt(anchor: number, frac: number): Promise<void> {
-    return this.fetch({ anchor, caret: false }, this.visibleRows * OVERSCAN_VIEWPORTS, frac);
+    return this.fetch({ anchor, caret: false }, this.visibleRows * OVERSCAN_VIEWPORTS, frac, false);
   }
 
   /**
    * Fetches a window around `anchor` and places the anchor row `screenRow`
-   * rows below the top of the viewport (plus `frac`).
+   * rows below the top of the viewport (plus `frac`); resolves once that
+   * window (or a later one) is adopted. One fetch runs at a time and the
+   * latest request waits; an explicit one (a jump) is never replaced by a
+   * request that only keeps the current position.
    */
-  private async fetch(
+  private fetch(
     a: { anchor: number; caret: boolean },
     screenRow: number,
     frac = 0,
+    explicit = true,
   ): Promise<void> {
-    if (this.fetching) {
-      this.refetch = true;
-      return;
-    }
+    return new Promise((resolve) => {
+      const p = this.pendingFetch;
+      if (p?.explicit && !explicit) {
+        p.waiters.push(resolve);
+      } else {
+        const waiters = [...(p?.waiters ?? []), resolve];
+        this.pendingFetch = { a, screenRow, frac, explicit, waiters };
+      }
+      if (!this.fetching) void this.runFetches();
+    });
+  }
+
+  private async runFetches(): Promise<void> {
     this.fetching = true;
     try {
-      const before = Math.max(screenRow, this.visibleRows * OVERSCAN_VIEWPORTS);
-      const buf = await invoke<ArrayBuffer>("txt_view", {
-        doc: this.doc,
-        req: this.request(a.anchor, a.caret, before),
-      });
-      this.adopt(decodeView(buf), screenRow, frac);
-    } catch (err) {
-      this.cb.onError(String(err));
+      for (let job = this.pendingFetch; job; job = this.pendingFetch) {
+        this.pendingFetch = undefined;
+        try {
+          const before = Math.max(job.screenRow, this.visibleRows * OVERSCAN_VIEWPORTS);
+          const buf = await invoke<ArrayBuffer>("txt_view", {
+            doc: this.doc,
+            req: this.request(job.a.anchor, job.a.caret, before),
+          });
+          // While an echoed edit is pending its response brings a fresh
+          // window, and this one may predate the edit.
+          const echoing = this.inflight?.echo || this.queue.some((q) => q.echo);
+          if (job.explicit || !echoing) this.adopt(decodeView(buf), job.screenRow, job.frac);
+        } catch (err) {
+          this.cb.onError(String(err));
+        }
+        for (const w of job.waiters) w();
+      }
     } finally {
       this.fetching = false;
-    }
-    if (this.refetch) {
-      this.refetch = false;
-      void this.fetchAt(this.topOffset(), this.top - Math.floor(this.top));
     }
   }
 
@@ -449,6 +612,7 @@ export class TxtView {
         const frac = this.caretScreenRow() !== undefined ? this.top - Math.floor(this.top) : 0;
         const req = this.request(0, true, Math.max(screen, this.visibleRows * OVERSCAN_VIEWPORTS));
         const sent = performance.now();
+        this.inflight = item;
         let buf: ArrayBuffer;
         try {
           if (item.action.type === "paste") {
@@ -468,18 +632,43 @@ export class TxtView {
             });
           }
         } catch (err) {
+          this.inflight = undefined;
           this.cb.onError(String(err));
+          // Echoes of this edit, or drawn on top of it, are wrong now.
+          if (item.echo || this.queue.some((q) => q.echo)) {
+            for (const q of this.queue) q.echo = false;
+            this.refresh();
+          }
           continue;
         }
-        const roundTripMs = performance.now() - sent;
-        this.adopt(decodeView(buf), screen, frac);
+        this.inflight = undefined;
+        const got = performance.now();
+        const roundTripMs = got - sent;
+        const m = decodeView(buf);
+        const coreMs = m.header.coreUs / 1000;
+        // With nothing typed since, the echoed row must equal the core's.
+        const predicted = item.echo && this.queue.length === 0 ? this.caretRowText() : undefined;
+        this.adopt(m, screen, frac);
+        const echoMatched = predicted === undefined ? undefined : predicted === this.caretRowText();
+        // Typing that is still queued was echoed: draw it again on top.
+        for (const q of this.queue) {
+          if (q.echo && !(q.action.type === "type" && this.echo(q.action.text))) {
+            q.echo = false;
+          }
+        }
         this.revealCaretX();
-        const at = item.at;
-        const kind = item.kind;
+        const adoptMs = performance.now() - got;
+        const { at, kind, echo } = item;
+        const waitMs = sent - at;
         requestAnimationFrame(() => {
           // The frame that draws the result has been produced.
-          const latencyMs = performance.now() - at;
-          for (const l of this.sampleListeners) l({ kind, latencyMs, roundTripMs });
+          const confirmMs = performance.now() - at;
+          if (!echo) {
+            for (const l of this.sampleListeners) l({ kind, latencyMs: confirmMs, echo: false });
+          }
+          for (const l of this.editListeners) {
+            l({ kind, confirmMs, roundTripMs, waitMs, adoptMs, coreMs, echoMatched });
+          }
         });
       }
     } finally {
@@ -596,15 +785,18 @@ export class TxtView {
       el.root.style.display = "";
       el.root.style.transform = `translateY(${k * this.lineH}px)`;
       el.root.dataset.index = String(first + k);
-      const key = `${row.textStart}:${row.end}:${this.header.revision}`;
+      // Keys are independent of the row's offset, so an edit redraws only
+      // the rows whose text or decorations changed, not every row after it.
+      const ln = row.flags & FLAG_FIRST && row.line >= 0 ? String(row.line + 1) : "";
+      const key = `${ln}\u0000${row.text}`;
       if (el.key !== key) {
         el.key = key;
         el.tx.textContent = row.text;
-        el.ln.textContent = row.flags & FLAG_FIRST && row.line >= 0 ? String(row.line + 1) : "";
+        el.ln.textContent = ln;
         el.decoKey = "";
       }
       el.inner.style.transform = `translateX(${row.col0 * this.cellW - this.scrollX}px)`;
-      const decoKey = `${key}:${JSON.stringify(sels)}:${hls.length}:${hls[0]?.[0] ?? -1}:${this.composing ? this.composeText : ""}`;
+      const decoKey = this.decoKey(row, sels, hls, primary);
       if (el.decoKey !== decoKey) {
         el.decoKey = decoKey;
         this.decorate(el, row, sels, hls, primary);
@@ -616,6 +808,25 @@ export class TxtView {
       firstContentMarked = true;
       performance.mark("txt-first-content");
     }
+  }
+
+  /** What [`decorate`] draws for a row, relative to the row's start. */
+  private decoKey(
+    row: Row,
+    sels: [number, number][],
+    hls: [number, number][],
+    primary: [number, number],
+  ): string {
+    const s = row.start;
+    let k = `${row.flags}:${row.end - s}:${row.textStart - s}:${this.composing ? this.composeText : ""}`;
+    for (const [a, b] of hls) if (b > row.start && a < row.end) k += `|h${a - s},${b - s}`;
+    for (const [anchor, head] of sels) {
+      if (Math.max(anchor, head) >= row.start && Math.min(anchor, head) <= row.end) {
+        const p = anchor === primary[0] && head === primary[1] ? "p" : "";
+        k += `|s${p}${anchor - s},${head - s}`;
+      }
+    }
+    return k;
   }
 
   /** Draws selections, highlights and carets of one row (row-relative). */

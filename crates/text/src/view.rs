@@ -15,6 +15,7 @@
 //! the text around the requested columns.
 
 use std::io;
+use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
@@ -61,6 +62,9 @@ pub struct ViewHeader {
     pub can_undo: bool,
     pub can_redo: bool,
     pub read_only: bool,
+    /// Time spent in the command up to this header, in microseconds (for
+    /// splitting a round trip into core time and IPC).
+    pub core_us: u64,
 }
 
 fn put32(out: &mut Vec<u8>, v: u32) {
@@ -77,6 +81,17 @@ pub fn build(
     doc: &TextDocument,
     req: &ViewRequest,
     highlights: &dyn Fn(u64, u64) -> Vec<(u64, u64)>,
+) -> io::Result<Vec<u8>> {
+    build_since(doc, req, highlights, Instant::now())
+}
+
+/// [`build`], reporting the time since `started` (the command's start) as
+/// `core_us`.
+pub fn build_since(
+    doc: &TextDocument,
+    req: &ViewRequest,
+    highlights: &dyn Fn(u64, u64) -> Vec<(u64, u64)>,
+    started: Instant,
 ) -> io::Result<Vec<u8>> {
     let snap = doc.snapshot();
     let anchor = if req.caret {
@@ -164,6 +179,7 @@ pub fn build(
         can_undo: doc.can_undo(),
         can_redo: doc.can_redo(),
         read_only: doc.read_only,
+        core_us: started.elapsed().as_micros() as u64,
     };
     let json = serde_json::to_vec(&header).map_err(io::Error::other)?;
     let mut out = Vec::with_capacity(4 + json.len() + body.len());

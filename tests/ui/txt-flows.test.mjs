@@ -114,6 +114,34 @@ test("IME composition commits once (Korean)", async () => {
   assert.equal((r[0].t.match(/한/g) ?? []).length, 1, "no duplicated syllable");
 });
 
+test("a burst of typing keeps every character, in order", async () => {
+  // Faster than the core answers: drawn as local echoes, queued and
+  // coalesced, then confirmed. Backspaces queue behind them.
+  const burst = "the quick brown fox 0123456789 jumps!?";
+  await wd.exec(`
+    const ta = document.querySelector('.txt-input');
+    for (const ch of ${JSON.stringify(burst)}) {
+      ta.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: ch, cancelable: true }));
+    }
+  `);
+  await wd.until(
+    async () => (await rows())[0].t === `Hello 한${burst}line 0\tsome text with a tab`,
+    5000,
+    "burst typed",
+  );
+  await wd.exec(`
+    const ta = document.querySelector('.txt-input');
+    for (let i = 0; i < ${burst.length}; i++) {
+      ta.dispatchEvent(new InputEvent('beforeinput', { inputType: 'deleteContentBackward', cancelable: true }));
+    }
+  `);
+  await wd.until(
+    async () => (await rows())[0].t === "Hello 한line 0\tsome text with a tab",
+    5000,
+    "burst deleted",
+  );
+});
+
 test("go to line", async () => {
   await wd.chord([KEYS.control, "g"]);
   const input = await wd.find(".goto input");

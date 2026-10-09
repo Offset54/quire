@@ -550,22 +550,32 @@ impl TxtService {
     }
 }
 
-fn view_message(s: &Session, f: &TextFile, req: &ViewRequest) -> CmdResult<Response> {
+fn view_message(
+    s: &Session,
+    f: &TextFile,
+    req: &ViewRequest,
+    started: Instant,
+) -> CmdResult<Response> {
     let search = s.search.lock();
     let fresh = search.revision == f.doc.revision();
     let matches = &search.matches;
-    let msg = view::build(&f.doc, req, &|from, to| {
-        if !fresh {
-            return Vec::new();
-        }
-        let i = matches.partition_point(|m| m.1 <= from);
-        matches[i..]
-            .iter()
-            .take_while(|m| m.0 < to)
-            .take(10_000)
-            .copied()
-            .collect()
-    })
+    let msg = view::build_since(
+        &f.doc,
+        req,
+        &|from, to| {
+            if !fresh {
+                return Vec::new();
+            }
+            let i = matches.partition_point(|m| m.1 <= from);
+            matches[i..]
+                .iter()
+                .take_while(|m| m.0 < to)
+                .take(10_000)
+                .copied()
+                .collect()
+        },
+        started,
+    )
     .map_err(io_err)?;
     Ok(Response::new(msg))
 }
@@ -647,11 +657,12 @@ pub async fn txt_view(
     doc: u64,
     req: ViewRequest,
 ) -> CmdResult<Response> {
+    let started = Instant::now();
     guarded(|| {
         let s = svc.session(doc)?;
         let mut f = s.file.lock();
         f.doc.layout = req.layout;
-        view_message(&s, &f, &req)
+        view_message(&s, &f, &req, started)
     })
 }
 
@@ -670,6 +681,7 @@ pub async fn txt_edit(
     req: ViewRequest,
     page: Option<PageInfo>,
 ) -> CmdResult<Response> {
+    let started = Instant::now();
     guarded(|| {
         let s = svc.session(doc)?;
         let mut f = s.file.lock();
@@ -696,9 +708,9 @@ pub async fn txt_edit(
         if let Some(p) = page {
             f.doc.page_rows = p.rows.max(1);
         }
-        let started = Instant::now();
+        let applying = Instant::now();
         let out = f.doc.apply(&action).map_err(io_err)?;
-        let apply_us = started.elapsed().as_micros();
+        let apply_us = applying.elapsed().as_micros();
         if let Some(text) = out.clipboard {
             write_clipboard(&app, text);
         }
@@ -706,7 +718,7 @@ pub async fn txt_edit(
             s.after_change(&mut f);
             tracing::trace!(apply_us, "txt edit");
         }
-        view_message(&s, &f, &req)
+        view_message(&s, &f, &req, started)
     })
 }
 
@@ -717,6 +729,7 @@ pub async fn txt_paste(
     svc: State<'_, Arc<TxtService>>,
     request: Request<'_>,
 ) -> CmdResult<Response> {
+    let started = Instant::now();
     guarded(|| {
         let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
             return Err("expected a raw body".into());
@@ -744,7 +757,7 @@ pub async fn txt_paste(
         if out.changed {
             s.after_change(&mut f);
         }
-        view_message(&s, &f, &req)
+        view_message(&s, &f, &req, started)
     })
 }
 

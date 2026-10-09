@@ -22,6 +22,8 @@ export interface ViewHeader {
   canUndo: boolean;
   canRedo: boolean;
   readOnly: boolean;
+  /** Time the command spent in the host before replying, µs. */
+  coreUs: number;
 }
 
 export const FLAG_FIRST = 1;
