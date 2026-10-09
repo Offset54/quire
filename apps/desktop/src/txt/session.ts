@@ -49,7 +49,8 @@ type CoreEvent =
   | { kind: "disk"; status: DiskStatus }
   | { kind: "reloaded"; change: string }
   | { kind: "sharedWriter" }
-  | { kind: "saving" };
+  | { kind: "saving" }
+  | { kind: "opening"; done: number; total: number };
 
 export type UiMode = { find: "off" | "find" | "replace"; goto: boolean };
 
@@ -108,11 +109,24 @@ export class Session {
   ): Promise<Session | undefined> {
     const holder: { session?: Session } = {};
     const early: CoreEvent[] = [];
+    let opened = false;
     const channel = Session.channel((e) => {
-      if (holder.session) holder.session.onEvent(e);
+      if (e.kind === "opening") {
+        if (!opened) update({ opening: { done: e.done, total: e.total } });
+      } else if (holder.session) holder.session.onEvent(e);
       else early.push(e);
     });
-    const info = await open(channel);
+    let info: DocInfo | null;
+    try {
+      info = await open(channel);
+    } catch (err) {
+      // A decode the user cancelled is not an error.
+      if (String(err).includes("cancelled")) return undefined;
+      throw err;
+    } finally {
+      opened = true;
+      update({ opening: undefined });
+    }
     if (!info) return undefined;
     reset();
     const session = new Session(info.doc);

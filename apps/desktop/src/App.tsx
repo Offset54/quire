@@ -4,7 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "./i18n";
-import { notify } from "./txt/doc-store";
+import { notify, useDocState } from "./txt/doc-store";
 import { EditorScreen } from "./txt/EditorScreen";
 import { Session, getUi, setUi } from "./txt/session";
 
@@ -13,6 +13,27 @@ interface Orphan {
   header: { path: string | null };
   records: number;
   lastChangeMs: number | null;
+}
+
+/** Progress of a non-UTF-8 file being decoded before it opens, with Cancel. */
+function Decoding() {
+  const { opening } = useDocState();
+  if (!opening) return null;
+  const pct = opening.total > 0 ? Math.floor((opening.done / opening.total) * 100) : 0;
+  return (
+    <div className="banner" role="status">
+      <span>{t("app.decoding", { pct })}</span>
+      <progress max={1} value={opening.total > 0 ? opening.done / opening.total : 0} />
+      <button
+        type="button"
+        onClick={() => {
+          void invoke("txt_open_cancel");
+        }}
+      >
+        {t("common.cancel")}
+      </button>
+    </div>
+  );
 }
 
 /** The session the app shows; exposed for benchmarks and UI tests. */
@@ -163,6 +184,7 @@ export function App() {
   }
   return (
     <main className="empty">
+      <Decoding />
       <div className="welcome">
         <p>{t("app.empty")}</p>
         <div className="welcome-actions">

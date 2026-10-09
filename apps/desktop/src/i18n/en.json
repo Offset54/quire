@@ -2,6 +2,7 @@
   "app.empty": "No document open",
   "app.open": "Open…",
   "app.new": "New document",
+  "app.decoding": "Decoding the file to open it… {pct}%",
   "hud.title": "Performance",
   "hud.frames": "Frames",
   "hud.longTasks": "Long tasks (> 50 ms)",

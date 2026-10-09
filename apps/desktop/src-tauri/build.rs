@@ -23,6 +23,7 @@ fn main() {
         "txt_find",
         "txt_replace_all",
         "txt_cancel",
+        "txt_open_cancel",
         "txt_save",
         "txt_set_format",
         "txt_reopen",

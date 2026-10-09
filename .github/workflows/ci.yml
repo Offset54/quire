@@ -73,6 +73,19 @@ jobs:
       - name: UI flows
         shell: pwsh
         run: pwsh tools/webdriver/run-ui-tests.ps1 -NoBuild
+      - name: App log without WebDriver (on failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "smoke"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          Set-Content (Join-Path $dir "a.txt") "smoke test`n"
+          $env:LOCALAPPDATA = $dir
+          $p = Start-Process target/release/quire.exe -ArgumentList (Join-Path $dir "a.txt") -RedirectStandardError (Join-Path $dir "err.txt") -PassThru
+          Start-Sleep 15
+          Stop-Process $p -Force -ErrorAction SilentlyContinue
+          Get-Content (Join-Path $dir "err.txt")
+          (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}').pv
 
   bench-regression:
     # A/B on the same runner: benchmarks of the PR's base and head run back to

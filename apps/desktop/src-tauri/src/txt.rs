@@ -15,7 +15,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use parking_lot::{Condvar, Mutex};
 use quire_core::memory::{DocId, MemoryGovernor, Registration};
@@ -172,6 +172,9 @@ struct Startup {
     state: Mutex<Option<Result<u64, String>>>,
     requested: AtomicBool,
     ready: Condvar,
+    /// Raw bytes decoded so far and the file's size (non-UTF-8 files).
+    done: AtomicU64,
+    total: AtomicU64,
 }
 
 pub struct TxtService {
@@ -183,6 +186,8 @@ pub struct TxtService {
     watcher: Mutex<Option<notify::RecommendedWatcher>>,
     watched: Mutex<HashMap<PathBuf, usize>>,
     weak: Mutex<Weak<TxtService>>,
+    /// Set by `txt_open_cancel` to stop a decode in progress.
+    open_cancel: AtomicBool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -220,6 +225,7 @@ impl TxtService {
             scheduler,
             governor,
             next_id: AtomicU64::new(1),
+            open_cancel: AtomicBool::new(false),
             startup: Startup::default(),
             watcher: Mutex::new(None),
             watched: Mutex::new(HashMap::new()),
@@ -239,20 +245,26 @@ impl TxtService {
             .ok_or_else(|| format!("no document {doc}"))
     }
 
-    fn settings(encoding: Option<&'static encoding_rs::Encoding>) -> OpenSettings<'static> {
+    fn settings<'a>(
+        encoding: Option<&'static encoding_rs::Encoding>,
+        progress: &'a dyn Fn(u64) -> bool,
+    ) -> OpenSettings<'a> {
         OpenSettings {
             encoding,
             temp_dir: data_dir().join("tmp"),
             threads: threads(),
-            progress: &|_| true,
+            progress,
         }
     }
 
     /// Opens a file and starts indexing it; returns the session id.
+    /// `progress(raw bytes decoded)` is called while a non-UTF-8 file is
+    /// transcoded; returning false cancels.
     pub fn open(
         &self,
         path: &Path,
         encoding: Option<&'static encoding_rs::Encoding>,
+        progress: &dyn Fn(u64) -> bool,
     ) -> CmdResult<u64> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let _span = tracing::info_span!("txt_open", doc = id).entered();
@@ -260,7 +272,7 @@ impl TxtService {
             path,
             &self.governor,
             Some(DocId(id)),
-            &Self::settings(encoding),
+            &Self::settings(encoding, progress),
         )
         .map_err(io_err)?;
         Ok(self.adopt(id, file))
@@ -349,7 +361,13 @@ impl TxtService {
         std::thread::Builder::new()
             .name("quire-preopen".into())
             .spawn(move || {
-                let result = me.open(&path, None);
+                me.open_cancel.store(false, Ordering::Release);
+                let total = std::fs::metadata(&path).map_or(0, |m| m.len());
+                me.startup.total.store(total, Ordering::Release);
+                let result = me.open(&path, None, &|done| {
+                    me.startup.done.store(done, Ordering::Release);
+                    !me.open_cancel.load(Ordering::Acquire)
+                });
                 // Lay out the first screen while the webview starts.
                 if let Ok(id) = result
                     && let Ok(s) = me.session(id)
@@ -374,13 +392,23 @@ impl TxtService {
             .expect("spawn preopen");
     }
 
-    fn startup_doc(&self) -> Option<CmdResult<u64>> {
+    /// The command-line document, once opened; `waiting(done, total)` is
+    /// called every 100 ms while a non-UTF-8 file is still being decoded.
+    fn startup_doc(&self, waiting: &dyn Fn(u64, u64)) -> Option<CmdResult<u64>> {
         if !self.startup.requested.load(Ordering::Acquire) {
             return None;
         }
         let mut st = self.startup.state.lock();
         while st.is_none() {
-            self.startup.ready.wait(&mut st);
+            let timed_out = self
+                .startup
+                .ready
+                .wait_for(&mut st, Duration::from_millis(100))
+                .timed_out();
+            let done = self.startup.done.load(Ordering::Acquire);
+            if timed_out && done > 0 {
+                waiting(done, self.startup.total.load(Ordering::Acquire));
+            }
         }
         st.take()
     }
@@ -501,7 +529,7 @@ impl TxtService {
             &path,
             &self.governor,
             Some(DocId(s.id)),
-            &Self::settings(encoding),
+            &Self::settings(encoding, &|_| true),
         )
         .map_err(io_err)?;
         new.doc.layout = layout;
@@ -588,7 +616,9 @@ pub async fn txt_startup(
     channel: Channel<Value>,
 ) -> CmdResult<Option<DocInfo>> {
     let started = Instant::now();
-    let Some(result) = svc.startup_doc() else {
+    let Some(result) = svc.startup_doc(&|done, total| {
+        let _ = channel.send(json!({"kind": "opening", "done": done, "total": total}));
+    }) else {
         return Ok(None);
     };
     let id = result?;
@@ -612,7 +642,26 @@ pub async fn txt_open(
     guarded(|| {
         let started = Instant::now();
         let enc = encoding.and_then(|e| encoding_rs::Encoding::for_label(e.as_bytes()));
-        let id = svc.open(Path::new(&path), enc)?;
+        // Decoding a large non-UTF-8 file takes seconds: report progress on
+        // the document's channel (at most every 100 ms) and stop on cancel.
+        svc.open_cancel.store(false, Ordering::Release);
+        let total = std::fs::metadata(&path).map_or(0, |m| m.len());
+        let last = Mutex::new(None::<Instant>);
+        let progress = |done: u64| {
+            let mut last = last.lock();
+            if last.is_none_or(|t| t.elapsed() >= Duration::from_millis(100)) {
+                *last = Some(Instant::now());
+                let _ = channel.send(json!({"kind": "opening", "done": done, "total": total}));
+            }
+            !svc.open_cancel.load(Ordering::Acquire)
+        };
+        let id = match svc.open(Path::new(&path), enc, &progress) {
+            Err(e) if svc.open_cancel.load(Ordering::Acquire) => {
+                tracing::info!(%e, "open cancelled");
+                return Err("cancelled".into());
+            }
+            r => r?,
+        };
         let s = svc.session(id)?;
         *s.events.lock() = Some(channel);
         let status = s.status(&s.file.lock());
@@ -1010,6 +1059,13 @@ pub async fn txt_replace_all(
             session.emit(st);
         })
         .map_err(io_err)?;
+    Ok(())
+}
+
+/// Stops the decode of a file being opened (`txt_open` returns "cancelled").
+#[tauri::command]
+pub async fn txt_open_cancel(svc: State<'_, Arc<TxtService>>) -> CmdResult<()> {
+    svc.open_cancel.store(true, Ordering::Release);
     Ok(())
 }
 

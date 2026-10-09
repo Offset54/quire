@@ -26,6 +26,7 @@
     "allow-txt-find",
     "allow-txt-replace-all",
     "allow-txt-cancel",
+    "allow-txt-open-cancel",
     "allow-txt-save",
     "allow-txt-set-format",
     "allow-txt-reopen",

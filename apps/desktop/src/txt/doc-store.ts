@@ -73,6 +73,8 @@ export interface State {
   saving: boolean;
   sharedWriter: boolean;
   notices: Notice[];
+  /** A non-UTF-8 file being decoded before it opens (raw bytes). */
+  opening: { done: number; total: number } | undefined;
 }
 
 let state: State = {
@@ -85,6 +87,7 @@ let state: State = {
   saving: false,
   sharedWriter: false,
   notices: [],
+  opening: undefined,
 };
 const listeners = new Set<() => void>();
 let noticeId = 0;

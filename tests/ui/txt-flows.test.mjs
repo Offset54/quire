@@ -233,3 +233,34 @@ test("a killed app offers to restore its unsaved edits", async () => {
   );
   assert.match(await status(), /Unsaved/);
 });
+test("a large non-UTF-8 file shows decode progress and can be cancelled", async () => {
+  // 768 MiB of UTF-16LE: decoding takes long enough to see and cancel.
+  const big = path.join(DIR, "big-utf16.txt");
+  const line = Buffer.from("UTF-16 line, 한국어 and 日本語, to decode\r\n", "utf16le");
+  const block = Buffer.concat(
+    Array.from({ length: Math.ceil((16 << 20) / line.length) }, () => line),
+  );
+  const fd = fs.openSync(big, "w");
+  fs.writeSync(fd, Buffer.from([0xff, 0xfe]));
+  for (let i = 0; i < 48; i++) fs.writeSync(fd, block);
+  fs.closeSync(fd);
+  await wd.stop().catch(() => {});
+  await launch([big]);
+  await wd.until(
+    () => wd.exec("return /Decoding/.test(document.querySelector('.banner')?.innerText ?? '')"),
+    10_000,
+    "decode progress",
+  );
+  await wd.exec(
+    "[...document.querySelectorAll('.banner button')].find((b) => b.innerText === 'Cancel').click()",
+  );
+  await wd.until(
+    () =>
+      wd.exec("return !document.querySelector('.banner') && !!document.querySelector('.welcome')"),
+    10_000,
+    "back to the welcome screen",
+  );
+  assert.equal(await wd.exec("return document.querySelectorAll('.txt-row').length"), 0);
+  assert.equal(await wd.exec("return document.querySelectorAll('.notice.error').length"), 0);
+  fs.rmSync(big);
+});

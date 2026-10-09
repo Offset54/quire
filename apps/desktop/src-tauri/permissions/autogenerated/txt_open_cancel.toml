@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-txt-open-cancel"
+description = "Enables the txt_open_cancel command without any pre-configured scope."
+commands.allow = ["txt_open_cancel"]
+
+[[permission]]
+identifier = "deny-txt-open-cancel"
+description = "Denies the txt_open_cancel command without any pre-configured scope."
+commands.deny = ["txt_open_cancel"]
