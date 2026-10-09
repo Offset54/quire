@@ -78,6 +78,40 @@ fn rows_around_an_anchor() {
 }
 
 #[test]
+fn rows_around_matches_the_row_walk() {
+    // Short, empty, CRLF, CR-only, wide and invalid lines, and one line
+    // spanning several wrap segments.
+    let mut text = b"one\n\nzwei drei vier\r\n\r\nfive\rsix \xFF\xFE seven\n".to_vec();
+    text.extend("가나다 라마 ".repeat(5).as_bytes());
+    text.push(b'\n');
+    text.extend("abc def ".repeat(20_000).as_bytes());
+    text.extend(b"\r\nend");
+    let s = snap(&text);
+    for layout in [
+        Layout { wrap: None, tab: 4 },
+        Layout {
+            wrap: Some(7),
+            tab: 4,
+        },
+    ] {
+        let rows = all_rows(&s, &layout);
+        let pick: Vec<usize> = (0..rows.len())
+            .filter(|&i| i < 40 || i % 997 == 0 || i + 40 > rows.len())
+            .collect();
+        for &i in &pick {
+            let r = rows[i];
+            for anchor in [r.start, (r.start + r.end) / 2] {
+                let (got, at) = rows_around(&s, anchor, 13, 21, &layout).unwrap();
+                let lo = i.saturating_sub(13);
+                let hi = (i + 22).min(rows.len());
+                assert_eq!(at, i - lo, "{layout:?} anchor {anchor}");
+                assert_eq!(got, rows[lo..hi], "{layout:?} anchor {anchor}");
+            }
+        }
+    }
+}
+
+#[test]
 fn long_lines_wrap_per_segment() {
     let line = "abcdefghij".repeat(30_000); // 300 KB, one line
     let s = snap(line.as_bytes());

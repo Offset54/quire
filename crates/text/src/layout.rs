@@ -223,6 +223,9 @@ pub fn row_before(
 
 /// Up to `before` rows above the row holding `anchor`, that row, and up to
 /// `after` rows below it. Returns the rows and the anchor row's index.
+///
+/// Works a segment (or an unwrapped line) at a time, so each segment is
+/// read and wrapped once however many of its rows are wanted.
 pub fn rows_around(
     snap: &Snapshot,
     anchor: u64,
@@ -230,32 +233,87 @@ pub fn rows_around(
     after: usize,
     layout: &Layout,
 ) -> io::Result<(Vec<VisualRow>, usize)> {
-    let mid = row_containing(snap, anchor.min(snap.len()), layout)?;
-    let mut up = Vec::with_capacity(before);
-    let mut r = mid;
+    let bounds = line_bounds(snap, anchor.min(snap.len()))?;
+    let off = anchor.min(bounds.1);
+    let seg = if layout.wrap.is_some() {
+        segment_start(snap, bounds.0, bounds.1, off)?
+    } else {
+        bounds.0
+    };
+    let rows = segment_rows(snap, bounds, seg, layout)?;
+    let i = rows.iter().rposition(|r| r.start <= off).unwrap_or(0);
+    // `up` is in reverse order (nearest first).
+    let mut up: Vec<VisualRow> = rows[..i].iter().rev().copied().collect();
+    let mut down: Vec<VisualRow> = rows[i..].to_vec();
+    let mut first = rows[0];
     while up.len() < before {
-        match row_before(snap, &r, layout)? {
-            Some(p) => {
-                up.push(p);
-                r = p;
-            }
-            None => break,
-        }
+        let Some(chunk) = segment_before(snap, &first, layout)? else {
+            break;
+        };
+        first = chunk[0];
+        up.extend(chunk.iter().rev());
     }
-    up.reverse();
+    let mut last = *rows.last().expect("a segment has a row");
+    while down.len() < after + 1 {
+        let Some(chunk) = segment_after(snap, &last, layout)? else {
+            break;
+        };
+        last = *chunk.last().expect("a segment has a row");
+        down.extend(chunk);
+    }
+    up.truncate(before);
+    down.truncate(after + 1);
     let index = up.len();
-    up.push(mid);
-    let mut r = mid;
-    for _ in 0..after {
-        match row_after(snap, &r, layout)? {
-            Some(n) => {
-                up.push(n);
-                r = n;
-            }
-            None => break,
-        }
-    }
+    up.reverse();
+    up.extend(down);
     Ok((up, index))
+}
+
+/// Rows of the segment (or line) after the one ending with `last`.
+fn segment_after(
+    snap: &Snapshot,
+    last: &VisualRow,
+    layout: &Layout,
+) -> io::Result<Option<Vec<VisualRow>>> {
+    if last.end < last.line_end {
+        let bounds = (last.line_start, last.line_end, last.next_line);
+        return segment_rows(snap, bounds, last.end, layout).map(Some);
+    }
+    if last.next_line > last.line_end {
+        let start = last.next_line;
+        let (end, next) = snap.line_end(start)?;
+        return segment_rows(snap, (start, end, next), start, layout).map(Some);
+    }
+    Ok(None)
+}
+
+/// Rows of the segment (or line) before the one starting with `first`.
+fn segment_before(
+    snap: &Snapshot,
+    first: &VisualRow,
+    layout: &Layout,
+) -> io::Result<Option<Vec<VisualRow>>> {
+    let (bounds, at) = if first.start > first.line_start {
+        let b = (first.line_start, first.line_end, first.next_line);
+        (b, first.start - 1)
+    } else if first.line_start == 0 {
+        return Ok(None);
+    } else {
+        // The previous line's break: step onto its first byte (the CR of a
+        // CRLF), never between CR and LF. Then its last segment.
+        let mut p = first.line_start - 1;
+        if p >= 1 && snap.read(p - 1..p + 1)? == b"\r\n" {
+            p -= 1;
+        }
+        let b = line_bounds(snap, p)?;
+        (b, b.1.saturating_sub(1).max(b.0))
+    };
+    let seg = if layout.wrap.is_some() {
+        segment_start(snap, bounds.0, bounds.1, at)?
+    } else {
+        bounds.0
+    };
+    segment_rows(snap, bounds, seg, layout).map(Some)
 }
 
 /// Visual column of `offset` within `row` (row-relative; approximate past

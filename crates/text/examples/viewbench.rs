@@ -33,6 +33,26 @@ fn main() {
     f.doc.buffer_mut().refresh_index();
     println!("index {:?}", t.elapsed());
     let len = f.doc.len();
+    {
+        // Line lookups and the row walk alone, away from the message.
+        let snap = f.doc.buffer().snapshot();
+        let off = len / 3 + 777;
+        let t = Instant::now();
+        for i in 0..1000u64 {
+            snap.line_start_containing(off + i * 5000).unwrap();
+            snap.line_end(off + i * 5000).unwrap();
+        }
+        println!("line bounds x1000 {:?}", t.elapsed());
+        for wrap in [None, Some(120)] {
+            let layout = Layout { wrap, tab: 4 };
+            let t = Instant::now();
+            for i in 0..10u64 {
+                quire_text::layout::rows_around(&snap, off + i * 7_000_000, 70, 105, &layout)
+                    .unwrap();
+            }
+            println!("rows_around {wrap:?} x10 {:?}", t.elapsed());
+        }
+    }
     for wrap in [None, Some(120)] {
         let mut times = Vec::new();
         for i in 0..50u64 {

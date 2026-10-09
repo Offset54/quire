@@ -8,27 +8,30 @@ use unicode_width::UnicodeWidthChar;
 /// `(offset, byte length, char)` for each character of `bytes`; an invalid
 /// byte is `(offset, 1, None)`.
 pub fn chars(bytes: &[u8]) -> impl Iterator<Item = (usize, usize, Option<char>)> + '_ {
+    // Each valid run is validated once and then walked (linear overall).
     let mut at = 0usize;
-    let mut valid_to = 0usize;
+    let mut run = "".char_indices();
+    let mut run_base = 0usize;
     std::iter::from_fn(move || {
+        if let Some((i, c)) = run.next() {
+            return Some((run_base + i, c.len_utf8(), Some(c)));
+        }
         if at >= bytes.len() {
             return None;
         }
-        if at >= valid_to {
-            match std::str::from_utf8(&bytes[at..]) {
-                Ok(_) => valid_to = bytes.len(),
-                Err(e) if e.valid_up_to() > 0 => valid_to = at + e.valid_up_to(),
-                Err(_) => {
-                    at += 1;
-                    return Some((at - 1, 1, None));
-                }
-            }
+        let valid = match std::str::from_utf8(&bytes[at..]) {
+            Ok(s) => s,
+            Err(e) => std::str::from_utf8(&bytes[at..at + e.valid_up_to()]).expect("validated"),
+        };
+        if valid.is_empty() {
+            at += 1;
+            return Some((at - 1, 1, None));
         }
-        let s = std::str::from_utf8(&bytes[at..valid_to]).expect("validated");
-        let c = s.chars().next().expect("non-empty");
-        let n = c.len_utf8();
-        at += n;
-        Some((at - n, n, Some(c)))
+        run_base = at;
+        at += valid.len();
+        run = valid.char_indices();
+        let (i, c) = run.next().expect("non-empty");
+        Some((run_base + i, c.len_utf8(), Some(c)))
     })
 }
 
