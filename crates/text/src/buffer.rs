@@ -222,6 +222,101 @@ impl Snapshot {
         Ok(b[0])
     }
 
+    /// Starts reading `range` ahead (mapped sources queue the reads; see
+    /// ADR-0007).
+    pub fn prefetch(&self, range: Range<u64>) {
+        let _ = self.tree.visit(range.start, range.end, &mut |ps, p| {
+            let a = range.start.max(ps);
+            let b = range.end.min(ps + p.len);
+            self.buffers
+                .get(p.buf)
+                .source
+                .prefetch(p.start + (a - ps), b - a);
+            ControlFlow::Continue(())
+        });
+    }
+
+    /// Position of the first (or, with `last`, the last) CR or LF in
+    /// `range`. Before the line index reaches a long line, finding its end
+    /// or start is a cold scan of up to the whole file, so large ranges are
+    /// read ahead and split across threads, a stage at a time from the near
+    /// end.
+    fn find_cr_lf(&self, range: Range<u64>, last: bool) -> io::Result<Option<u64>> {
+        const BLOCK: u64 = 1 << 20;
+        const STAGE: u64 = 32 << 20;
+        const PARTS: u64 = 4;
+        let scan = |r: Range<u64>| -> io::Result<Option<u64>> {
+            let mut buf = vec![0u8; BLOCK.min(r.end - r.start) as usize];
+            let (mut lo, mut hi) = (r.start, r.end);
+            while lo < hi {
+                let n = BLOCK.min(hi - lo);
+                let at = if last { hi - n } else { lo };
+                let bytes = &mut buf[..n as usize];
+                self.read_into(at, bytes)?;
+                let hit = if last {
+                    memchr::memrchr2(b'\n', b'\r', bytes)
+                } else {
+                    memchr::memchr2(b'\n', b'\r', bytes)
+                };
+                if let Some(p) = hit {
+                    return Ok(Some(at + p as u64));
+                }
+                if last {
+                    hi = at;
+                } else {
+                    lo = at + n;
+                }
+            }
+            Ok(None)
+        };
+        let (mut lo, mut hi) = (range.start, range.end.min(self.len()));
+        while lo < hi {
+            let (a, b) = if last {
+                (hi.saturating_sub(STAGE).max(lo), hi)
+            } else {
+                (lo, (lo + STAGE).min(hi))
+            };
+            let found = if b - a <= 2 * BLOCK {
+                scan(a..b)?
+            } else {
+                self.prefetch(a..b);
+                let part = (b - a).div_ceil(PARTS);
+                let results: Vec<io::Result<Option<u64>>> = std::thread::scope(|s| {
+                    let handles: Vec<_> = (0..PARTS)
+                        .map(|i| {
+                            let pa = (a + i * part).min(b);
+                            let pb = (pa + part).min(b);
+                            let scan = &scan;
+                            s.spawn(move || if pa < pb { scan(pa..pb) } else { Ok(None) })
+                        })
+                        .collect();
+                    handles
+                        .into_iter()
+                        .map(|h| h.join().expect("scan thread panicked"))
+                        .collect()
+                });
+                let mut hits = Vec::new();
+                for r in results {
+                    hits.extend(r?);
+                }
+                if last {
+                    hits.into_iter().max()
+                } else {
+                    hits.into_iter().min()
+                }
+            };
+            if found.is_some() {
+                return Ok(found);
+            }
+            if last {
+                hi = a;
+            } else {
+                lo = b;
+            }
+        }
+        Ok(None)
+    }
+
     /// Calls `f(offset, bytes)` over `range` in blocks of at most `block`
     /// bytes, in order, until it breaks.
     pub fn for_each_block(
@@ -394,6 +489,21 @@ impl Snapshot {
     /// bytes (`None`: no limit). `Ok(None)`: not within the limit.
     fn scan_back_for_line_start(&self, offset: u64, limit: Option<u64>) -> io::Result<Option<u64>> {
         const STEP: u64 = 64 * 1024;
+        if limit.is_none() {
+            // The last break strictly before `offset`; a CR whose LF is at
+            // or past `offset` isn't one (the LF ends that line).
+            let mut end = offset;
+            while let Some(p) = self.find_cr_lf(0..end, true)? {
+                let is_break = self.byte_at(p)? == b'\n'
+                    || p + 1 >= self.len()
+                    || self.byte_at(p + 1)? != b'\n';
+                if is_break {
+                    return Ok(Some(p + 1));
+                }
+                end = p;
+            }
+            return Ok(Some(0));
+        }
         let floor = limit.map_or(0, |l| offset.saturating_sub(l));
         let mut end = offset;
         // A break at offset-1 ends the previous line: `offset` starts one.
@@ -450,6 +560,14 @@ impl Snapshot {
     fn scan_line_end(&self, offset: u64, limit: Option<u64>) -> io::Result<Option<(u64, u64)>> {
         const STEP: u64 = 64 * 1024;
         let len = self.len();
+        if limit.is_none() {
+            let Some(pos) = self.find_cr_lf(offset..len, false)? else {
+                return Ok(Some((len, len)));
+            };
+            let crlf =
+                self.byte_at(pos)? == b'\r' && pos + 1 < len && self.byte_at(pos + 1)? == b'\n';
+            return Ok(Some((pos, pos + if crlf { 2 } else { 1 })));
+        }
         let ceil = limit.map_or(len, |l| (offset + l).min(len));
         let mut at = offset;
         while at < ceil {

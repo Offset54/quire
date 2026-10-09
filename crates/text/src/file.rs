@@ -19,10 +19,8 @@
 //! losses; anything that can't be written faithfully (characters the
 //! target encoding lacks) fails the save unless the caller confirmed.
 
-#[cfg(unix)]
-use std::fs::File;
-use std::fs::OpenOptions;
-use std::io::{self, BufWriter, Write};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -464,6 +462,112 @@ fn bom_bytes(e: &'static Encoding) -> &'static [u8] {
     }
 }
 
+/// Block size handed to the save writer thread.
+const WRITE_BLOCK: usize = 4 << 20;
+
+/// A writer that hands full blocks to a thread writing them to the file, so
+/// reading and indexing the next block overlap the write: a save runs at
+/// the disk's speed instead of read + scan + write in series. Blocks are
+/// recycled; at most four exist.
+struct ThreadedWriter {
+    block: Vec<u8>,
+    tx: Option<std::sync::mpsc::SyncSender<Vec<u8>>>,
+    free: std::sync::mpsc::Receiver<Vec<u8>>,
+    thread: Option<std::thread::JoinHandle<io::Result<File>>>,
+}
+
+impl ThreadedWriter {
+    fn new(file: File) -> io::Result<Self> {
+        let (tx, rx) = std::sync::mpsc::sync_channel::<Vec<u8>>(2);
+        let (free_tx, free) = std::sync::mpsc::channel();
+        for _ in 0..3 {
+            let _ = free_tx.send(Vec::with_capacity(WRITE_BLOCK));
+        }
+        let thread = std::thread::Builder::new()
+            .name("quire-save-writer".into())
+            .spawn(move || {
+                let mut file = file;
+                for mut b in rx {
+                    file.write_all(&b)?;
+                    b.clear();
+                    let _ = free_tx.send(b);
+                }
+                Ok(file)
+            })?;
+        Ok(Self {
+            block: Vec::with_capacity(WRITE_BLOCK),
+            tx: Some(tx),
+            free,
+            thread: Some(thread),
+        })
+    }
+
+    fn send_block(&mut self) -> io::Result<()> {
+        if self.block.is_empty() {
+            return Ok(());
+        }
+        // Waits for the writer to return a block; if it stopped (an error),
+        // the send below fails and the error comes from joining it.
+        let next = self
+            .free
+            .recv()
+            .unwrap_or_else(|_| Vec::with_capacity(WRITE_BLOCK));
+        let full = std::mem::replace(&mut self.block, next);
+        let sent = self.tx.as_ref().is_some_and(|tx| tx.send(full).is_ok());
+        if sent { Ok(()) } else { self.join().map(drop) }
+    }
+
+    fn join(&mut self) -> io::Result<File> {
+        drop(self.tx.take());
+        match self.thread.take() {
+            Some(t) => t.join().expect("save writer panicked"),
+            None => Err(io::Error::other("save writer already finished")),
+        }
+    }
+
+    /// Writes what is left and returns the file.
+    fn finish(mut self) -> io::Result<File> {
+        self.send_block()?;
+        self.join()
+    }
+}
+
+impl Write for ThreadedWriter {
+    fn write(&mut self, b: &[u8]) -> io::Result<usize> {
+        let mut rest = b;
+        while !rest.is_empty() {
+            let n = (WRITE_BLOCK - self.block.len()).min(rest.len());
+            self.block.extend_from_slice(&rest[..n]);
+            rest = &rest[n..];
+            if self.block.len() == WRITE_BLOCK {
+                self.send_block()?;
+            }
+        }
+        Ok(b.len())
+    }
+
+    /// Blocks are written as they fill; [`ThreadedWriter::finish`] writes the
+    /// last one.
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+impl Drop for ThreadedWriter {
+    fn drop(&mut self) {
+        // An abandoned save: stop the thread (the caller removes the file).
+        if self.thread.is_some() {
+            let _ = self.join();
+        }
+    }
+}
+
+impl std::fmt::Debug for ThreadedWriter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ThreadedWriter").finish_non_exhaustive()
+    }
+}
+
 struct Sink<W: Write> {
     w: W,
     index: IndexBuilder,
@@ -498,6 +602,7 @@ fn write_content<W: Write>(
     on_unmappable: OnUnmappable,
 ) -> Result<(WriteStats, W), SaveError> {
     const BLOCK: u64 = 4 << 20;
+    const PREFETCH_AHEAD: u64 = 64 << 20;
     let mut sink = Sink {
         w,
         index: IndexBuilder::default(),
@@ -530,7 +635,13 @@ fn write_content<W: Write>(
             };
             let mut at = range.start;
             let mut buf = vec![0u8; BLOCK.min(range.end - range.start) as usize];
+            let mut prefetched = at;
             while at < range.end {
+                // Keep the mapping's reads queued ahead (ADR-0007).
+                if at >= prefetched {
+                    o.raw.prefetch(at, PREFETCH_AHEAD.min(range.end - at));
+                    prefetched = at + PREFETCH_AHEAD / 2;
+                }
                 let n = BLOCK.min(range.end - at) as usize;
                 o.raw.read_at(at, &mut buf[..n])?;
                 sink.put(&buf[..n])?;
@@ -880,18 +991,14 @@ pub fn prepare_save(
         .write(true)
         .create_new(true)
         .open(&temp)?;
-    let result = write_content(
-        BufWriter::with_capacity(8 << 20, out),
-        snap,
-        origin,
-        &format,
-        on_unmappable,
-    )
-    .and_then(|(stats, w)| {
-        let f = w.into_inner().map_err(io::IntoInnerError::into_error)?;
-        f.sync_all()?;
-        Ok(stats)
-    });
+    let result = ThreadedWriter::new(out)
+        .map_err(SaveError::from)
+        .and_then(|w| write_content(w, snap, origin, &format, on_unmappable))
+        .and_then(|(stats, w)| {
+            let f = w.finish()?;
+            f.sync_all()?;
+            Ok(stats)
+        });
     match result {
         Ok(stats) => Ok(PreparedSave {
             temp,

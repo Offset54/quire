@@ -251,3 +251,36 @@ fn paths_longer_than_260_characters() {
     save(&mut f, None, &opts(dir.path())).unwrap();
     assert_eq!(std::fs::read(&file).unwrap(), b"long +path\n");
 }
+
+#[test]
+fn threaded_writer_keeps_bytes_in_order_and_reports_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let p = dir.path().join("w.bin");
+    let mut w = ThreadedWriter::new(File::create(&p).unwrap()).unwrap();
+    let mut expected = Vec::new();
+    // Writes smaller than, equal to and larger than a block, unaligned.
+    for (i, n) in [
+        1usize,
+        7,
+        WRITE_BLOCK - 3,
+        WRITE_BLOCK,
+        3 * WRITE_BLOCK + 5,
+        0,
+        11,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let chunk: Vec<u8> = (0..n).map(|k| (k + i * 31) as u8).collect();
+        w.write_all(&chunk).unwrap();
+        expected.extend_from_slice(&chunk);
+    }
+    drop(w.finish().unwrap());
+    assert!(std::fs::read(&p).unwrap() == expected);
+
+    // A handle that can't be written: the error comes back, nothing hangs.
+    let mut w = ThreadedWriter::new(File::open(&p).unwrap()).unwrap();
+    let big = vec![0u8; 3 * WRITE_BLOCK];
+    let result = w.write_all(&big).and_then(|()| w.finish().map(drop));
+    assert!(result.is_err());
+}

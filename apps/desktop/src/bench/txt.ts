@@ -336,14 +336,20 @@ export async function txtSave(host: HTMLElement): Promise<unknown> {
 export async function txt300m(host: HTMLElement): Promise<unknown> {
   const e = await env();
   if (!e.file) throw new Error("QUIRE_BENCH_FILE not set");
-  const { session, view, firstPaintMs } = await openView(host, e.file);
+  const { session, view, openedMs, firstPaintMs } = await openView(host, e.file);
+  const firstViewCoreMs = (view.currentHeader?.coreUs ?? 0) / 1000;
   const long0 = getLongTaskCount();
+  const coreMs: Record<string, number> = {};
   const timeAction = async (a: Parameters<TxtView["send"]>[0]) => {
     const samples: InputSample[] = [];
+    const edits: EditSample[] = [];
     const stop = view.onInputSample((s) => samples.push(s));
+    const stopEdits = view.onEditSample((s) => edits.push(s));
     view.send(a);
-    await until(() => samples.length > 0, 10_000, `response to ${a.type}`);
+    await until(() => samples.length > 0 && edits.length > 0, 10_000, `response to ${a.type}`);
     stop();
+    stopEdits();
+    coreMs[`${Object.keys(coreMs).length}:${a.type}`] = edits[0]!.coreMs;
     return samples[0]!.latencyMs;
   };
   const moves: Record<string, number> = {};
@@ -371,7 +377,9 @@ export async function txt300m(host: HTMLElement): Promise<unknown> {
   return {
     scenario: "txt-300m",
     firstPaintMs: Math.round(firstPaintMs * 10) / 10,
-    caretMs: { max: Math.max(...moveMs), each: moves },
+    openedMs: Math.round(openedMs * 10) / 10,
+    firstViewCoreMs,
+    caretMs: { max: Math.max(...moveMs), each: moves, coreMs },
     wrapToggleMs: { on: wrapOn, off: wrapOff, max: Math.max(wrapOn, wrapOff) },
     wrappedScroll: wrapped,
     longTasks: getLongTaskCount() - long0,

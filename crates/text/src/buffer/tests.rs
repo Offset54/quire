@@ -147,3 +147,51 @@ fn add_buffer_reads_across_blocks() {
     assert_eq!(&buf, b"0123456789");
     assert!(add.read_at(at + 5, &mut buf).is_err());
 }
+
+#[test]
+fn long_line_scans_match_the_sequential_scan() {
+    // A 40 MiB line (two 32 MiB stages, each split in four parts) with a
+    // break placed at seams: lone CR, LF and CRLF straddling a boundary.
+    const MIB: usize = 1 << 20;
+    let len = 40 * MIB;
+    let part = (32 * MIB).div_ceil(4);
+    let cases: &[(usize, &[u8])] = &[
+        (5, b"\n"),
+        (part - 1, b"\r\n"),
+        (part, b"\r"),
+        (2 * part + 3, b"\n"),
+        (32 * MIB - 1, b"\r\n"),
+        (32 * MIB, b"\n"),
+        (len - 1, b"\r"),
+    ];
+    for &(at, brk) in cases {
+        let mut bytes = vec![b'a'; len];
+        bytes[at..at + brk.len()].copy_from_slice(brk);
+        let s = TextBuffer::from_bytes(&bytes).snapshot();
+        let n = s.len();
+        for from in [
+            0,
+            at.saturating_sub(1) as u64,
+            (at + brk.len()) as u64,
+            n / 2,
+        ] {
+            assert_eq!(
+                s.scan_line_end(from, None).unwrap(),
+                s.scan_line_end(from, Some(n)).unwrap(),
+                "end from {from}, break {brk:?} at {at}"
+            );
+        }
+        for to in [
+            n,
+            (at + brk.len()) as u64,
+            at as u64 + 1,
+            (at + 1).min(len - 1) as u64,
+        ] {
+            assert_eq!(
+                s.scan_back_for_line_start(to, None).unwrap(),
+                s.scan_back_for_line_start(to, Some(to)).unwrap(),
+                "start before {to}, break {brk:?} at {at}"
+            );
+        }
+    }
+}
