@@ -46,3 +46,7 @@ proptest = "1"
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "text"
+harness = false
