@@ -26,21 +26,26 @@ use serde::{Deserialize, Serialize};
 
 use crate::buffer::Snapshot;
 
-// Tests use tiny sizes so chunk seams, overlap and long matches are hit.
-#[cfg(not(test))]
+// Tests and fuzzing use tiny sizes so chunk seams, overlap and long matches
+// are hit.
+#[cfg(not(any(test, fuzzing)))]
 pub const CHUNK: u64 = 16 << 20;
-#[cfg(test)]
+#[cfg(all(test, not(fuzzing)))]
 pub const CHUNK: u64 = 4096;
-#[cfg(not(test))]
+#[cfg(fuzzing)]
+pub const CHUNK: u64 = 64;
+#[cfg(not(any(test, fuzzing)))]
 pub const OVERLAP: u64 = 64 * 1024;
-#[cfg(test)]
+#[cfg(all(test, not(fuzzing)))]
 pub const OVERLAP: u64 = 64;
+#[cfg(fuzzing)]
+pub const OVERLAP: u64 = 16;
 /// Look-behind context read before each chunk.
 const BEHIND: u64 = 4;
 /// Longest match found exactly; longer ones are cut here.
-#[cfg(not(test))]
+#[cfg(not(any(test, fuzzing)))]
 pub const MAX_MATCH: u64 = 16 << 20;
-#[cfg(test)]
+#[cfg(any(test, fuzzing))]
 pub const MAX_MATCH: u64 = 100_000;
 /// Matches kept in memory (16 bytes each).
 pub const MAX_STORED: usize = 4_000_000;

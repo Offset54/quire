@@ -28,8 +28,12 @@ use encoding_rs::{CoderResult, Encoding, UTF_16BE, UTF_16LE};
 use crate::encoding::{is_multibyte_legacy, is_stateful};
 use crate::source::{MappedSource, MemorySource, Source};
 
-/// Target segment size, in raw bytes.
+/// Target segment size, in raw bytes (tiny when fuzzing, so small inputs
+/// have many seams).
+#[cfg(not(fuzzing))]
 pub const SEGMENT: u64 = 64 * 1024;
+#[cfg(fuzzing)]
+pub const SEGMENT: u64 = 16;
 /// Transcoded output up to this size stays in memory.
 pub const IN_MEMORY_MAX: u64 = 64 << 20;
 
@@ -65,11 +69,11 @@ pub fn clean_boundary(
         return Ok(at.min(end));
     }
     if encoding == UTF_16LE || encoding == UTF_16BE {
+        // Not just after a high surrogate, which may pair with the next
+        // unit. In a run of high surrogates each one may, so move past the
+        // whole run (found by fuzzing: D800 D800 DC00).
         let mut at = at + (at % 2);
-        if at >= end {
-            return Ok(end);
-        }
-        if at >= 2 {
+        while at >= 2 && at < end {
             let mut u = [0u8; 2];
             raw.read_at(at - 2, &mut u)?;
             let unit = if encoding == UTF_16LE {
@@ -77,9 +81,10 @@ pub fn clean_boundary(
             } else {
                 u16::from_be_bytes(u)
             };
-            if (0xD800..0xDC00).contains(&unit) {
-                at += 2;
+            if !(0xD800..0xDC00).contains(&unit) {
+                break;
             }
+            at += 2;
         }
         return Ok(at.min(end));
     }

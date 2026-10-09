@@ -1,0 +1,65 @@
+# Nightly fuzzing (M1 task 13): each cargo-fuzz target in fuzz/ runs for
+# ten minutes from the committed seeds plus the corpus cached from earlier
+# runs. Crashes are uploaded as artifacts; a crash input that is fixed goes
+# into fuzz/regressions/<target>/ (byte-exact, never reformatted).
+name: Fuzz
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: "600"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Pinned like the stable toolchain; bump deliberately.
+  NIGHTLY: nightly-2026-10-07
+  CARGO_FUZZ: 0.13.2
+
+jobs:
+  fuzz:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [encoding, piece_tree, journal, search]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Nightly toolchain and cargo-fuzz
+        run: |
+          rustup toolchain install "$NIGHTLY" --profile minimal
+          cargo +"$NIGHTLY" install cargo-fuzz --version "$CARGO_FUZZ" --locked
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: fuzz
+      - name: Corpus from earlier runs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: fuzz/corpus/${{ matrix.target }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: fuzz-corpus-${{ matrix.target }}-
+      - name: Regressions still pass
+        run: |
+          dir="fuzz/regressions/${{ matrix.target }}"
+          if [ -d "$dir" ] && [ -n "$(ls -A "$dir")" ]; then
+            cargo +"$NIGHTLY" fuzz run ${{ matrix.target }} "$dir"/* -- -runs=0
+          fi
+      - name: Fuzz
+        run: |
+          mkdir -p fuzz/corpus/${{ matrix.target }}
+          cargo +"$NIGHTLY" fuzz run ${{ matrix.target }} \
+            fuzz/corpus/${{ matrix.target }} fuzz/seeds/${{ matrix.target }} \
+            -- -max_total_time=${{ inputs.seconds || '600' }} -rss_limit_mb=4096 -timeout=20
+      - name: Crash inputs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-${{ matrix.target }}-artifacts
+          path: fuzz/artifacts/${{ matrix.target }}

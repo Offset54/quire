@@ -9,6 +9,7 @@
 **/testdata/** -text -diff
 **/tests/data/** -text -diff
 fuzz/regressions/** -text -diff
+fuzz/seeds/** -text -diff
 
 # Document and media formats
 *.pdf   binary

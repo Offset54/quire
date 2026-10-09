@@ -1,0 +1,47 @@
+[package]
+name = "quire-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "cargo-fuzz targets for the text engine (M1 task 13); not shipped"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+encoding_rs = "0.8"
+quire-core = { path = "../crates/core" }
+quire-text = { path = "../crates/text" }
+
+# Its own workspace: built with nightly by cargo-fuzz, never by the main one.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "encoding"
+path = "fuzz_targets/encoding.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "piece_tree"
+path = "fuzz_targets/piece_tree.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "journal"
+path = "fuzz_targets/journal.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "search"
+path = "fuzz_targets/search.rs"
+test = false
+doc = false
+bench = false

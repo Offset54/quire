@@ -130,3 +130,25 @@ fn cancel_stops_transcoding() {
     let err = transcode(src, EUC_KR, 0, dir.path(), 2, &|done| done < 500_000).unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::Interrupted);
 }
+#[test]
+fn utf16_cut_never_splits_a_pair_after_a_run_of_high_surrogates() {
+    // D800 D800 DC00: one decoder gives U+FFFD then U+10000. A cut after
+    // the first D800 that skips only one unit would land between the pair.
+    let units: [u16; 6] = [0x41, 0xD800, 0xD800, 0xD800, 0xDC00, 0x42];
+    for le in [true, false] {
+        let raw: Vec<u8> = units
+            .iter()
+            .flat_map(|u| if le { u.to_le_bytes() } else { u.to_be_bytes() })
+            .collect();
+        let encoding = if le { UTF_16LE } else { UTF_16BE };
+        let src = MemorySource::new(raw.clone());
+        let whole = decode_segment(encoding, &raw).0;
+        for at in 0..=raw.len() as u64 {
+            let cut = clean_boundary(&src, encoding, at, raw.len() as u64).unwrap();
+            let (a, b) = raw.split_at(cut as usize);
+            let mut joined = decode_segment(encoding, a).0;
+            joined.extend(decode_segment(encoding, b).0);
+            assert_eq!(joined, whole, "cut at {cut} (asked {at}), le {le}");
+        }
+    }
+}
