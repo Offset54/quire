@@ -27,7 +27,7 @@ use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use encoding_rs::{EncoderResult, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use quire_core::memory::{DocId, MemoryGovernor};
@@ -761,7 +761,7 @@ fn replace_file(target: &Path, temp: &Path) -> io::Result<()> {
                 return Ok(());
             }
             last = io::Error::last_os_error();
-            std::thread::sleep(Duration::from_millis(100));
+            std::thread::sleep(std::time::Duration::from_millis(100));
         }
         Err(last)
     }
