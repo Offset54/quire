@@ -145,6 +145,8 @@ function maxColumns(s: string): number {
 }
 /** The first rows this process drew (startup and first-paint metrics). */
 let firstContentMarked = false;
+/** The first rows arrived and a frame was requested to draw them. */
+let firstRowsReadyMarked = false;
 
 /** Code points in the first `upTo` UTF-16 units of `s`. */
 function codePoints(s: string, upTo: number): number {
@@ -713,6 +715,11 @@ export class TxtView {
 
   private invalidate(): void {
     this.dirty = true;
+    if (!firstRowsReadyMarked && this.rows.length > 0) {
+      // From here to "txt-first-content" is the wait for a frame (RISKS #12).
+      firstRowsReadyMarked = true;
+      performance.mark("txt-first-rows-ready");
+    }
     if (this.frame === 0 && !this.destroyed) {
       this.frame = requestAnimationFrame(() => {
         this.frame = 0;

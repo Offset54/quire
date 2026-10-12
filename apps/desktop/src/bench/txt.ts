@@ -14,6 +14,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getLongTaskCount } from "../perf/trace";
 import { summarize } from "../perf/stats";
+import { type Loaf, stallsIn as framesStalls, stallTotal } from "./stalls";
 import { getState } from "../txt/doc-store";
 import { Session } from "../txt/session";
 import type { EditSample, InputSample, TxtView } from "../txt/txt-view";
@@ -49,8 +50,33 @@ async function until<T>(
   }
 }
 
+// Long animation frames, for platform stalls (ADR-0024, ./stalls.ts).
+const loafs: Loaf[] = [];
+let loafObserver: PerformanceObserver | undefined;
+
+function watchFrames() {
+  if (loafObserver) return;
+  loafObserver = new PerformanceObserver((l) => {
+    for (const e of l.getEntries()) loafs.push(e.toJSON() as Loaf);
+  });
+  try {
+    loafObserver.observe({ type: "long-animation-frame", buffered: true });
+  } catch {
+    // not supported: no stalls are subtracted
+  }
+}
+
+/** Platform stalls inside [from, to] (performance.now() times). */
+function stallsIn(from: number, to: number) {
+  for (const e of loafObserver?.takeRecords() ?? []) loafs.push(e.toJSON() as Loaf);
+  return framesStalls(loafs, from, to);
+}
+
+const round1 = (v: number) => Math.round(v * 10) / 10;
+
 /** Opens `path` in a view inside `host`; resolves at the first drawn rows. */
 async function openView(host: HTMLElement, path: string) {
+  watchFrames();
   const t0 = performance.now();
   const session = await Session.open(path);
   if (!session) throw new Error("open failed");
@@ -58,7 +84,20 @@ async function openView(host: HTMLElement, path: string) {
   const view = session.attach(host);
   await until(() => view.visibleText().length > 0, 10_000, "first rows");
   await nextFrame();
-  return { session, view, openedMs, firstPaintMs: performance.now() - t0 };
+  const end = performance.now();
+  const stalls = stallsIn(t0, end);
+  const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
+  const drawn = performance.getEntriesByName("txt-first-content", "mark")[0];
+  return {
+    session,
+    view,
+    openedMs,
+    firstPaintMs: end - t0,
+    ownFirstPaintMs: end - t0 - stallTotal(stalls),
+    firstPaintStalls: stalls,
+    // From the first rows' arrival to the frame that drew them.
+    firstFrameWaitMs: ready && drawn ? round1(drawn.startTime - ready.startTime) : null,
+  };
 }
 
 async function indexDone(timeoutMs = 60_000): Promise<number | undefined> {
@@ -79,6 +118,7 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
   const out: {
     line: number;
     ms: number;
+    ownMs: number;
     coreMs: number;
     viewCoreMs: number;
     invokeMs: number;
@@ -92,11 +132,13 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
     const t0 = performance.now();
     const r = await session.gotoLine(line);
     await nextFrame();
-    const ms = performance.now() - t0;
+    const t1 = performance.now();
+    const ms = t1 - t0;
     const landed = view.visibleText().some((t) => t.startsWith(linePrefix(line)));
     out.push({
       line,
       ms,
+      ownMs: ms - stallTotal(stallsIn(t0, t1)),
       coreMs: r.ms,
       viewCoreMs: (view.currentHeader?.coreUs ?? 0) / 1000,
       invokeMs: r.invokeMs,
@@ -118,41 +160,43 @@ function rand(seed: number) {
 }
 
 async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: number) {
-  const gaps: number[] = [];
+  watchFrames();
+  const gaps: [number, number][] = []; // [from, to]
   let blank = 0;
   let frames = 0;
   const long0 = getLongTaskCount();
-  // Long animation frames: where a slow frame's time went (script, style
-  // and layout, or nothing on the main thread).
-  const loafs: unknown[] = [];
-  const po = new PerformanceObserver((l) => {
-    for (const e of l.getEntries()) {
-      if (e.duration > 50) loafs.push(e.toJSON());
-    }
-  });
-  try {
-    po.observe({ type: "long-animation-frame", buffered: false });
-  } catch {
-    // not supported
-  }
   const start = await nextFrame();
   let last = start;
   let worst = { gapMs: 0, atMs: 0 };
   while (last - start < durationMs) {
     const t = await nextFrame();
-    gaps.push(t - last);
+    gaps.push([last, t]);
     if (t - last > worst.gapMs) worst = { gapMs: t - last, atMs: Math.round(last - start) };
     view.scrollByRows((rowsPerSecond * (t - last)) / 1000);
     frames++;
     if (view.placeholderRows() > 0) blank++;
     last = t;
   }
-  po.disconnect();
+  // Each interval without the platform's stall time in it (ADR-0024).
+  const stalls = stallsIn(start, last);
+  const own = gaps.map(([a, b]) => b - a - stallTotal(stallsIn(a, b)));
+  // Where a slow frame's time went (script, style and layout, or nothing on
+  // the main thread).
+  const longFrames = loafs
+    .filter((f) => f.startTime < last && f.startTime + f.duration > start && f.duration > 50)
+    .slice(0, 5);
   return {
-    frameIntervalMs: summarize(gaps),
-    framesOver50ms: gaps.filter((g) => g > 50).length,
+    frameIntervalMs: summarize(gaps.map(([a, b]) => b - a)),
+    ownFrameIntervalMs: summarize(own),
+    platformStalls: {
+      count: stalls.length,
+      totalMs: round1(stallTotal(stalls)),
+      worstMs: round1(Math.max(0, ...stalls.map((s) => s.stallMs))),
+      frames: stalls.slice(0, 10),
+    },
+    framesOver50ms: gaps.filter(([a, b]) => b - a > 50).length,
     worstFrame: worst,
-    longFrames: loafs.slice(0, 5),
+    longFrames,
     placeholderFramesPct: Math.round((blank / Math.max(1, frames)) * 1000) / 10,
     longTasks: getLongTaskCount() - long0,
   };
@@ -204,7 +248,15 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
   const e = await env();
   if (!e.file) throw new Error("QUIRE_BENCH_FILE not set");
   const mem0 = await memory();
-  const { session, view, openedMs, firstPaintMs } = await openView(host, e.file);
+  const {
+    session,
+    view,
+    openedMs,
+    firstPaintMs,
+    ownFirstPaintMs,
+    firstPaintStalls,
+    firstFrameWaitMs,
+  } = await openView(host, e.file);
   const totalLines = 1_662_532; // from the fixture manifest; checked below
   const r = rand(42);
   // Before the index completes: approximate jumps (§4: ≤ 300 ms).
@@ -244,25 +296,37 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
   const fling = await measureFrames(view, 3000, 24_000 / lineH);
   // Scrolling that starts after the screen has been static for a while:
   // the worst frame of a short scroll after each idle period.
-  const scrollAfterIdle: { idleMs: number; worstMs: number }[] = [];
+  const scrollAfterIdle: { idleMs: number; worstMs: number; ownWorstMs: number }[] = [];
   for (const idleMs of [100, 300, 500, 700, 1000, 2000, 300]) {
     await sleep(idleMs);
     const m = await measureFrames(view, 250, 2400 / lineH);
-    scrollAfterIdle.push({ idleMs, worstMs: Math.round(m.worstFrame.gapMs * 10) / 10 });
+    scrollAfterIdle.push({
+      idleMs,
+      worstMs: round1(m.worstFrame.gapMs),
+      ownWorstMs: m.ownFrameIntervalMs.max,
+    });
   }
   const mem1 = await memory();
   await session.discard();
   return {
     scenario: "txt-2g",
     file: e.file,
-    firstPaintMs: Math.round(firstPaintMs * 10) / 10,
+    firstPaintMs: round1(firstPaintMs),
+    ownFirstPaintMs: round1(ownFirstPaintMs),
+    firstPaintStalls,
+    firstFrameWaitMs,
     openMs: Math.round(openedMs * 10) / 10,
     indexMs,
     lineCount: exactLines,
     expectedLines: totalLines,
-    jumpBeforeIndex: { ms: summarize(early.map((j) => j.ms)), runs: early },
+    jumpBeforeIndex: {
+      ms: summarize(early.map((j) => j.ms)),
+      ownMs: summarize(early.map((j) => j.ownMs)),
+      runs: early,
+    },
     jumpIndexed: {
       ms: summarize(indexed.map((j) => j.ms)),
+      ownMs: summarize(indexed.map((j) => j.ownMs)),
       allLanded: indexed.every((j) => j.landed && j.exact),
       runs: indexed,
     },
@@ -336,7 +400,15 @@ export async function txtSave(host: HTMLElement): Promise<unknown> {
 export async function txt300m(host: HTMLElement): Promise<unknown> {
   const e = await env();
   if (!e.file) throw new Error("QUIRE_BENCH_FILE not set");
-  const { session, view, openedMs, firstPaintMs } = await openView(host, e.file);
+  const {
+    session,
+    view,
+    openedMs,
+    firstPaintMs,
+    ownFirstPaintMs,
+    firstPaintStalls,
+    firstFrameWaitMs,
+  } = await openView(host, e.file);
   const firstViewCoreMs = (view.currentHeader?.coreUs ?? 0) / 1000;
   const long0 = getLongTaskCount();
   const coreMs: Record<string, number> = {};
@@ -376,7 +448,10 @@ export async function txt300m(host: HTMLElement): Promise<unknown> {
   await session.discard();
   return {
     scenario: "txt-300m",
-    firstPaintMs: Math.round(firstPaintMs * 10) / 10,
+    firstPaintMs: round1(firstPaintMs),
+    ownFirstPaintMs: round1(ownFirstPaintMs),
+    firstPaintStalls,
+    firstFrameWaitMs,
     openedMs: Math.round(openedMs * 10) / 10,
     firstViewCoreMs,
     caretMs: { max: Math.max(...moveMs), each: moves, coreMs },
@@ -388,14 +463,22 @@ export async function txt300m(host: HTMLElement): Promise<unknown> {
 
 /** Launched with the file as an argument: the app shows it on its own. */
 export async function launch2g(): Promise<unknown> {
+  watchFrames();
   const mark = await until(
     () => performance.getEntriesByName("txt-first-content", "mark")[0],
     30_000,
     "first content",
   );
+  const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
+  // Before the page's time origin the webview wasn't running; stalls are
+  // only seen from there on.
+  const stalls = stallsIn(0, mark.startTime);
   return {
     scenario: "launch-2g",
     timeOriginEpochMs: performance.timeOrigin,
     firstContentEpochMs: performance.timeOrigin + mark.startTime,
+    firstFrameWaitMs: ready ? round1(mark.startTime - ready.startTime) : null,
+    stallMs: round1(stallTotal(stalls)),
+    stalls,
   };
 }

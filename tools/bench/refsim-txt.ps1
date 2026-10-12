@@ -11,8 +11,12 @@
   - txt-2g: first paint, jumps before/after indexing, index time, inserts,
     typing, scrolling, memory (2 GiB fixture, cold).
   - txt-2g-search: literal search on the cold 2 GiB fixture.
-  - txt-save: small edit + save of a 2 GiB copy, against a raw sequential
-    write of the same size on the same volume.
+  - txt-save: small edit + save of a 2 GiB copy, against the mean of raw
+    sequential writes of the same size on the same volume taken right
+    before and right after it ($SaveRuns runs, median ratio).
+  - Frame rows are judged without platform frame stalls (ADR-0024): the
+    scenarios report raw values, the stalls, and "own" values; budgets
+    point at the own values, and the stalls are printed separately.
   - txt-300m: the 300 MiB one-line JSON.
   - launch-2g: the app started with the 2 GiB fixture (ADR-0022).
   Writes bench/results/m1/refsim-txt-<timestamp>.json.
@@ -20,6 +24,7 @@
 param(
   [switch] $NoBuild,
   [int] $Runs = 3,
+  [int] $SaveRuns = 5,
   [string] $Out
 )
 $ErrorActionPreference = "Stop"
@@ -101,26 +106,37 @@ Write-Host "launch-2g (cold file) x $Runs..."
 $launch = foreach ($i in 1..$Runs) {
   & $refsim purge $big | Out-Null
   $r = Invoke-Scenario "launch-2g" $big @($big)
-  [Math]::Round($r.firstContentEpochMs - $r.processCreatedEpochMs, 1)
+  $raw = $r.firstContentEpochMs - $r.processCreatedEpochMs
+  [ordered]@{ ms = [Math]::Round($raw, 1); ownMs = [Math]::Round($raw - $r.stallMs, 1); stallMs = $r.stallMs; firstFrameWaitMs = $r.firstFrameWaitMs }
 }
-Write-Host "txt-save..."
+Write-Host "txt-save x $SaveRuns..."
+# Save against the mean of raw sequential writes of the same size taken
+# right before and right after it (M1_PLAN, decided 2026-10-12): raw writes
+# alone vary 1.0-2.1 s on this SSD.
 $copy = Join-Path $tmp "txt-2g-copy.txt"
-$saves = foreach ($i in 1..$Runs) {
+$seqFile = Join-Path $tmp "seqwrite.bin"
+$saveBytes = (Get-Item $big).Length + "SAVE-BENCH ".Length
+$saves = foreach ($i in 1..$SaveRuns) {
   Copy-Item $big $copy -Force
+  $before = & $refsim seqwrite $seqFile $saveBytes | ConvertFrom-Json
   $s = Invoke-Scenario "txt-save" $copy
-  $w = & $refsim seqwrite (Join-Path $tmp "seqwrite.bin") $s.bytes | ConvertFrom-Json
-  [ordered]@{ saveMs = $s.saveMs; seqwriteMs = [Math]::Round($w.seconds * 1000); ratio = [Math]::Round($s.saveMs / ($w.seconds * 1000), 3); bytes = $s.bytes; ok = $s.ok }
+  $after = & $refsim seqwrite $seqFile $s.bytes | ConvertFrom-Json
+  $rawMs = ($before.seconds + $after.seconds) * 500
+  [ordered]@{
+    saveMs = $s.saveMs; seqwriteBeforeMs = [Math]::Round($before.seconds * 1000); seqwriteAfterMs = [Math]::Round($after.seconds * 1000)
+    ratio = [Math]::Round($s.saveMs / $rawMs, 3); bytes = $s.bytes; ok = $s.ok
+  }
 }
-Remove-Item $copy -ErrorAction SilentlyContinue
+Remove-Item $copy, $seqFile -ErrorAction SilentlyContinue
 
 # The median run per scenario, chosen by its headline metric.
 function Pick([object[]] $runs, [scriptblock] $key) {
   $sorted = @($runs | Sort-Object { [double](& $key $_) })
   $sorted[[int][Math]::Floor(($sorted.Count - 1) / 2)]
 }
-$t2gMid = Pick $t2g { $_.firstPaintMs }
+$t2gMid = Pick $t2g { $_.ownFirstPaintMs }
 $searchMid = Pick $search { $_.totalMs }
-$t300Mid = Pick $t300 { $_.firstPaintMs }
+$t300Mid = Pick $t300 { $_.ownFirstPaintMs }
 $saveMid = Pick $saves { $_.ratio }
 $long = ($t2g | ForEach-Object { $_.typing.longTasks + $_.steady.longTasks + $_.fling.longTasks } | Measure-Object -Sum).Sum +
   ($t300 | ForEach-Object { $_.longTasks } | Measure-Object -Sum).Sum
@@ -140,7 +156,7 @@ $results = [ordered]@{
   runs = $Runs
   txt2g = $t2gMid
   txt2gAll = [ordered]@{
-    firstPaintMs = @($t2g | ForEach-Object { $_.firstPaintMs }); indexMs = @($t2g | ForEach-Object { $_.indexMs })
+    firstPaintMs = @($t2g | ForEach-Object { $_.firstPaintMs }); ownFirstPaintMs = @($t2g | ForEach-Object { $_.ownFirstPaintMs }); indexMs = @($t2g | ForEach-Object { $_.indexMs })
     typingP95 = @($t2g | ForEach-Object { $_.typing.latencyMs.p95 }); insertP95 = @($t2g | ForEach-Object { $_.insertMs.p95 })
   }
   search = $searchMid
@@ -149,7 +165,18 @@ $results = [ordered]@{
   txt300mAll = @($t300 | ForEach-Object { [ordered]@{ firstPaintMs = $_.firstPaintMs; caretMax = $_.caretMs.max; wrapMax = $_.wrapToggleMs.max } })
   save = $saveMid
   saveAll = $saves
-  launch = [ordered]@{ firstContentMs = $launch; p50 = (Median $launch { $_ }) }
+  launch = [ordered]@{
+    runs = $launch; p50 = (Median $launch { $_.ms }); ownP50 = (Median $launch { $_.ownMs })
+  }
+  # Platform frame stalls (ADR-0024), reported, not judged.
+  platformStalls = [ordered]@{
+    txt2gFirstPaint = @($t2g | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; stalls = $_.firstPaintStalls } })
+    txt300mFirstPaint = @($t300 | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; stalls = $_.firstPaintStalls } })
+    steady = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.steady.frameIntervalMs.max; ownMax = $_.steady.ownFrameIntervalMs.max; stalls = $_.steady.platformStalls.count; worstStallMs = $_.steady.platformStalls.worstMs } })
+    fling = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.fling.frameIntervalMs.max; ownMax = $_.fling.ownFrameIntervalMs.max; stalls = $_.fling.platformStalls.count; worstStallMs = $_.fling.platformStalls.worstMs } })
+    wrappedScroll = @($t300 | ForEach-Object { [ordered]@{ rawMax = $_.wrappedScroll.frameIntervalMs.max; ownMax = $_.wrappedScroll.ownFrameIntervalMs.max; stalls = $_.wrappedScroll.platformStalls.count; worstStallMs = $_.wrappedScroll.platformStalls.worstMs } })
+    scrollAfterIdle = @($t2g | ForEach-Object { , @($_.scrollAfterIdle) })
+  }
   longTasks = $long
 }
 
@@ -179,6 +206,13 @@ if (-not $Out) {
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 $results | ConvertTo-Json -Depth 14 | Set-Content $Out
 $rows | ForEach-Object { [pscustomobject]$_ } | Format-Table id, value, unit, kind, factor, effectiveBudget, budget, pass -AutoSize | Out-String -Width 200 | Write-Host
-Write-Host ("launch-2g first content (process creation → rows on screen): " + ($launch -join ", ") + " ms")
+Write-Host ("launch-2g first content (process creation → rows on screen): " + (($launch | ForEach-Object { "$($_.ms) (own $($_.ownMs))" }) -join ", ") + " ms")
+Write-Host "Platform frame stalls (ADR-0024; reported, not judged):"
+$ps = $results.platformStalls
+Write-Host ("  2 GB first paint raw/own: " + (($ps.txt2gFirstPaint | ForEach-Object { "$($_.rawMs)/$($_.ownMs)" }) -join ", ") + " ms")
+Write-Host ("  300 MB first paint raw/own: " + (($ps.txt300mFirstPaint | ForEach-Object { "$($_.rawMs)/$($_.ownMs)" }) -join ", ") + " ms")
+foreach ($k in "steady", "fling", "wrappedScroll") {
+  Write-Host ("  $k max frame raw/own (stalls): " + (($ps.$k | ForEach-Object { "$($_.rawMax)/$($_.ownMax) ($($_.stalls))" }) -join ", ") + " ms")
+}
 Write-Host "results: $Out"
 if ($rows | Where-Object { -not $_.pass }) { exit 1 }

@@ -13,6 +13,7 @@
     "zero": "pass if value is 0",
     "ratio": "pass if value ≤ budget; a ratio of two measurements on this machine, not derated"
   },
+  "platformStalls": "TXT frame and first-paint rows are judged on own values: the measured time minus platform frame stalls (frames the platform did not deliver while the main thread was idle). Raw values and the stalls are reported in the results (ADR-0024).",
   "budgets": [
     {
       "id": "startup.warm",
@@ -116,7 +117,7 @@
     {
       "id": "txt.firstPaint",
       "suite": "txt",
-      "metric": "txt2g.firstPaintMs",
+      "metric": "txt2g.ownFirstPaintMs",
       "budget": 300,
       "unit": "ms",
       "kind": "mixed",
@@ -134,7 +135,7 @@
     {
       "id": "txt.jumpBeforeIndex.max",
       "suite": "txt",
-      "metric": "txt2g.jumpBeforeIndex.ms.max",
+      "metric": "txt2g.jumpBeforeIndex.ownMs.max",
       "budget": 300,
       "unit": "ms",
       "kind": "mixed",
@@ -143,7 +144,7 @@
     {
       "id": "txt.jumpIndexed.p95",
       "suite": "txt",
-      "metric": "txt2g.jumpIndexed.ms.p95",
+      "metric": "txt2g.jumpIndexed.ownMs.p95",
       "budget": 100,
       "unit": "ms",
       "kind": "cpu",
@@ -152,7 +153,7 @@
     {
       "id": "txt.jumpIndexed.max",
       "suite": "txt",
-      "metric": "txt2g.jumpIndexed.ms.max",
+      "metric": "txt2g.jumpIndexed.ownMs.max",
       "budget": 100,
       "unit": "ms",
       "kind": "cpu",
@@ -206,7 +207,7 @@
     {
       "id": "txt.scroll.steady.p99",
       "suite": "txt",
-      "metric": "txt2g.steady.frameIntervalMs.p99",
+      "metric": "txt2g.steady.ownFrameIntervalMs.p99",
       "budget": 16.7,
       "unit": "ms",
       "kind": "raw",
@@ -215,7 +216,7 @@
     {
       "id": "txt.scroll.steady.max",
       "suite": "txt",
-      "metric": "txt2g.steady.frameIntervalMs.max",
+      "metric": "txt2g.steady.ownFrameIntervalMs.max",
       "budget": 50,
       "unit": "ms",
       "kind": "raw",
@@ -224,7 +225,7 @@
     {
       "id": "txt.scroll.fling.p99",
       "suite": "txt",
-      "metric": "txt2g.fling.frameIntervalMs.p99",
+      "metric": "txt2g.fling.ownFrameIntervalMs.p99",
       "budget": 16.7,
       "unit": "ms",
       "kind": "raw",
@@ -233,7 +234,7 @@
     {
       "id": "txt.scroll.fling.max",
       "suite": "txt",
-      "metric": "txt2g.fling.frameIntervalMs.max",
+      "metric": "txt2g.fling.ownFrameIntervalMs.max",
       "budget": 50,
       "unit": "ms",
       "kind": "raw",
@@ -255,7 +256,7 @@
       "budget": 1.25,
       "unit": "×",
       "kind": "ratio",
-      "ref": "§4 saving 2 GB after a small edit: limited only by sequential write speed; read as save time ≤ 1.25 × a raw sequential write of the same bytes on the same volume"
+      "ref": "§4 saving 2 GB after a small edit: limited only by sequential write speed; read as save time ≤ 1.25 × the mean of raw sequential writes of the same bytes on the same volume taken right before and right after it; median of 5 runs (M1_PLAN, 2026-10-12)"
     },
     {
       "id": "txt.memory",
@@ -269,7 +270,7 @@
     {
       "id": "txt300.firstPaint",
       "suite": "txt",
-      "metric": "txt300m.firstPaintMs",
+      "metric": "txt300m.ownFirstPaintMs",
       "budget": 300,
       "unit": "ms",
       "kind": "mixed",
@@ -296,7 +297,7 @@
     {
       "id": "txt300.wrapScroll.max",
       "suite": "txt",
-      "metric": "txt300m.wrappedScroll.frameIntervalMs.max",
+      "metric": "txt300m.wrappedScroll.ownFrameIntervalMs.max",
       "budget": 50,
       "unit": "ms",
       "kind": "raw",

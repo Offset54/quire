@@ -29,8 +29,8 @@ ADR-0021 derates: `cpu` work passes if `value × 1.5 ≤ budget`, `mixed` work (
 | 300 MB single line: first paint | 300 ms | mixed | ≈ 172 ms |
 | 300 MB single line: caret movement, wrap toggle | no hang | cpu | no UI task over 50 ms; each response ≤ 100 ms |
 | Typing → visual response | p95 16 ms, p99 33 ms | cpu | p95 10.7 ms, p99 22 ms |
-| Scrolling | 60 fps, no frame over 50 ms | raw | p99 frame ≤ 16.7 ms, max ≤ 50 ms |
-| Save after a small edit, 2 GB | sequential write speed | io | see task 14: compared with a raw sequential write of the same bytes on the same volume |
+| Scrolling | 60 fps, no frame over 50 ms | raw | p99 frame ≤ 16.7 ms, max ≤ 50 ms, judged without platform frame stalls, which are reported separately (user decision, 2026-10-12; ADR-0024; also first paint and jumps) |
+| Save after a small edit, 2 GB | sequential write speed | io | save time ≤ 1.25 × the mean of raw sequential writes of the same bytes on the same volume, taken right before and right after each save; median of 5 runs (user decision, 2026-10-12: raw 2 GiB writes alone vary 1.0–2.1 s on the dev SSD) |
 | Memory beyond the mapped source | ≤ 1.5 GB per document | raw | process private bytes growth after open, index, search and edits |
 
 ## Tasks
