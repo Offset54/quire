@@ -47,6 +47,18 @@ try {
       Write-Host "==== $log (last 60 lines)"
       if (Test-Path $log) { Get-Content $log -Tail 60 | Write-Host }
     }
+    # Where WebView2 put its user data and DevToolsActivePort, versus what
+    # msedgedriver waited for.
+    if (Test-Path $driverLog) {
+      Write-Host "==== msedgedriver.log: launch and environment lines"
+      Select-String $driverLog -Pattern 'WEBVIEW2|user.data|DevToolsActivePort|Launching|scoped_dir|Starting' |
+        ForEach-Object { Write-Host $_.Line }
+    }
+    Write-Host "==== DevToolsActivePort and EBWebView under the run dir and TEMP"
+    foreach ($base in $dir, $env:TEMP) {
+      Get-ChildItem $base -Recurse -Force -ErrorAction SilentlyContinue -Include DevToolsActivePort, EBWebView |
+        ForEach-Object { Write-Host "$($_.FullName) $($_.LastWriteTime.ToString('o'))" }
+    }
   }
 } finally {
   Stop-Process $td -Force -ErrorAction SilentlyContinue
