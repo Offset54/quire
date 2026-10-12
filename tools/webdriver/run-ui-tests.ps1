@@ -39,17 +39,31 @@ $td = Start-Process $tauriDriver -ArgumentList "--native-driver", "`"$wrapper`""
 # While the first session starts: which app and WebView2 processes run, with
 # what command lines, and what msedgedriver's scoped dirs hold.
 $probeLog = Join-Path $dir "process-probe.log"
-$probe = Start-ThreadJob -ArgumentList $probeLog, $env:TEMP -ScriptBlock {
-  param($out, $temp)
-  for ($i = 0; $i -lt 12; $i++) {
-    Start-Sleep -Seconds 4
-    "---- t+$(4 * ($i + 1)) s" | Add-Content $out
-    Get-CimInstance Win32_Process -Filter "Name='quire.exe' OR Name='msedgewebview2.exe' OR Name='msedgedriver.exe'" |
-      ForEach-Object { "$($_.ProcessId) <- $($_.ParentProcessId) $($_.CommandLine)" } | Add-Content $out
-    Get-ChildItem $temp -Directory -Filter "scoped_dir*" -ErrorAction SilentlyContinue |
-      Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-2) } |
-      ForEach-Object { Get-ChildItem $_.FullName -Recurse -Depth 1 -Force -ErrorAction SilentlyContinue } |
-      ForEach-Object { "  $($_.FullName)" } | Add-Content $out
+$probe = Start-ThreadJob -ArgumentList $probeLog -ScriptBlock {
+  param($out)
+  "user: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)" | Add-Content $out
+  $prev = 0
+  foreach ($t in 5, 15) {
+    Start-Sleep -Seconds ($t - $prev)
+    $prev = $t
+    "---- t+$t s" | Add-Content $out
+    $procs = Get-CimInstance Win32_Process -Filter "Name='quire.exe' OR Name='msedgewebview2.exe' OR Name='msedgedriver.exe'" |
+      Where-Object { $_.Name -ne 'msedgewebview2.exe' -or $_.CommandLine -match '--webview-exe-name=quire\.exe' }
+    foreach ($p in $procs) {
+      $owner = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction SilentlyContinue
+      "$($p.ProcessId) <- $($p.ParentProcessId) $($p.Name) owner=$($owner.Domain)\$($owner.User)" | Add-Content $out
+      # The WebView2 browser process: every switch, and its listening ports.
+      if ($p.Name -eq 'msedgewebview2.exe' -and $p.CommandLine -notmatch ' --type=' -and
+        $p.CommandLine -match '--webview-exe-name=quire\.exe') {
+        $p.CommandLine -split ' (?=--)' | ForEach-Object { "    $_" } | Add-Content $out
+        Get-NetTCPConnection -OwningProcess $p.ProcessId -State Listen -ErrorAction SilentlyContinue |
+          ForEach-Object { "    listening $($_.LocalAddress):$($_.LocalPort)" } | Add-Content $out
+        if ($p.CommandLine -match '--user-data-dir="?([^"]+?)"?( --|$)') {
+          Get-ChildItem $Matches[1] -Force -ErrorAction SilentlyContinue | ForEach-Object { "    udd: $($_.Name)" } | Add-Content $out
+          Get-ChildItem (Split-Path $Matches[1]) -Force -ErrorAction SilentlyContinue | ForEach-Object { "    scoped: $($_.Name)" } | Add-Content $out
+        }
+      }
+    }
   }
 }
 try {
