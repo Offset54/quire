@@ -15,7 +15,7 @@
 
 ## State (2026-10-09)
 
-- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver CI job fails on the runner (diagnosis in progress).
+- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver CI job fails on the runner: the app starts and loads its page there, but msedgedriver can't attach (`session not created: DevToolsActivePort file doesn't exist`, WebView2 153). Since b0cec80, `run-ui-tests.ps1` keeps a verbose msedgedriver log and prints it on failure: read it in that CI run (`gh run view <id> --log-failed`) and compare with a local run (`.cache/ui-tests/<run>/msedgedriver.log`).
 - Platform frame stalls: on this machine the display path stalls 90–340 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). Ref-sim runs that start right after the screen has been static are affected; check `longFrames`/`worstFrame` in results before blaming our code.
 - Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
 - Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
