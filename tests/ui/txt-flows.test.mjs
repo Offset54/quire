@@ -72,7 +72,15 @@ after(async () => {
 
 test("opens a file from the command line and shows its first lines", async () => {
   await launch([sample]);
-  const r = await rows();
+  // The welcome screen can show briefly before the file's rows arrive.
+  const r = await wd.until(
+    async () => {
+      const r = await rows();
+      return r.length > 7 && r;
+    },
+    20_000,
+    "the file's rows",
+  );
   assert.equal(r[0].t, "line 0\tsome text with a tab");
   assert.equal(r[0].ln, "1");
   assert.match(r[7].t, /^한국어 줄 7/);
