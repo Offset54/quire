@@ -2,7 +2,7 @@
 
 - Date: 2026-10-09
 - Commits: `d30c543` (task 1) … HEAD on `main` ([Offset54/quire](https://github.com/Offset54/quire))
-- CI: build, tests and gates green on Windows, macOS and Linux; nightly fuzzing green. The new WebDriver UI-flow job fails on the runner and is being diagnosed (below).
+- CI: build, tests and gates green on Windows, macOS and Linux; the WebDriver UI-flow job green on Windows (since 2026-10-12); nightly fuzzing green.
 - **One decision is yours before M1 can close: how to treat platform frame stalls (and, smaller, how to measure the save ratio).** Everything else is done.
 
 ## Definition of Done (§11)
@@ -19,7 +19,7 @@ Carried into M1 from M0:
 | Item | Status | Evidence |
 |---|---|---|
 | Open a command-line file in parallel with WebView2 startup (ADR-0022) | **Done** | `launch-2g`, process creation → rows on screen, cold: 937–1,068 ms (run 1), 1,225–1,672 ms (run 2, platform stalls) against the cold startup budget of 1.7 s. A non-UTF-8 file reports decode progress through this path too. |
-| WebDriver UI-flow tests (ADR-0020) | **Done locally, CI job failing** | 9 of 9 flows pass locally. On the GitHub runner, msedgedriver can't attach (`session not created: DevToolsActivePort file doesn't exist`); the job now prints the app's own log on failure. |
+| WebDriver UI-flow tests (ADR-0020) | **Done** | 9 of 9 flows pass locally and in CI. The runner's WebView2 (153, elevated) ignored msedgedriver's switches, so no DevTools port opened; under tauri-driver the app now applies them itself ([ADR-0020](adr/0020-benchmark-and-test-harness.md) addendum). |
 
 ### §4 TXT rows in ref-sim
 
@@ -104,6 +104,7 @@ Options: (a) keep the rule and accept that the row passes or fails by chance on 
 7. **UTF-16 segment cut** (found by fuzzing): a cut after a run of high surrogates could split a valid pair.
 8. **macOS and Linux CI** had been red since task 11 (an import used only on Windows).
 9. **No decode progress or cancel** when opening a large non-UTF-8 file, though the plan listed a progress banner.
+10. **WebDriver on the CI runner.** The runner's WebView2 started without msedgedriver's switches (no `--remote-debugging-port`), so every session timed out. A process probe in the runner script showed it; the app now applies the switches under tauri-driver. The first flow also raced the welcome screen on the slower runner and now waits for the file's rows.
 
 ## Deviations from the plan
 
@@ -114,7 +115,6 @@ Options: (a) keep the rule and accept that the row passes or fails by chance on 
 
 ## Known gaps
 
-- WebDriver CI job failing on the runner (above).
 - A command-line file that fails to open (not cancelled) shows no message on the welcome screen.
 - Reopening with another encoding decodes without progress or cancel.
 - The add buffer isn't compacted after a save ([ADR-0008](adr/0008-text-buffer-piece-tree.md)).

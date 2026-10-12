@@ -37,7 +37,7 @@
 | 12 | Editor frontend | Done (`src/txt/`): local echo, offset-independent row keys, latest-wins fetch queue |
 | 13 | Fuzzing | Done: 4 cargo-fuzz targets, 10 min each (1 bug found and fixed), nightly workflow |
 | 14 | Benchmarks | Done: two ref-sim runs (`bench/results/m1/`), criterion, transcoding, Edge idle probe |
-| 15 | WebDriver UI flows | Done: 9/9 pass locally; CI job added, failing on the runner (WebView2 session not created), being diagnosed |
+| 15 | WebDriver UI flows | Done: 9/9 pass locally and in CI (Windows runner). The runner's WebView2 ignored msedgedriver's switches; the app now applies them under tauri-driver (ADR-0020 addendum) |
 | 16 | M1 report | Written ([M1_REPORT.md](M1_REPORT.md)); awaiting the decision on platform frame stalls |
 
 Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, the earlier open issue, is fixed: ref-sim p95 8.1–9.4 ms with local echo (ADR-0023).

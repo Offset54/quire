@@ -13,9 +13,9 @@
 - Make small, focused commits and push to `origin main` (private repo Offset54/quire) as you go. Keep CI green.
 - Keep the user posted with short progress lines during long work.
 
-## State (2026-10-09)
+## State (2026-10-12)
 
-- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver CI job fails on the runner: the app starts and loads its page there, but msedgedriver can't attach (`session not created: DevToolsActivePort file doesn't exist`, WebView2 153). Since b0cec80, `run-ui-tests.ps1` keeps a verbose msedgedriver log and prints it on failure: read it in that CI run (`gh run view <id> --log-failed`) and compare with a local run (`.cache/ui-tests/<run>/msedgedriver.log`).
+- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver UI-flow CI job is green (9/9) since 2026-10-12.
 - Platform frame stalls: on this machine the display path stalls 90–340 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). Ref-sim runs that start right after the screen has been static are affected; check `longFrames`/`worstFrame` in results before blaming our code.
 - Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
 - Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
@@ -55,5 +55,6 @@
 - Tauri Channel messages are ordered per invocation: one Channel per logical stream (ADR-0004).
 - Office automation (`tools/fixtures/validate.ps1`) skips if Word or PowerPoint is already running. Never touch the user's open Office session.
 - Under WebDriver, msedgedriver passes app arguments as `--<lowercased arg>`; the app accepts that form when it names an existing file.
+- The GitHub runner's WebView2 ignores `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`, so under tauri-driver the app applies msedgedriver's switches itself (`webdriver_browser_args`, ADR-0020 addendum). If you change the window builder's browser args, keep that path. On a UI-flow failure, `run-ui-tests.ps1` prints a process probe (WebView2 switches, listening ports) and the driver logs, and CI uploads them as `ui-flow-logs`. msedgedriver doesn't forward the app's stdout or stderr.
 - Windows refuses to truncate a file we have mapped (os error 1224): tests that rewrite a file must drop the document first.
 - Python edits through bash heredocs mangle `\r`/`\n` escapes: write scripts with the file tools and run them.
