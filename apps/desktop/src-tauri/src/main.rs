@@ -121,6 +121,34 @@ fn is_app_url(url: &Url) -> bool {
     }
 }
 
+/// Under tauri-driver, msedgedriver passes its switches (among them
+/// `--remote-debugging-port`) in `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`.
+/// On the GitHub Windows runner (elevated, WebView2 153) the runtime ignores
+/// that variable, so no DevTools port opens and msedgedriver times out on
+/// `DevToolsActivePort`. Under automation the app therefore passes the
+/// switches itself, together with wry's defaults. Chromium keeps only the
+/// last `--disable-features`, so the two feature lists are merged.
+#[cfg(windows)]
+fn webdriver_browser_args() -> Option<String> {
+    if std::env::var_os("TAURI_WEBVIEW_AUTOMATION").is_none_or(|v| v != "true") {
+        return None;
+    }
+    let driver = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").ok()?;
+    let mut features = String::from("msWebOOUI,msPdfOOUI,msSmartScreenProtection");
+    let mut args = vec![String::from("--autoplay-policy=no-user-gesture-required")];
+    for arg in driver.split_whitespace() {
+        match arg.strip_prefix("--disable-features=") {
+            Some(f) => {
+                features.push(',');
+                features.push_str(f);
+            }
+            None => args.push(arg.to_owned()),
+        }
+    }
+    tracing::info!(%driver, "WebDriver browser arguments applied");
+    Some(format!("--disable-features={features} {}", args.join(" ")))
+}
+
 fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
     let _span = tracing::info_span!("create_main_window").entered();
     let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
@@ -129,6 +157,11 @@ fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
         .min_inner_size(640.0, 400.0);
     #[cfg(feature = "bench-fixtures")]
     let builder = bench::configure_window(builder);
+    #[cfg(windows)]
+    let builder = match webdriver_browser_args() {
+        Some(args) => builder.additional_browser_args(&args),
+        None => builder,
+    };
     builder
         .on_navigation(|url| {
             let allowed = is_app_url(url);
