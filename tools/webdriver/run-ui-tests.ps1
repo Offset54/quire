@@ -4,6 +4,8 @@
   Runs the WebDriver UI-flow tests (tests/ui) against the release app
   (ADR-0020): fetches the msedgedriver matching WebView2, starts
   tauri-driver, and runs the flows with an isolated app data directory.
+  Logs (tauri-driver and app output, verbose msedgedriver log) go to the
+  run's directory under .cache/ui-tests; their tails are printed on failure.
 #>
 param([switch] $NoBuild)
 $ErrorActionPreference = "Stop"
@@ -25,13 +27,27 @@ if (-not $tauriDriver) { $tauriDriver = Join-Path $env:USERPROFILE ".cargo/bin/t
 $savedLocal = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = Join-Path $dir "appdata"
 New-Item -ItemType Directory -Force $env:LOCALAPPDATA | Out-Null
-$td = Start-Process $tauriDriver -ArgumentList "--native-driver", "`"$driver`"" -PassThru -WindowStyle Hidden
+# msedgedriver through a wrapper that adds a verbose log; tauri-driver's
+# output (and the app's, which inherits it) goes to files.
+$driverLog = Join-Path $dir "msedgedriver.log"
+$wrapper = Join-Path $dir "msedgedriver.cmd"
+Set-Content $wrapper "@`"$driver`" %* --verbose `"--log-path=$driverLog`"" -Encoding ascii
+$tdOut = Join-Path $dir "tauri-driver.out.log"
+$tdErr = Join-Path $dir "tauri-driver.err.log"
+$td = Start-Process $tauriDriver -ArgumentList "--native-driver", "`"$wrapper`"" -PassThru -WindowStyle Hidden `
+  -RedirectStandardOutput $tdOut -RedirectStandardError $tdErr
 try {
   Start-Sleep -Milliseconds 800
   $env:QUIRE_APP = $app
   $env:QUIRE_UI_DIR = $dir
   node --test --test-concurrency=1 (Join-Path $root "tests/ui/txt-flows.test.mjs")
   $code = $LASTEXITCODE
+  if ($code -ne 0) {
+    foreach ($log in $tdErr, $tdOut, $driverLog) {
+      Write-Host "==== $log (last 60 lines)"
+      if (Test-Path $log) { Get-Content $log -Tail 60 | Write-Host }
+    }
+  }
 } finally {
   Stop-Process $td -Force -ErrorAction SilentlyContinue
   Get-Process msedgedriver -ErrorAction SilentlyContinue | Stop-Process -Force
