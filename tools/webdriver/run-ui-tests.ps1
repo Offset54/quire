@@ -36,6 +36,22 @@ $tdOut = Join-Path $dir "tauri-driver.out.log"
 $tdErr = Join-Path $dir "tauri-driver.err.log"
 $td = Start-Process $tauriDriver -ArgumentList "--native-driver", "`"$wrapper`"" -PassThru -WindowStyle Hidden `
   -RedirectStandardOutput $tdOut -RedirectStandardError $tdErr
+# While the first session starts: which app and WebView2 processes run, with
+# what command lines, and what msedgedriver's scoped dirs hold.
+$probeLog = Join-Path $dir "process-probe.log"
+$probe = Start-ThreadJob -ArgumentList $probeLog, $env:TEMP -ScriptBlock {
+  param($out, $temp)
+  for ($i = 0; $i -lt 12; $i++) {
+    Start-Sleep -Seconds 4
+    "---- t+$(4 * ($i + 1)) s" | Add-Content $out
+    Get-CimInstance Win32_Process -Filter "Name='quire.exe' OR Name='msedgewebview2.exe' OR Name='msedgedriver.exe'" |
+      ForEach-Object { "$($_.ProcessId) <- $($_.ParentProcessId) $($_.CommandLine)" } | Add-Content $out
+    Get-ChildItem $temp -Directory -Filter "scoped_dir*" -ErrorAction SilentlyContinue |
+      Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-2) } |
+      ForEach-Object { Get-ChildItem $_.FullName -Recurse -Depth 1 -Force -ErrorAction SilentlyContinue } |
+      ForEach-Object { "  $($_.FullName)" } | Add-Content $out
+  }
+}
 try {
   Start-Sleep -Milliseconds 800
   $env:QUIRE_APP = $app
@@ -43,6 +59,9 @@ try {
   node --test --test-concurrency=1 (Join-Path $root "tests/ui/txt-flows.test.mjs")
   $code = $LASTEXITCODE
   if ($code -ne 0) {
+    $probe | Wait-Job | Out-Null
+    Write-Host "==== $probeLog"
+    if (Test-Path $probeLog) { Get-Content $probeLog | ForEach-Object { Write-Host ($_.Substring(0, [Math]::Min(600, $_.Length))) } }
     foreach ($log in $tdErr, $tdOut, $driverLog) {
       Write-Host "==== $log (last 60 lines)"
       if (Test-Path $log) { Get-Content $log -Tail 60 | Write-Host }
@@ -61,6 +80,7 @@ try {
     }
   }
 } finally {
+  Remove-Job $probe -Force -ErrorAction SilentlyContinue
   Stop-Process $td -Force -ErrorAction SilentlyContinue
   Get-Process msedgedriver -ErrorAction SilentlyContinue | Stop-Process -Force
   $env:LOCALAPPDATA = $savedLocal
