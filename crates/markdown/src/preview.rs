@@ -162,6 +162,8 @@ pub struct Window {
 /// The preview's render cache.
 pub struct Preview {
     entries: HashMap<u64, Entry>,
+    /// Render with the tables as they are, without waiting for a rebuild.
+    provisional: bool,
     opts: RenderOptions,
     opts_gen: u64,
     next_rev: u64,
@@ -186,6 +188,7 @@ impl Preview {
     pub fn new(opts: RenderOptions) -> Self {
         Self {
             entries: HashMap::new(),
+            provisional: false,
             opts,
             opts_gen: 1,
             next_rev: 1,
@@ -203,6 +206,16 @@ impl Preview {
     pub fn set_options(&mut self, opts: RenderOptions) {
         self.opts = opts;
         self.opts_gen += 1;
+    }
+
+    /// Provisional rendering: while on, blocks render against the tables as
+    /// they are, even when an edit left them waiting for a rebuild. Right
+    /// after an edit the window is shown this way first (the edited block's
+    /// own text and structure don't depend on the tables), then again once
+    /// the tables are rebuilt: renderings whose table values changed get a
+    /// new revision then (their signatures differ).
+    pub fn set_provisional(&mut self, on: bool) {
+        self.provisional = on;
     }
 
     /// Bytes the cache holds (reported to the memory governor).
@@ -257,7 +270,12 @@ impl Preview {
     ) -> io::Result<(u64, u32, Arc<Rendered>)> {
         self.tick += 1;
         let b = doc.index().blocks()[i].clone();
-        let tables_gen = doc.tables_generation();
+        let provisional = self.provisional && doc.tables_pending();
+        let tables_gen = if provisional {
+            doc.current_generation()
+        } else {
+            doc.tables_generation()
+        };
         if let Some(e) = self.entries.get_mut(&b.id)
             && e.opts_gen == self.opts_gen
         {
@@ -265,7 +283,7 @@ impl Preview {
                 e.tick = self.tick;
                 return Ok((e.rev, e.lines, Arc::clone(&e.rendered)));
             }
-            let sig = signature(doc.tables(), &b, &e.rendered);
+            let sig = signature(doc.current_tables(), &b, &e.rendered);
             if sig == e.sig {
                 e.tables_gen = tables_gen;
                 e.tick = self.tick;
@@ -287,9 +305,13 @@ impl Preview {
         let rendered = Arc::new(if large {
             render_large(&bytes, b.end - b.start)
         } else {
-            doc.render_bytes(&bytes, i, &self.opts)
+            if provisional {
+                doc.render_bytes_provisional(&bytes, i, &self.opts)
+            } else {
+                doc.render_bytes(&bytes, i, &self.opts)
+            }
         });
-        let sig = signature(doc.tables(), &b, &rendered);
+        let sig = signature(doc.current_tables(), &b, &rendered);
         let rev = self.next_rev;
         self.next_rev += 1;
         self.bytes += entry_bytes(&rendered);
@@ -298,7 +320,7 @@ impl Preview {
             Entry {
                 rendered: Arc::clone(&rendered),
                 sig,
-                tables_gen: doc.tables_generation(),
+                tables_gen,
                 opts_gen: self.opts_gen,
                 rev,
                 lines,
@@ -544,5 +566,36 @@ mod tests {
         assert!(h.contains("&lt;code&gt;"));
         assert!(h.len() < 40_000);
         assert!(w.blocks[1].html.as_ref().unwrap().html.contains("after"));
+    }
+    #[test]
+    fn provisional_windows_come_first_and_corrections_follow() {
+        let mut text = String::from("Intro.\n\nLater[^n] text.\n\n[^n]: The note.\n");
+        let (mut doc, mut p) = setup(&text);
+        let w = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        assert!(w.blocks[1].html.as_ref().unwrap().html.contains(">1</a>"));
+        // A new reference before it renumbers the note: rebuild pending.
+        text.insert_str(0, "First[^n] ");
+        doc.edit(text.as_bytes(), 0, 0, 10).unwrap();
+        assert!(doc.tables_pending());
+        p.set_provisional(true);
+        let w1 = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        assert!(
+            doc.tables_pending(),
+            "no rebuild for the provisional window"
+        );
+        assert!(w1.blocks[0].html.as_ref().unwrap().html.contains("First"));
+        p.set_provisional(false);
+        let w2 = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        assert!(!doc.tables_pending());
+        // The edited block gets its number; the later reference is the second.
+        assert_ne!(w2.blocks[0].rev, w1.blocks[0].rev);
+        assert!(w2.blocks[0].html.as_ref().unwrap().html.contains(">1</a>"));
+        assert_ne!(w2.blocks[1].rev, w1.blocks[1].rev, "renumbered");
     }
 }

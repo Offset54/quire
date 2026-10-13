@@ -29,6 +29,8 @@ pub struct Heading {
     pub level: u8,
     /// Plain text of the heading's content.
     pub text: String,
+    /// Its id before duplicates are numbered (GitHub's slug rules).
+    pub slug: String,
     /// Line within the block, from 0.
     pub line: u32,
 }
@@ -217,9 +219,11 @@ pub fn analyze(bytes: &[u8], flavor: &Flavor) -> Analysis {
             NodeValue::Heading(h) if line <= base => {
                 let mut t = String::new();
                 plain_text(node, &mut t);
+                let text = t.trim().to_owned();
                 out.headings.push(Heading {
                     level: h.level,
-                    text: t.trim().to_owned(),
+                    slug: crate::tables::slug(&text),
+                    text,
                     line: (line - 1) as u32,
                 });
             }
@@ -289,6 +293,7 @@ mod tests {
             vec![Heading {
                 level: 1,
                 text: "Title em".into(),
+                slug: "title-em".into(),
                 line: 0
             }]
         );

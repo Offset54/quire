@@ -6,7 +6,6 @@
 use std::collections::HashMap;
 
 use crate::analysis::{Analysis, LinkDef};
-use crate::index::Block;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OutlineEntry {
@@ -50,59 +49,47 @@ pub fn slug(text: &str) -> String {
 }
 
 impl Tables {
-    /// Builds the tables from the blocks in order. `analysis(id)` gives a
-    /// block's analysis if it has one (blocks without any take part in no
-    /// table); `complete` says whether every block was analyzed.
-    pub fn build<'a>(
-        blocks: &[Block],
-        analysis: impl Fn(u64) -> Option<&'a Analysis>,
-        complete: bool,
-    ) -> Self {
+    /// Builds the tables from the analyzed blocks in document order:
+    /// (block id, its analysis) for the blocks that have one (the others take
+    /// part in no table); `complete` says whether every block was analyzed.
+    pub fn build<'a>(blocks: impl Iterator<Item = (u64, &'a Analysis)>, complete: bool) -> Self {
         let mut t = Tables {
             complete,
             ..Tables::default()
         };
-        let mut refs_in_order: Vec<String> = Vec::new();
-        let mut seen_slugs: HashMap<String, u32> = HashMap::new();
-        for b in blocks {
-            let Some(a) = analysis(b.id) else { continue };
+        // Keys are cloned only when first inserted (this runs over the whole
+        // document after edits that change what a block contributes).
+        let mut refs_in_order: Vec<&'a str> = Vec::new();
+        let mut seen_slugs: HashMap<&'a str, u32> = HashMap::new();
+        for (id, a) in blocks {
             for (k, d) in &a.defs {
-                t.defs.entry(k.clone()).or_insert_with(|| d.clone());
+                if !t.defs.contains_key(k.as_str()) {
+                    t.defs.insert(k.clone(), d.clone());
+                }
             }
             for k in &a.footnote_defs {
-                t.footnote_defined.entry(k.clone()).or_insert(b.id);
+                if !t.footnote_defined.contains_key(k.as_str()) {
+                    t.footnote_defined.insert(k.clone(), id);
+                }
             }
             for (k, n) in &a.footnote_refs {
-                let total = t.footnote_refs_total.entry(k.clone()).or_insert(0);
-                if *total > 0 {
-                    t.footnote_refs_before.insert((b.id, k.clone()), *total);
+                match t.footnote_refs_total.get_mut(k.as_str()) {
+                    Some(total) => {
+                        t.footnote_refs_before.insert((id, k.clone()), *total);
+                        *total += n;
+                    }
+                    None => {
+                        t.footnote_refs_total.insert(k.clone(), *n);
+                    }
                 }
-                *total += n;
-                refs_in_order.push(k.clone());
+                refs_in_order.push(k);
             }
-            for (i, h) in a.headings.iter().enumerate() {
-                let base = slug(&h.text);
-                let n = seen_slugs.entry(base.clone()).or_insert(0);
-                let s = if *n == 0 {
-                    base.clone()
-                } else {
-                    format!("{base}-{n}")
-                };
-                *n += 1;
-                t.slugs.insert((b.id, i), t.outline.len());
-                t.outline.push(OutlineEntry {
-                    block: b.id,
-                    index: i,
-                    level: h.level,
-                    text: h.text.clone(),
-                    slug: s,
-                });
-            }
+            t.add_headings(id, a, &mut seen_slugs);
         }
         let mut next = 1;
         for k in refs_in_order {
-            if t.footnote_defined.contains_key(&k) && !t.footnote_numbers.contains_key(&k) {
-                t.footnote_numbers.insert(k, next);
+            if t.footnote_defined.contains_key(k) && !t.footnote_numbers.contains_key(k) {
+                t.footnote_numbers.insert(k.to_owned(), next);
                 next += 1;
             }
         }
@@ -136,6 +123,66 @@ impl Tables {
         self.footnote_refs_total.get(key).copied().unwrap_or(0)
     }
 
+    /// Block `old` was replaced by block `new` with an equal analysis `a`:
+    /// the tables stay the same but for the id (typing in a paragraph or a
+    /// heading's block that leaves its contribution unchanged).
+    pub fn rename(&mut self, old: u64, new: u64, a: &Analysis) {
+        for k in &a.footnote_defs {
+            if let Some(id) = self.footnote_defined.get_mut(k)
+                && *id == old
+            {
+                *id = new;
+            }
+        }
+        for (k, _) in &a.footnote_refs {
+            if let Some(n) = self.footnote_refs_before.remove(&(old, k.clone())) {
+                self.footnote_refs_before.insert((new, k.clone()), n);
+            }
+        }
+        for i in 0..a.headings.len() {
+            if let Some(at) = self.slugs.remove(&(old, i)) {
+                self.outline[at].block = new;
+                self.slugs.insert((new, i), at);
+            }
+        }
+    }
+
+    /// Rebuilds only the outline (headings changed, nothing else did).
+    pub fn rebuild_outline<'a>(&mut self, blocks: impl Iterator<Item = (u64, &'a Analysis)>) {
+        self.outline.clear();
+        self.slugs.clear();
+        let mut seen_slugs: HashMap<&'a str, u32> = HashMap::new();
+        for (id, a) in blocks {
+            self.add_headings(id, a, &mut seen_slugs);
+        }
+    }
+
+    fn add_headings<'a>(
+        &mut self,
+        block: u64,
+        a: &'a Analysis,
+        seen_slugs: &mut HashMap<&'a str, u32>,
+    ) {
+        for (i, h) in a.headings.iter().enumerate() {
+            let base = h.slug.as_str();
+            let n = seen_slugs.entry(base).or_insert(0);
+            let s = if *n == 0 {
+                base.to_owned()
+            } else {
+                format!("{base}-{n}")
+            };
+            *n += 1;
+            self.slugs.insert((block, i), self.outline.len());
+            self.outline.push(OutlineEntry {
+                block,
+                index: i,
+                level: h.level,
+                text: h.text.clone(),
+                slug: s,
+            });
+        }
+    }
+
     /// Footnote labels in number order.
     pub fn footnotes_in_order(&self) -> Vec<(&str, u32)> {
         let mut v: Vec<(&str, u32)> = self
@@ -149,6 +196,69 @@ impl Tables {
 
     pub fn outline(&self) -> &[OutlineEntry] {
         &self.outline
+    }
+
+    /// Everything in the tables with block ids replaced by positions in
+    /// `blocks`, sorted: equal for equal documents however they were built.
+    #[cfg(test)]
+    pub(crate) fn summary(&self, blocks: &[crate::index::Block]) -> String {
+        let pos = |id: u64| blocks.iter().position(|b| b.id == id);
+        let mut defs: Vec<_> = self
+            .defs
+            .iter()
+            .map(|(k, d)| format!("{k}={}|{}", d.url, d.title))
+            .collect();
+        defs.sort();
+        let mut numbers: Vec<_> = self
+            .footnote_numbers
+            .iter()
+            .map(|(k, n)| format!("{k}#{n}"))
+            .collect();
+        numbers.sort();
+        let mut defined: Vec<_> = self
+            .footnote_defined
+            .iter()
+            .map(|(k, id)| format!("{k}@{:?}", pos(*id)))
+            .collect();
+        defined.sort();
+        let mut before: Vec<_> = self
+            .footnote_refs_before
+            .iter()
+            .map(|((id, k), n)| format!("{:?}:{k}={n}", pos(*id)))
+            .collect();
+        before.sort();
+        let mut total: Vec<_> = self
+            .footnote_refs_total
+            .iter()
+            .map(|(k, n)| format!("{k}={n}"))
+            .collect();
+        total.sort();
+        let outline: Vec<_> = self
+            .outline
+            .iter()
+            .enumerate()
+            .map(|(i, e)| {
+                let linked = self.slugs.get(&(e.block, e.index)) == Some(&i);
+                format!(
+                    "{:?}/{} h{} {} #{} {linked}",
+                    pos(e.block),
+                    e.index,
+                    e.level,
+                    e.text,
+                    e.slug
+                )
+            })
+            .collect();
+        format!(
+            "defs {defs:?}
+numbers {numbers:?}
+defined {defined:?}
+before {before:?}
+total {total:?}
+outline {outline:?}
+slugs {}",
+            self.slugs.len()
+        )
     }
 
     /// Id of a block's `index`-th heading.
@@ -176,7 +286,12 @@ mod tests {
                 (b.id, analyze(bytes, &crate::options::Flavor::PRODUCT))
             })
             .collect();
-        let t = Tables::build(ix.blocks(), |id| analyses.get(&id), true);
+        let t = Tables::build(
+            ix.blocks()
+                .iter()
+                .filter_map(|b| analyses.get(&b.id).map(|a| (b.id, a))),
+            true,
+        );
         (ix, t)
     }
 

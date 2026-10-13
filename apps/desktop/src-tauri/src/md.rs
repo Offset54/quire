@@ -222,8 +222,15 @@ impl MdDoc {
                 return;
             }
             let has_pending = self.pending.lock().is_some();
-            let complete = self.state.lock().md.index().is_complete();
-            if !has_pending && complete {
+            let (complete, tables_pending) = {
+                let st = self.state.lock();
+                (st.md.index().is_complete(), st.md.tables_pending())
+            };
+            // Tables wait for a rebuild only after the index is complete
+            // (until then every stretch changes them; the completion push
+            // brings them).
+            let corrections = complete && tables_pending;
+            if !has_pending && complete && !corrections {
                 let due = *self.words_due.lock();
                 if due.is_some_and(|d| d <= Instant::now()) {
                     self.count_words();
@@ -242,7 +249,17 @@ impl MdDoc {
             let mut st = self.state.lock();
             let step = if has_pending {
                 self.apply_pending(&mut st).and_then(|at| {
-                    let pushed = self.push_window(&mut st, false)?;
+                    // First the window as it is now, against the tables as
+                    // they are: the edited block's text and structure don't
+                    // wait for an O(document) rebuild of the tables. If the
+                    // edit changed what a block contributes (a footnote
+                    // reference, a definition, a heading), the corrections
+                    // follow once no further edit is waiting.
+                    st.preview.set_provisional(true);
+                    let pushed = self.push_window(&mut st, false);
+                    let indexing = !st.md.index().is_complete();
+                    st.preview.set_provisional(indexing);
+                    let pushed = pushed?;
                     if let Some(at) = at {
                         *self.words_due.lock() = Some(Instant::now() + WORDS_DELAY);
                         let ms = at.elapsed().as_secs_f64() * 1000.0;
@@ -253,6 +270,14 @@ impl MdDoc {
                     }
                     Ok(())
                 })
+            } else if corrections {
+                let started = Instant::now();
+                let r = self.push_window(&mut st, false).map(|_| ());
+                tracing::debug!(
+                    ms = started.elapsed().as_secs_f64() * 1000.0,
+                    "tables rebuilt after an edit"
+                );
+                r
             } else {
                 let MdState { md, snap, .. } = &mut *st;
                 match md.extend(&*snap) {
@@ -270,6 +295,7 @@ impl MdDoc {
                         );
                         *self.words_due.lock() = Some(Instant::now());
                         // Definitions and footnotes from the whole document.
+                        st.preview.set_provisional(false);
                         let r = self.push_window(&mut st, false);
                         let outline = st.md.tables().outline().len();
                         self.emit(json!({"kind": "indexed", "ms": ms, "blocks": st.md.index().blocks().len(), "headings": outline}));
@@ -425,7 +451,13 @@ impl MdService {
                 doc,
                 state: Mutex::new(MdState {
                     md: MarkdownDoc::new(snap.len()),
-                    preview: Preview::new(opts),
+                    preview: {
+                        let mut p = Preview::new(opts);
+                        // Until the index completes, render with what is
+                        // known (no rebuild of partial tables per request).
+                        p.set_provisional(true);
+                        p
+                    },
                     snap: snap.clone(),
                     revision,
                     viewport: None,

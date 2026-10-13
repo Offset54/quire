@@ -52,6 +52,9 @@ pub struct Change {
     pub first: usize,
     pub inserted: usize,
     pub removed: Vec<u64>,
+    /// Ids of the old blocks at `first..`, in order, that the new ones
+    /// replace (reused ids included).
+    pub replaced: Vec<u64>,
     /// Bytes re-parsed to apply the edit.
     pub scanned: u64,
     /// The edit's re-scan didn't line up with the old blocks within its
@@ -317,11 +320,12 @@ impl BlockIndex {
             if (head.starts_with(b"---\n") || head.starts_with(b"---\r\n"))
                 && front_matter_end_within(text, new_end + 4096)?.is_some()
             {
-                let removed = self.blocks.drain(..).map(|b| b.id).collect();
+                let removed: Vec<u64> = self.blocks.drain(..).map(|b| b.id).collect();
                 self.frontier = 0;
                 return Ok(Change {
                     first: 0,
                     inserted: 0,
+                    replaced: removed.clone(),
                     removed,
                     scanned: 0,
                     truncated: true,
@@ -412,6 +416,7 @@ impl BlockIndex {
         // blocks aren't re-rendered.
         let replaced_end = tail.unwrap_or(self.blocks.len());
         let replaced = &self.blocks[first..replaced_end];
+        let replaced_ids: Vec<u64> = replaced.iter().map(|b| b.id).collect();
         let mut pool: Vec<Option<&Block>> = replaced.iter().map(Some).collect();
         let mut next_id = self.next_id;
         let mut new_blocks = Vec::with_capacity(fresh.len());
@@ -445,6 +450,7 @@ impl BlockIndex {
             first,
             inserted: inserted_count,
             removed: removed_ids,
+            replaced: replaced_ids,
             scanned,
             truncated,
         })
