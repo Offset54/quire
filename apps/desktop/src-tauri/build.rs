@@ -36,6 +36,11 @@ fn main() {
         "txt_recovery_list",
         "txt_recover",
         "txt_recovery_discard",
+        "md_attach",
+        "md_detach",
+        "md_view",
+        "md_set_remote",
+        "md_status",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
         commands.extend([

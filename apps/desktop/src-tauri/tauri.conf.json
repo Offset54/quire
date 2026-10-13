@@ -17,7 +17,7 @@
         "default-src": "'self'",
         "script-src": "'self'",
         "style-src": "'self'",
-        "img-src": "'self' blob: data:",
+        "img-src": "'self' blob: data: http://quire-img.localhost quire-img:",
         "font-src": "'self'",
         "connect-src": "ipc: http://ipc.localhost",
         "object-src": "'none'",

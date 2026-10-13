@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-view"
+description = "Enables the md_view command without any pre-configured scope."
+commands.allow = ["md_view"]
+
+[[permission]]
+identifier = "deny-md-view"
+description = "Denies the md_view command without any pre-configured scope."
+commands.deny = ["md_view"]

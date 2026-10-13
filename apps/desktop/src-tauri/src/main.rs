@@ -4,6 +4,8 @@
 #[cfg(feature = "bench-fixtures")]
 mod bench;
 mod frontend_cache;
+mod images;
+mod md;
 #[cfg(feature = "bench-fixtures")]
 mod synthetic;
 mod tracing_setup;
@@ -245,7 +247,20 @@ fn main() {
     let builder = builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init());
+    let image_service = images::ImageService::new(&governor);
+    let served = Arc::clone(&image_service);
+    let builder = builder.register_asynchronous_uri_scheme_protocol(
+        images::SCHEME,
+        move |_ctx, request, responder| served.handle(request, move |r| responder.respond(r)),
+    );
+    let markdown = md::MdService::new(
+        Arc::clone(&txt),
+        Arc::clone(&image_service),
+        governor.clone(),
+    );
     let builder = builder
+        .manage(markdown)
+        .manage(image_service)
         .manage(tracing)
         .manage(ViewService::new(scheduler))
         .manage(governor.clone())
@@ -287,6 +302,11 @@ fn main() {
         txt::txt_recovery_list,
         txt::txt_recover,
         txt::txt_recovery_discard,
+        md::md_attach,
+        md::md_detach,
+        md::md_view,
+        md::md_set_remote,
+        md::md_status,
         bench::bench_scenario,
         bench::bench_open_synthetic,
         bench::bench_report,
@@ -331,6 +351,11 @@ fn main() {
         txt::txt_recovery_list,
         txt::txt_recover,
         txt::txt_recovery_discard,
+        md::md_attach,
+        md::md_detach,
+        md::md_view,
+        md::md_set_remote,
+        md::md_status,
     ]);
 
     let build_span = tracing::info_span!("tauri_build").entered();

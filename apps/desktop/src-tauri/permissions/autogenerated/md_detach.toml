@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-detach"
+description = "Enables the md_detach command without any pre-configured scope."
+commands.allow = ["md_detach"]
+
+[[permission]]
+identifier = "deny-md-detach"
+description = "Denies the md_detach command without any pre-configured scope."
+commands.deny = ["md_detach"]

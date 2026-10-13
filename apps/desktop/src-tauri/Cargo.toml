@@ -14,6 +14,7 @@ path = "src/main.rs"
 quire-core = { path = "../../../crates/core" }
 quire-raster = { path = "../../../crates/raster" }
 quire-text = { path = "../../../crates/text" }
+quire-markdown = { path = "../../../crates/markdown" }
 encoding_rs = "0.8"
 notify = "8"
 qoi = "0.4"
@@ -26,6 +27,8 @@ tauri-plugin-window-state = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 parking_lot = "0.12"
+ureq = { version = "3.4.2", default-features = false, features = ["native-tls-no-default"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp", "ico"] }
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = "0.39"

@@ -20,7 +20,7 @@ use std::time::{Duration, Instant};
 use parking_lot::{Condvar, Mutex};
 use quire_core::memory::{DocId, MemoryGovernor, Registration};
 use quire_core::scheduler::{CancelToken, Scheduler};
-use quire_text::document::{Action, LineEnding, SaveFormat};
+use quire_text::document::{Action, LineEnding, SaveFormat, TextChange};
 use quire_text::file::{
     OnUnmappable, OpenSettings, SaveError, SaveOptions, SaveReport, TextFile, commit_save,
     prepare_save,
@@ -82,9 +82,14 @@ impl Drop for Foreground<'_> {
     }
 }
 
+/// Called after each text change, under the document lock, with the change
+/// envelope and the document (Markdown follows the text through it).
+pub type ChangeListener = Arc<dyn Fn(TextChange, &TextFile) + Send + Sync>;
+
 pub struct Session {
     pub id: u64,
-    file: Mutex<TextFile>,
+    pub(crate) file: Mutex<TextFile>,
+    listener: Mutex<Option<ChangeListener>>,
     journal: Mutex<Option<JournalWriter>>,
     events: Mutex<Option<Channel<Value>>>,
     search: Mutex<SearchState>,
@@ -105,6 +110,20 @@ impl Session {
         {
             tracing::debug!(%err, "document event dropped");
         }
+    }
+
+    fn changed(&self, c: TextChange, f: &TextFile) {
+        let listener = self.listener.lock().clone();
+        if let Some(l) = listener {
+            l(c, f);
+        }
+    }
+
+    /// Follows the text's changes from now on (`None` stops).
+    pub fn set_listener(&self, f: &mut TextFile, l: Option<ChangeListener>) {
+        // Changes before now are part of the state the listener starts from.
+        f.doc.take_change();
+        *self.listener.lock() = l;
     }
 
     fn status(&self, f: &TextFile) -> Value {
@@ -134,11 +153,15 @@ impl Session {
             "remote": f.remote,
             "revision": f.doc.revision(),
             "busy": self.busy.load(Ordering::Acquire),
+            "markdown": f.path.as_deref().is_some_and(crate::md::is_markdown),
         })
     }
 
     /// After a change: journal it, hold or release the edit lock, report.
     fn after_change(&self, f: &mut TextFile) {
+        if let Some(c) = f.doc.take_change() {
+            self.changed(c, f);
+        }
         let records = f.doc.take_records();
         if !records.is_empty() {
             let mut j = self.journal.lock();
@@ -217,11 +240,11 @@ pub struct DocInfo {
     pub open_ms: f64,
 }
 
-type CmdResult<T> = Result<T, String>;
+pub(crate) type CmdResult<T> = Result<T, String>;
 
 /// Runs `f`, turning panics into errors (§8: isolate panics at the
 /// provider boundary).
-fn guarded<T>(f: impl FnOnce() -> CmdResult<T>) -> CmdResult<T> {
+pub(crate) fn guarded<T>(f: impl FnOnce() -> CmdResult<T>) -> CmdResult<T> {
     catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|p| {
         let msg = p
             .downcast_ref::<&str>()
@@ -233,7 +256,7 @@ fn guarded<T>(f: impl FnOnce() -> CmdResult<T>) -> CmdResult<T> {
     })
 }
 
-fn io_err(e: impl std::fmt::Display) -> String {
+pub(crate) fn io_err(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
 
@@ -256,7 +279,7 @@ impl TxtService {
         s
     }
 
-    fn session(&self, doc: u64) -> CmdResult<Arc<Session>> {
+    pub(crate) fn session(&self, doc: u64) -> CmdResult<Arc<Session>> {
         self.sessions
             .lock()
             .get(&doc)
@@ -303,6 +326,7 @@ impl TxtService {
         let session = Arc::new(Session {
             id,
             file: Mutex::new(file),
+            listener: Mutex::new(None),
             journal: Mutex::new(None),
             events: Mutex::new(None),
             search: Mutex::new(SearchState::default()),
@@ -359,6 +383,7 @@ impl TxtService {
     }
 
     fn close_session(&self, s: &Arc<Session>, keep_journal: bool) {
+        *s.listener.lock() = None;
         s.index_cancel.lock().cancel();
         if let Some(c) = s.search.lock().cancel.take() {
             c.cancel();
@@ -566,7 +591,18 @@ impl TxtService {
         new.doc
             .set_selections(vec![quire_text::document::Selection::caret(start)], 0);
         let original = new.original_index();
-        *s.file.lock() = new;
+        {
+            let mut f = s.file.lock();
+            let old_len = f.doc.len();
+            *f = new;
+            f.doc.take_change();
+            let whole = TextChange {
+                from: 0,
+                removed: old_len,
+                inserted: f.doc.len(),
+            };
+            s.changed(whole, &f);
+        }
         if let Some(w) = s.journal.lock().take() {
             w.close(true);
         }

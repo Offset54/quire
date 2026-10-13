@@ -22,6 +22,8 @@ pub struct MarkdownDoc {
     analyzed: std::collections::HashSet<u64>,
     tables: Tables,
     tables_dirty: bool,
+    /// Bumped each time the tables are rebuilt.
+    tables_gen: u64,
 }
 
 impl MarkdownDoc {
@@ -36,6 +38,7 @@ impl MarkdownDoc {
             analyzed: Default::default(),
             tables: Tables::default(),
             tables_dirty: true,
+            tables_gen: 0,
         }
     }
 
@@ -52,7 +55,12 @@ impl MarkdownDoc {
 
     /// Indexes and analyzes one more stretch.
     pub fn extend<T: Text + ?Sized>(&mut self, text: &T) -> io::Result<()> {
+        let was_complete = self.index.is_complete();
         let new = self.index.extend(text)?;
+        if self.index.is_complete() != was_complete {
+            // Footnote numbers wait for the whole document.
+            self.tables_dirty = true;
+        }
         self.analyze_range(text, new)
     }
 
@@ -109,8 +117,26 @@ impl MarkdownDoc {
                 complete,
             );
             self.tables_dirty = false;
+            self.tables_gen += 1;
         }
         &self.tables
+    }
+
+    /// Generation of the tables: changes when they are rebuilt (call
+    /// [`tables`](Self::tables) first to rebuild them if needed).
+    pub fn tables_generation(&mut self) -> u64 {
+        self.tables();
+        self.tables_gen
+    }
+
+    /// Renders block `i`, whose bytes are `bytes`.
+    pub fn render_bytes(&mut self, bytes: &[u8], i: usize, opts: &RenderOptions) -> Rendered {
+        let b = &self.index.blocks()[i];
+        if b.kind == BlockKind::FrontMatter {
+            return render_front_matter(bytes, opts);
+        }
+        let id = b.id;
+        render_block(bytes, id, self.tables(), opts)
     }
 
     /// Renders block `i` of the index.
@@ -120,13 +146,8 @@ impl MarkdownDoc {
         i: usize,
         opts: &RenderOptions,
     ) -> io::Result<Rendered> {
-        let b = self.index.blocks()[i].clone();
-        let bytes = text.read(b.range())?;
-        if b.kind == BlockKind::FrontMatter {
-            return Ok(render_front_matter(&bytes, opts));
-        }
-        let tables = self.tables();
-        Ok(render_block(&bytes, b.id, tables, opts))
+        let bytes = text.read(self.index.blocks()[i].range())?;
+        Ok(self.render_bytes(&bytes, i, opts))
     }
 }
 

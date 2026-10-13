@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-set-remote"
+description = "Enables the md_set_remote command without any pre-configured scope."
+commands.allow = ["md_set_remote"]
+
+[[permission]]
+identifier = "deny-md-set-remote"
+description = "Denies the md_set_remote command without any pre-configured scope."
+commands.deny = ["md_set_remote"]

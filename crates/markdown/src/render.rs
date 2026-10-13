@@ -59,8 +59,11 @@ pub struct Rendered {
     pub html: String,
     /// Normalized labels of references resolved (or not) from other blocks.
     pub deps: Vec<String>,
-    /// Footnote labels the block references.
+    /// Footnote labels the block mentions (`[^label]`), defined or not:
+    /// whether they are defined decides whether they render as references.
     pub footnotes: Vec<String>,
+    /// Headings rendered (their ids come from the outline).
+    pub headings: usize,
 }
 
 struct State<'r> {
@@ -416,8 +419,11 @@ pub fn render_block(bytes: &[u8], block: u64, tables: &Tables, opts: &RenderOpti
     };
     for label in candidates {
         let key = normalize_label(&label);
-        if tables.footnote_defined(&key) {
+        let defined = tables.footnote_defined(&key);
+        if !footnotes.contains(&key) {
             footnotes.push(key);
+        }
+        if defined {
             source.push_str("\n[^");
             source.push_str(&label);
             source.push_str("]: \u{200b}\n");
@@ -443,12 +449,15 @@ pub fn render_block(bytes: &[u8], block: u64, tables: &Tables, opts: &RenderOpti
         headings: 0,
         skip: None,
     };
-    let _ = format_document_with_formatter(root, &o, &mut html, &Plugins::default(), format, state);
+    let headings =
+        format_document_with_formatter(root, &o, &mut html, &Plugins::default(), format, state)
+            .map_or(0, |st| st.headings);
     let deps = std::mem::take(&mut *deps.lock().unwrap_or_else(|e| e.into_inner()));
     Rendered {
         html,
         deps,
         footnotes,
+        headings,
     }
 }
 
