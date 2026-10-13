@@ -13,6 +13,7 @@ const ALLOWED = new Set([
   "Zlib",
   "MPL-2.0",
   "Unicode-3.0",
+  "Unicode-DFS-2016",
   "BSL-1.0",
   "CC0-1.0",
   "0BSD",

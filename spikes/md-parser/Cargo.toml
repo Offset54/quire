@@ -1,0 +1,19 @@
+[package]
+name = "quire-spike-md-parser"
+description = "M2 task 1 spike: comrak vs. pulldown-cmark on the CommonMark/GFM spec tests, the 20 MiB fixture and source positions (ADR-0026). Not shipped."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "md-parser"
+path = "src/main.rs"
+
+[dependencies]
+comrak = { version = "0.56", default-features = false }
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+serde_json = "1"
+
+[lints]
+workspace = true

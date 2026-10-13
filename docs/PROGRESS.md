@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Phase | M1 (TXT engine) in progress |
+| Phase | M2 (Markdown) in progress |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-09 |
+| Last updated | 2026-10-13 |
 
 ## Milestones
 
@@ -12,12 +12,33 @@
 |---|---|---|
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
 | M1 TXT engine | Done ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | All 4 met. Ref-sim run 6 (2026-10-13): 21 of 21 TXT budgets, platform frame stalls reported separately (ADR-0024) |
-| M2 Markdown | Plan approved 2026-10-13 ([plan](M2_PLAN.md)) | n/a |
+| M2 Markdown | In progress ([plan](M2_PLAN.md), approved 2026-10-13) | n/a |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
 | M5 PPTX | Not started | n/a |
 | M6 PPT, export and print | Not started | n/a |
 | M7 Hardening and release | Not started | n/a |
+
+## M2 tasks
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Parser spike | Done: comrak 0.56 ([ADR-0026](adr/0026-markdown-parser.md)); CommonMark 0.31.2 100 %, GFM spec 98.5 %, extensions 93 % as shipped; 20 MiB parse 693 ms raw (background), one block 2 µs |
+| 2 | Block index and incremental parsing | Not started |
+| 3 | Block rendering and spec suite | Not started |
+| 4 | Sanitization and content loading | Not started |
+| 5 | Code highlighting | Not started |
+| 6 | Preview surface | Not started |
+| 7 | KaTeX and Mermaid | Not started |
+| 8 | Source view and incremental preview | Not started |
+| 9 | Scroll sync, outline, click-to-source | Not started |
+| 10 | Editing helpers | Not started |
+| 11 | Exports | Not started |
+| 12 | Corpora, fixtures and fuzzing | Not started |
+| 13 | Benchmarks | Not started |
+| 14 | WebDriver UI flows | Not started |
+| 15 | Carried from M1 | Not started |
+| 16 | M2 report | Not started |
 
 ## M1 tasks
 
@@ -66,6 +87,7 @@ Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, t
 - License allowlist extended with Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD; OFL-1.1 for bundled fonts and FTL for PDFium's FreeType. MIT-0 and `Apache-2.0 WITH LLVM-exception` are also allowed, since both are strictly more permissive than an already-allowed license.
 - Hosting: private GitHub repo with Actions. Made public on 2026-10-13 ([ADR-0025](adr/0025-public-repository.md)).
 - Benchmarking: ref-sim profile on this machine (ADR-0021) instead of a reference laptop.
+- License allowlist: Unicode-DFS-2016 (the predecessor of Unicode-3.0, same grant) approved on 2026-10-13 for comrak's `finl_unicode` (ADR-0026).
 - TypeScript is pinned to 6.0.x: typescript-eslint 8.71 supports `<6.1`, so TS 7 waits for it.
 
 ## Benchmarks vs. budget

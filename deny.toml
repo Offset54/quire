@@ -20,8 +20,9 @@ ignore = [
 
 [licenses]
 # §0 permissive list, plus the additions approved on 2026-10-08:
-# Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD. (OFL-1.1 is approved for bundled
-# fonts and FTL for FreeType inside PDFium; neither ships as a crate.)
+# Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD. Unicode-DFS-2016 (the predecessor of
+# Unicode-3.0, same grant) approved on 2026-10-13 for comrak's finl_unicode.
+# (OFL-1.1 is approved for bundled fonts and FTL for FreeType inside PDFium; neither ships as a crate.)
 allow = [
   "MIT",
   "MIT-0",
@@ -33,6 +34,7 @@ allow = [
   "Zlib",
   "MPL-2.0",
   "Unicode-3.0",
+  "Unicode-DFS-2016",
   "BSL-1.0",
   "CC0-1.0",
   "0BSD",

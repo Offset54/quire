@@ -1,0 +1,266 @@
+{
+  "spike": "M2 task 1: comrak 0.56.0 vs. pulldown-cmark 0.13.4 (ADR-0026)",
+  "machine": "dev machine, raw (not ref-sim): Core Ultra 7 258V, AC power",
+  "python": "3.14.4",
+  "spec": {
+    "commonmark": {
+      "comrak": {
+        "failed": [],
+        "pass": 652,
+        "rate": 1.0
+      },
+      "examples": 652,
+      "pulldown": {
+        "failed": [],
+        "pass": 652,
+        "rate": 1.0
+      },
+      "spec": ".cache/corpora/markdown/commonmark-0.31.2-spec.txt",
+      "suite": "commonmark"
+    },
+    "gfm": {
+      "comrak": {
+        "failed": [
+          [
+            398,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            426,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            434,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            435,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            436,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            473,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            474,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            475,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            477,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            652,
+            "Disallowed Raw HTML (extension)"
+          ]
+        ],
+        "pass": 660,
+        "rate": 0.9850746268656716
+      },
+      "examples": 670,
+      "pulldown": {
+        "failed": [
+          [
+            199,
+            "Tables (extension)"
+          ],
+          [
+            205,
+            "Tables (extension)"
+          ],
+          [
+            398,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            426,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            434,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            435,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            436,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            473,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            474,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            475,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            477,
+            "Emphasis and strong emphasis"
+          ],
+          [
+            621,
+            "Autolinks (extension)"
+          ],
+          [
+            622,
+            "Autolinks (extension)"
+          ],
+          [
+            623,
+            "Autolinks (extension)"
+          ],
+          [
+            624,
+            "Autolinks (extension)"
+          ],
+          [
+            625,
+            "Autolinks (extension)"
+          ],
+          [
+            626,
+            "Autolinks (extension)"
+          ],
+          [
+            627,
+            "Autolinks (extension)"
+          ],
+          [
+            628,
+            "Autolinks (extension)"
+          ],
+          [
+            629,
+            "Autolinks (extension)"
+          ],
+          [
+            630,
+            "Autolinks (extension)"
+          ],
+          [
+            631,
+            "Autolinks (extension)"
+          ],
+          [
+            652,
+            "Disallowed Raw HTML (extension)"
+          ]
+        ],
+        "pass": 647,
+        "rate": 0.9656716417910448
+      },
+      "spec": ".cache/corpora/markdown/gfm-spec.txt",
+      "suite": "gfm"
+    },
+    "gfm-ext": {
+      "comrak": {
+        "failed": [
+          [
+            19,
+            "Autolinks"
+          ],
+          [
+            22,
+            "HTML tag filter"
+          ]
+        ],
+        "pass": 28,
+        "rate": 0.9333333333333333
+      },
+      "examples": 30,
+      "pulldown": {
+        "failed": [
+          [
+            3,
+            "Tables"
+          ],
+          [
+            6,
+            "Tables"
+          ],
+          [
+            10,
+            "Oddly-formatted markers"
+          ],
+          [
+            19,
+            "Autolinks"
+          ],
+          [
+            22,
+            "HTML tag filter"
+          ],
+          [
+            23,
+            "Footnotes"
+          ],
+          [
+            24,
+            "When a footnote is used multiple times, we insert multiple backrefs."
+          ],
+          [
+            25,
+            "Footnote reference labels are href escaped"
+          ],
+          [
+            26,
+            "Interop"
+          ],
+          [
+            27,
+            "Interop"
+          ]
+        ],
+        "pass": 20,
+        "rate": 0.6666666666666666
+      },
+      "spec": ".cache/corpora/markdown/gfm-extensions.txt",
+      "suite": "gfm-ext"
+    }
+  },
+  "throughput_20mib": {
+    "bytes": 20972845,
+    "comrak_blocks": 210938,
+    "comrak_blocks_ms": 639.7746,
+    "comrak_html_bytes": 81445513,
+    "comrak_nodes": 2131544,
+    "comrak_parse_mb_s": 30.250584231616788,
+    "comrak_parse_ms": 693.3038,
+    "comrak_render_mb_s": 23.71181313329624,
+    "comrak_render_ms": 884.4893000000001,
+    "isolated_block_biggest_bytes": 925,
+    "isolated_block_us_comrak_p50": 2.0999999999999996,
+    "isolated_block_us_comrak_p95": 13.1,
+    "isolated_block_us_pulldown_p50": 1.0,
+    "isolated_block_us_pulldown_p95": 4.0,
+    "pulldown_blocks": 210938,
+    "pulldown_blocks_ms": 239.28459999999998,
+    "pulldown_events": 3029492,
+    "pulldown_html_bytes": 43073450,
+    "pulldown_isolated_equals_whole_2mb": false,
+    "pulldown_isolated_len_2mb": [
+      4026388,
+      4113030
+    ],
+    "pulldown_offset_parse_ms": 236.81730000000002,
+    "pulldown_parse_mb_s": 91.00170740649942,
+    "pulldown_parse_ms": 230.4665,
+    "pulldown_render_mb_s": 71.31842639233145,
+    "pulldown_render_ms": 294.07329999999996
+  }
+}
