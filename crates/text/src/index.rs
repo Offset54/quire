@@ -344,8 +344,24 @@ impl ChunkIndex {
         hi: usize,
         cancel: Option<&dyn Fn() -> bool>,
     ) -> io::Result<()> {
+        self.scan_range_ahead(source, lo, hi, cancel, 0)
+    }
+
+    /// [`scan_range`](Self::scan_range), prefetching up to `ahead` bytes
+    /// past the block being read (0: no prefetch). A short window keeps the
+    /// device queue short, so foreground reads don't wait behind it.
+    pub fn scan_range_ahead(
+        &self,
+        source: &dyn Source,
+        lo: usize,
+        hi: usize,
+        cancel: Option<&dyn Fn() -> bool>,
+        ahead: u64,
+    ) -> io::Result<()> {
         const BLOCK_CHUNKS: usize = 16; // 1 MiB reads
         let len = source.len();
+        let range_end = (hi as u64 * CHUNK).min(len);
+        let mut prefetched = lo as u64 * CHUNK;
         let mut buf = vec![0u8; BLOCK_CHUNKS * CHUNK as usize + 1];
         let mut i = lo;
         while i < hi {
@@ -355,6 +371,13 @@ impl ChunkIndex {
             let n = BLOCK_CHUNKS.min(hi - i);
             let start = i as u64 * CHUNK;
             let end = ((i + n) as u64 * CHUNK).min(len);
+            // Top the window up once it's half used.
+            if ahead > 0 && prefetched < range_end && prefetched < end + ahead / 2 {
+                let to = (end + ahead).min(range_end);
+                let from = prefetched.max(start);
+                source.prefetch(from, to - from);
+                prefetched = to;
+            }
             // One byte of look-ahead past the block, for a trailing CR.
             let read_end = (end + 1).min(len);
             let block = &mut buf[..(read_end - start) as usize];
@@ -552,37 +575,49 @@ fn scan_nth(
     Ok((scan(bytes, None, next).0, None))
 }
 
+/// The longest an index job waits for foreground reads before it goes on.
+pub const MAX_PAUSE: std::time::Duration = std::time::Duration::from_millis(200);
+
 /// Indexes `source` in the background on `scheduler`, in jobs of 32 MiB
-/// submitted front to back, with prefetch ahead of the readers (ADR-0007).
-/// `on_progress` runs after each job.
+/// submitted front to back, each prefetching a short window ahead of its
+/// reads (ADR-0007 addendum: a deep prefetch queue made foreground reads
+/// wait). While `foreground` is non-zero (a view is being built from the
+/// same file), jobs pause between blocks, for at most [`MAX_PAUSE`] each
+/// time. `on_progress` runs after each job.
 pub fn index_in_background(
     scheduler: &quire_core::scheduler::Scheduler,
     source: Arc<dyn Source>,
     index: Arc<ChunkIndex>,
     cancel: quire_core::scheduler::CancelToken,
+    foreground: Arc<std::sync::atomic::AtomicUsize>,
     on_progress: Arc<dyn Fn(&ChunkIndex) + Send + Sync>,
 ) -> Vec<quire_core::scheduler::JobHandle<()>> {
     use quire_core::scheduler::{JobSpec, Priority};
     const JOB_CHUNKS: usize = 512; // 32 MiB
-    const AHEAD: u64 = 64 << 20;
+    const AHEAD: u64 = 8 << 20;
     let n = index.chunk_count();
     let mut handles = Vec::new();
     let mut lo = 0;
     while lo < n {
         let hi = (lo + JOB_CHUNKS).min(n);
-        let (source, index, cancel, on_progress) = (
+        let (source, index, cancel, foreground, on_progress) = (
             Arc::clone(&source),
             Arc::clone(&index),
             cancel.clone(),
+            Arc::clone(&foreground),
             Arc::clone(&on_progress),
         );
         handles.push(scheduler.submit(
             JobSpec::new("txt-index", Priority::Background),
             move |ctx| {
-                let start = lo as u64 * CHUNK;
-                source.prefetch(start, (hi - lo) as u64 * CHUNK + AHEAD);
-                let stop = || cancel.is_cancelled() || ctx.is_cancelled();
-                if let Err(err) = index.scan_range(&*source, lo, hi, Some(&stop)) {
+                let stop = || {
+                    let paused = std::time::Instant::now();
+                    while foreground.load(Ordering::Acquire) > 0 && paused.elapsed() < MAX_PAUSE {
+                        std::thread::sleep(std::time::Duration::from_millis(1));
+                    }
+                    cancel.is_cancelled() || ctx.is_cancelled()
+                };
+                if let Err(err) = index.scan_range_ahead(&*source, lo, hi, Some(&stop), AHEAD) {
                     tracing::warn!(%err, chunk = lo, "line index read failed");
                 }
                 on_progress(&index);

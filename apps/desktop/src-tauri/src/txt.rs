@@ -13,7 +13,7 @@
 use std::collections::HashMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
 use std::time::{Duration, Instant};
 
@@ -66,6 +66,22 @@ struct SearchState {
     cancel: Option<CancelToken>,
 }
 
+/// Counts a foreground read of a session's file while it lives.
+struct Foreground<'a>(&'a AtomicUsize);
+
+impl<'a> Foreground<'a> {
+    fn new(count: &'a AtomicUsize) -> Self {
+        count.fetch_add(1, Ordering::AcqRel);
+        Self(count)
+    }
+}
+
+impl Drop for Foreground<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
 pub struct Session {
     pub id: u64,
     file: Mutex<TextFile>,
@@ -75,6 +91,9 @@ pub struct Session {
     /// A save or replace-all is running: edits are refused meanwhile.
     busy: AtomicBool,
     index_cancel: Mutex<CancelToken>,
+    /// Views and jumps being built: background indexing of the same file
+    /// pauses meanwhile, so their cold reads don't queue behind it.
+    foreground: Arc<AtomicUsize>,
     add_bytes: Registration,
     lock_warned: AtomicBool,
 }
@@ -289,6 +308,7 @@ impl TxtService {
             search: Mutex::new(SearchState::default()),
             busy: AtomicBool::new(false),
             index_cancel: Mutex::new(CancelToken::new()),
+            foreground: Arc::new(AtomicUsize::new(0)),
             add_bytes: self
                 .governor
                 .register_fixed("txt-add-buffer", Some(DocId(id))),
@@ -318,6 +338,7 @@ impl TxtService {
             original.source,
             original.index,
             cancel,
+            Arc::clone(&session.foreground),
             Arc::new(move |index| {
                 let Some(s) = weak.upgrade() else { return };
                 let mut f = s.file.lock();
@@ -709,6 +730,7 @@ pub async fn txt_view(
     let started = Instant::now();
     guarded(|| {
         let s = svc.session(doc)?;
+        let _fg = Foreground::new(&s.foreground);
         let mut f = s.file.lock();
         f.doc.layout = req.layout;
         view_message(&s, &f, &req, started)
@@ -851,6 +873,7 @@ pub async fn txt_goto_line(
 ) -> CmdResult<Value> {
     let s = svc.session(doc)?;
     let started = Instant::now();
+    let _fg = Foreground::new(&s.foreground);
     let mut f = s.file.lock();
     let (offset, exact) = f.doc.snapshot().line_start_estimate(line);
     f.doc
@@ -1104,6 +1127,9 @@ pub async fn txt_save(
     if s.busy.swap(true, Ordering::AcqRel) {
         return Err("busy".into());
     }
+    let t0 = Instant::now();
+    let mut steps: Vec<(&str, u128)> = Vec::new();
+    let mut mark = |what: &'static str| steps.push((what, t0.elapsed().as_millis()));
     let result = (|| {
         let target = path.map(PathBuf::from);
         let (snap, origin, format, current) = {
@@ -1140,10 +1166,13 @@ pub async fn txt_save(
             }
             Err(e) => return Err(e.to_string()),
         };
+        mark("prepared");
         drop(snap);
         drop(origin);
+        mark("dropped snapshot");
         let temp = data_dir().join("tmp");
         let mut f = s.file.lock();
+        mark("locked");
         let old_path = f.path.clone();
         let report = commit_save(
             &mut f,
@@ -1155,10 +1184,12 @@ pub async fn txt_save(
             },
         )
         .map_err(|e| e.to_string())?;
+        mark("committed");
         // The file now holds everything: start a fresh journal on the next edit.
         if let Some(w) = s.journal.lock().take() {
             w.close(true);
         }
+        mark("journal closed");
         if old_path != f.path {
             if let Some(p) = &old_path {
                 svc.unwatch(p);
@@ -1174,8 +1205,11 @@ pub async fn txt_save(
     // A failed save may have stopped the index of the (still current) original.
     let original = s.file.lock().original_index();
     svc.start_index(&s, original);
+    mark("index started");
     let st = s.status(&s.file.lock());
     s.emit(st);
+    mark("status sent");
+    tracing::debug!(?steps, "txt_save steps (ms since start)");
     result
 }
 

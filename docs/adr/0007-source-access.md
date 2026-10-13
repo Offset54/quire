@@ -58,3 +58,10 @@ Dependencies: `memmap2` (MIT/Apache-2.0), `cc` (MIT/Apache-2.0, build only), `wi
 - While a file is mapped, Windows refuses to truncate it (`ERROR_USER_MAPPED_FILE`), so another program that saves by truncating and rewriting in place gets an error. Programs that save by writing a temp file and renaming it, as we do, are unaffected. The same is true of every editor that maps files; it's listed in the user docs.
 - Bytes changed in place by another program change what we read. External change detection (§5.8) reports it; while a document has unsaved edits we additionally hold a handle that denies write sharing (task 9).
 - A cloud file that is hydrated (fully local) is mapped like any local file. If it's dehydrated while open, the guard turns the failed read into an error.
+
+## Addendum (M1, 2026-10-13): background indexing and foreground reads
+
+Ref-sim run 3 (2026-10-13) measured approximate jumps before the index completes at up to 217 ms, against 178 ms effective (300 ms derated by 1.69). The time was in building the view: 64–109 ms of cold reads, which on the mixed-lines fixture often scan a 0.1–1 MiB line. Two changes:
+
+1. **A short prefetch window.** Each 32 MiB index job used to prefetch its whole range plus 64 MiB ahead in one call. With about five background workers that queued up to about 480 MiB of reads (about 145 ms at 3.3 GB/s) in front of any foreground read. Now each job prefetches 8 MiB ahead of its 1 MiB reads (`ChunkIndex::scan_range_ahead`). Early-jump max fell to 146–168 ms, and the index got faster (719–841 ms against 879–986 ms).
+2. **Index jobs yield to foreground reads.** While a view or a jump is being built for a document (the host's `Foreground` guard), its index jobs pause between 1 MiB blocks, for at most 200 ms each time (`index::MAX_PAUSE`), so a view can't starve indexing. Early-jump max: 71–94 ms over 5 cold runs; index 481–796 ms; indexed jumps unchanged (p95 13–17 ms).

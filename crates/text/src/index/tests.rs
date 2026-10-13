@@ -148,6 +148,7 @@ fn background_indexing_completes_and_reports_progress() {
         Arc::clone(&src),
         Arc::clone(&index),
         CancelToken::new(),
+        Arc::new(std::sync::atomic::AtomicUsize::new(0)),
         Arc::new(move |_| {
             c2.fetch_add(1, Ordering::Relaxed);
         }),
