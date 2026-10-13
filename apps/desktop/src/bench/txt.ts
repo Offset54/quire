@@ -14,7 +14,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getLongTaskCount } from "../perf/trace";
 import { summarize } from "../perf/stats";
-import { type Loaf, stallsIn as framesStalls, stallTotal } from "./stalls";
+import { type Loaf, frameWaitStallMs, stallsIn as framesStalls, stallTotal } from "./stalls";
 import { getState } from "../txt/doc-store";
 import { Session } from "../txt/session";
 import type { EditSample, InputSample, TxtView } from "../txt/txt-view";
@@ -74,6 +74,19 @@ function stallsIn(from: number, to: number) {
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
+/** From the first rows' arrival to the frame that drew them, and the part of
+ * that wait the platform didn't deliver a frame (ADR-0024). */
+function firstFrameWait() {
+  const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
+  const drawn = performance.getEntriesByName("txt-first-content", "mark")[0];
+  if (!ready || !drawn) return { waitMs: null, waitStallMs: 0 };
+  stallsIn(0, 0); // collect pending entries
+  return {
+    waitMs: round1(drawn.startTime - ready.startTime),
+    waitStallMs: frameWaitStallMs(loafs, ready.startTime, drawn.startTime),
+  };
+}
+
 /** Opens `path` in a view inside `host`; resolves at the first drawn rows. */
 async function openView(host: HTMLElement, path: string) {
   watchFrames();
@@ -86,17 +99,18 @@ async function openView(host: HTMLElement, path: string) {
   await nextFrame();
   const end = performance.now();
   const stalls = stallsIn(t0, end);
-  const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
-  const drawn = performance.getEntriesByName("txt-first-content", "mark")[0];
+  const { waitMs, waitStallMs } = firstFrameWait();
+  // The two can describe the same wait: take the larger, never the sum.
+  const stallMs = Math.max(stallTotal(stalls), waitStallMs);
   return {
     session,
     view,
     openedMs,
     firstPaintMs: end - t0,
-    ownFirstPaintMs: end - t0 - stallTotal(stalls),
+    ownFirstPaintMs: end - t0 - stallMs,
     firstPaintStalls: stalls,
-    // From the first rows' arrival to the frame that drew them.
-    firstFrameWaitMs: ready && drawn ? round1(drawn.startTime - ready.startTime) : null,
+    firstFrameWaitMs: waitMs,
+    firstFrameWaitStallMs: waitStallMs,
   };
 }
 
@@ -256,6 +270,7 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
     ownFirstPaintMs,
     firstPaintStalls,
     firstFrameWaitMs,
+    firstFrameWaitStallMs,
   } = await openView(host, e.file);
   const totalLines = 1_662_532; // from the fixture manifest; checked below
   const r = rand(42);
@@ -315,6 +330,7 @@ export async function txt2g(host: HTMLElement): Promise<unknown> {
     ownFirstPaintMs: round1(ownFirstPaintMs),
     firstPaintStalls,
     firstFrameWaitMs,
+    firstFrameWaitStallMs,
     openMs: Math.round(openedMs * 10) / 10,
     indexMs,
     lineCount: exactLines,
@@ -393,8 +409,18 @@ export async function txtSave(host: HTMLElement): Promise<unknown> {
   const ok = await session.save(false);
   const ms = performance.now() - t0;
   const bytes = getState().status?.len ?? 0;
+  // The core's own timing of the save and its phases (the rest is IPC and
+  // the frontend).
+  const core = performance.getEntriesByName("txt-save", "measure").at(-1) as
+    PerformanceMeasure | undefined;
   await session.discard();
-  return { scenario: "txt-save", ok, saveMs: Math.round(ms), bytes };
+  return {
+    scenario: "txt-save",
+    ok,
+    saveMs: Math.round(ms),
+    bytes,
+    core: (core?.detail as unknown) ?? null,
+  };
 }
 
 export async function txt300m(host: HTMLElement): Promise<unknown> {
@@ -408,6 +434,7 @@ export async function txt300m(host: HTMLElement): Promise<unknown> {
     ownFirstPaintMs,
     firstPaintStalls,
     firstFrameWaitMs,
+    firstFrameWaitStallMs,
   } = await openView(host, e.file);
   const firstViewCoreMs = (view.currentHeader?.coreUs ?? 0) / 1000;
   const long0 = getLongTaskCount();
@@ -452,6 +479,7 @@ export async function txt300m(host: HTMLElement): Promise<unknown> {
     ownFirstPaintMs: round1(ownFirstPaintMs),
     firstPaintStalls,
     firstFrameWaitMs,
+    firstFrameWaitStallMs,
     openedMs: Math.round(openedMs * 10) / 10,
     firstViewCoreMs,
     caretMs: { max: Math.max(...moveMs), each: moves, coreMs },
@@ -469,16 +497,16 @@ export async function launch2g(): Promise<unknown> {
     30_000,
     "first content",
   );
-  const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
   // Before the page's time origin the webview wasn't running; stalls are
   // only seen from there on.
   const stalls = stallsIn(0, mark.startTime);
+  const { waitMs, waitStallMs } = firstFrameWait();
   return {
     scenario: "launch-2g",
     timeOriginEpochMs: performance.timeOrigin,
     firstContentEpochMs: performance.timeOrigin + mark.startTime,
-    firstFrameWaitMs: ready ? round1(mark.startTime - ready.startTime) : null,
-    stallMs: round1(stallTotal(stalls)),
+    firstFrameWaitMs: waitMs,
+    stallMs: round1(Math.max(stallTotal(stalls), waitStallMs)),
     stalls,
   };
 }

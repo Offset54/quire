@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { FRAME_MS, type Loaf, frameStallMs, ownWorkMs, stallsIn, stallTotal } from "./stalls";
+import {
+  FRAME_MS,
+  type Loaf,
+  frameStallMs,
+  frameWaitStallMs,
+  ownWorkMs,
+  stallsIn,
+  stallTotal,
+} from "./stalls";
 
 // The 244 ms steady-scroll frame of ref-sim run 2
 // (bench/results/m1/refsim-txt-2026-10-09-104421.json): the main thread ran
@@ -35,6 +43,19 @@ describe("platform frame stalls", () => {
     };
     expect(ownWorkMs(busy)).toBeGreaterThanOrEqual(FRAME_MS);
     expect(frameStallMs(busy)).toBe(0);
+  });
+
+  it("counts a frame wait with nothing blocking as the platform's, minus one frame", () => {
+    // A 223 ms wait for the first frame (txt-2g probe, 2026-10-13).
+    expect(frameWaitStallMs([], 1000, 1223)).toBeCloseTo(223 - FRAME_MS, 1);
+    expect(frameWaitStallMs([], 1000, 1010)).toBe(0);
+  });
+
+  it("counts a frame wait fully as ours if a task blocked in it", () => {
+    const blocking: Loaf = { ...run2, startTime: 1100, duration: 80, blockingDuration: 30 };
+    expect(frameWaitStallMs([blocking], 1000, 1223)).toBe(0);
+    // A blocking frame outside the window doesn't count.
+    expect(frameWaitStallMs([blocking], 1300, 1500)).toBeGreaterThan(0);
   });
 
   it("only counts the part of a stall inside the measured interval", () => {

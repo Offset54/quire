@@ -15,6 +15,8 @@ Budgets are unchanged. The TXT rows that end on a presented frame are judged on 
 
 **What counts as a platform stall.** From the Long Animation Frames API: a long frame with `blockingDuration` 0 (no task over 50 ms) whose own main-thread work (scripts before rendering, plus rendering) is under one 60 Hz frame (16.7 ms). Its stall time is the frame's duration minus that work, minus one 16.7 ms frame. If any task in the frame blocked, or our work took a frame or more, the whole frame counts as ours.
 
+**Waits with an idle main thread.** A long animation frame starts with a task. If the main thread runs no task while it waits for a requested frame, no long frame is reported, and the rule above sees nothing. For the first paint, the bench also marks when the first rows arrive and a frame is requested (`txt-first-rows-ready`) and when they are drawn (`txt-first-content`). If no long frame with a blocking task overlaps that window, the wait beyond one 16.7 ms frame counts as a platform stall: the page renders as soon as a frame is delivered between tasks. Where both rules see the same wait, the larger value is used, never the sum. Found on 2026-10-13: two of five cold runs waited 223 and 276 ms for the first frame, and the first rule caught 50 ms of one of them. The jumps and scroll rows use the first rule only.
+
 **Where it applies:** the 2 GB and 300 MB first paints, the jumps before and after indexing, and the scrolling rows (steady, fling, wrapped 300 MB): p99 and max frame interval, each interval reduced by the stall time inside it. Typing latency and the core-timed rows are judged raw. `launch-2g` reports both values; it has no row of its own.
 
 ## Why the attribution holds

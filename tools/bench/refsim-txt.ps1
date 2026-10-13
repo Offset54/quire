@@ -170,8 +170,8 @@ $results = [ordered]@{
   }
   # Platform frame stalls (ADR-0024), reported, not judged.
   platformStalls = [ordered]@{
-    txt2gFirstPaint = @($t2g | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; stalls = $_.firstPaintStalls } })
-    txt300mFirstPaint = @($t300 | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; stalls = $_.firstPaintStalls } })
+    txt2gFirstPaint = @($t2g | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; firstFrameWaitStallMs = $_.firstFrameWaitStallMs; stalls = $_.firstPaintStalls } })
+    txt300mFirstPaint = @($t300 | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitMs = $_.firstFrameWaitMs; firstFrameWaitStallMs = $_.firstFrameWaitStallMs; stalls = $_.firstPaintStalls } })
     steady = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.steady.frameIntervalMs.max; ownMax = $_.steady.ownFrameIntervalMs.max; stalls = $_.steady.platformStalls.count; worstStallMs = $_.steady.platformStalls.worstMs } })
     fling = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.fling.frameIntervalMs.max; ownMax = $_.fling.ownFrameIntervalMs.max; stalls = $_.fling.platformStalls.count; worstStallMs = $_.fling.platformStalls.worstMs } })
     wrappedScroll = @($t300 | ForEach-Object { [ordered]@{ rawMax = $_.wrappedScroll.frameIntervalMs.max; ownMax = $_.wrappedScroll.ownFrameIntervalMs.max; stalls = $_.wrappedScroll.platformStalls.count; worstStallMs = $_.wrappedScroll.platformStalls.worstMs } })

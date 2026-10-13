@@ -60,5 +60,25 @@ export function stallsIn(frames: readonly Loaf[], from: number, to: number): Sta
   return out;
 }
 
+/**
+ * A wait for one requested frame, from `requested` to `drawn`. The page
+ * renders as soon as a frame is delivered between tasks, so if no task
+ * blocked the main thread in the window, any wait beyond one frame is the
+ * platform not delivering it. (A wait with an idle main thread starts no
+ * long animation frame, so [`stallsIn`] can't see it.) 0 if anything
+ * blocked in the window.
+ */
+export function frameWaitStallMs(
+  frames: readonly Loaf[],
+  requested: number,
+  drawn: number,
+): number {
+  const blocked = frames.some(
+    (f) => f.blockingDuration > 0 && f.startTime < drawn && f.startTime + f.duration > requested,
+  );
+  if (blocked) return 0;
+  return round1(Math.max(0, drawn - requested - FRAME_MS));
+}
+
 export const stallTotal = (s: readonly { stallMs: number }[]) =>
   s.reduce((sum, x) => sum + x.stallMs, 0);
