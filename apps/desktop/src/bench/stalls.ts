@@ -32,12 +32,19 @@ export function ownWorkMs(f: Loaf): number {
   return before + render;
 }
 
-/** Time in a long frame the platform didn't deliver a frame; 0 if it's ours. */
+/**
+ * Time in a long frame the platform didn't deliver a frame: the idle time
+ * before rendering started (the frame's start to `renderStart`, less our
+ * scripts in between), minus one frame. Our rendering work comes after that
+ * wait and can't have caused it. 0 if a task blocked in the frame.
+ */
 export function frameStallMs(f: Loaf): number {
   if (f.blockingDuration > 0) return 0;
-  const own = ownWorkMs(f);
-  if (own >= FRAME_MS) return 0;
-  return Math.max(0, f.duration - own - FRAME_MS);
+  const renderAt = f.renderStart > 0 ? f.renderStart : f.startTime + f.duration;
+  const scriptsBefore = f.scripts
+    .filter((s) => s.startTime < renderAt)
+    .reduce((sum, s) => sum + s.duration, 0);
+  return Math.max(0, renderAt - f.startTime - scriptsBefore - FRAME_MS);
 }
 
 const round1 = (v: number) => Math.round(v * 10) / 10;

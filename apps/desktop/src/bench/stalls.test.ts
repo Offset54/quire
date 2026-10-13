@@ -36,13 +36,29 @@ describe("platform frame stalls", () => {
     expect(frameStallMs({ ...run2, blockingDuration: 12 })).toBe(0);
   });
 
-  it("counts a frame with a frame or more of our own script work as ours", () => {
+  it("doesn't count our scripts before rendering as a stall", () => {
     const busy: Loaf = {
       ...run2,
-      scripts: [{ startTime: run2.startTime + 5, duration: 20 }],
+      scripts: [{ startTime: run2.startTime + 5, duration: 230 }],
     };
-    expect(ownWorkMs(busy)).toBeGreaterThanOrEqual(FRAME_MS);
     expect(frameStallMs(busy)).toBe(0);
+    const someWork: Loaf = { ...busy, scripts: [{ startTime: run2.startTime + 5, duration: 20 }] };
+    expect(frameStallMs(someWork)).toBeCloseTo(239.9 - 20 - FRAME_MS, 1);
+  });
+
+  it("doesn't let rendering work after the wait void the stall", () => {
+    // The 404 ms steady-scroll interval of ref-sim run 4
+    // (bench/results/m1/refsim-txt-2026-10-13-170045.json): 401 ms idle,
+    // then a 16.7 ms rAF callback and rendering, 20 ms in all.
+    const run4: Loaf = {
+      startTime: 11305,
+      duration: 421.1,
+      blockingDuration: 0,
+      renderStart: 11706,
+      scripts: [{ startTime: 11706, duration: 16.7 }],
+    };
+    expect(ownWorkMs(run4)).toBeCloseTo(20.1, 1);
+    expect(frameStallMs(run4)).toBeCloseTo(401 - FRAME_MS, 1);
   });
 
   it("counts a frame wait with nothing blocking as the platform's, minus one frame", () => {
