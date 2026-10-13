@@ -220,7 +220,7 @@ impl ImageService {
                 .expect("spawn image worker");
         }
         Arc::new(Self {
-            cache: LruCache::new(governor, "preview-images", None, CacheClass::DecodedImage),
+            cache: LruCache::new(governor, "image-scheme", None, CacheClass::DecodedImage),
             remote: Mutex::new(HashSet::new()),
             agent: OnceLock::new(),
             jobs: Mutex::new(tx),

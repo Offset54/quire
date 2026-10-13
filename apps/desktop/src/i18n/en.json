@@ -86,5 +86,20 @@
   "status.saveWith": "Save with encoding",
   "status.reopenWith": "Reopen with encoding",
   "status.addBom": "Add byte-order mark",
-  "status.removeBom": "Remove byte-order mark"
+  "status.removeBom": "Remove byte-order mark",
+  "md.preview": "Preview",
+  "md.imageBlocked": "Remote image blocked: {src}",
+  "md.imageBlockedAlt": "Remote image blocked: {alt} ({src})",
+  "md.imageFailed": "Image not shown: {alt}",
+  "md.remoteBlocked": "This document refers to remote images. They are blocked so that opening it sends nothing over the network.",
+  "md.loadRemote": "Load remote content",
+  "md.remoteOn": "Remote content on",
+  "md.remoteOnTitle": "Remote images load for this document. Click to block them again.",
+  "md.words": "{count} words",
+  "md.indexing": "Preview: indexing…",
+  "md.viewMode": "View",
+  "md.source": "Source",
+  "md.split": "Split",
+  "md.reading": "Reading",
+  "md.tooLarge": "This block is too large to preview ({size} KiB). Its beginning is shown as source; edit it in the source view."
 }

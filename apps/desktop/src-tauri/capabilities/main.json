@@ -44,6 +44,7 @@
     "allow-md-view",
     "allow-md-set-remote",
     "allow-md-status",
+    "allow-md-blocks",
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-ask",

@@ -25,6 +25,7 @@ use quire_markdown::document::MarkdownDoc;
 use quire_markdown::images::ImagePolicy;
 use quire_markdown::preview::{self, Preview, Window};
 use quire_markdown::render::RenderOptions;
+use quire_markdown::words::WordCounter;
 use quire_text::buffer::Snapshot;
 use quire_text::document::TextChange;
 use serde::Serialize;
@@ -90,6 +91,9 @@ pub struct MdDoc {
     index_bytes: Registration,
     /// Last edit applied: (text revision, ms from the change to the push).
     last_edit: Mutex<Option<(u64, f64)>>,
+    /// When the word count is due (after the index completes, and a moment
+    /// after the last edit).
+    words_due: Mutex<Option<Instant>>,
 }
 
 impl Evictable for MdDoc {
@@ -220,9 +224,18 @@ impl MdDoc {
             let has_pending = self.pending.lock().is_some();
             let complete = self.state.lock().md.index().is_complete();
             if !has_pending && complete {
+                let due = *self.words_due.lock();
+                if due.is_some_and(|d| d <= Instant::now()) {
+                    self.count_words();
+                    continue;
+                }
+                let wait = due.map_or(Duration::from_millis(500), |d| {
+                    d.saturating_duration_since(Instant::now())
+                        .min(Duration::from_millis(500))
+                });
                 let mut p = self.pending.lock();
                 if p.is_none() && !self.closed.load(Ordering::Acquire) {
-                    self.wake.wait_for(&mut p, Duration::from_millis(500));
+                    self.wake.wait_for(&mut p, wait);
                 }
                 continue;
             }
@@ -231,6 +244,7 @@ impl MdDoc {
                 self.apply_pending(&mut st).and_then(|at| {
                     let pushed = self.push_window(&mut st, false)?;
                     if let Some(at) = at {
+                        *self.words_due.lock() = Some(Instant::now() + WORDS_DELAY);
                         let ms = at.elapsed().as_secs_f64() * 1000.0;
                         *self.last_edit.lock() = Some((st.revision, ms));
                         if pushed {
@@ -254,6 +268,7 @@ impl MdDoc {
                         self.index_bytes.charge(
                             index_estimate(&st.md) as i64 - self.index_bytes.bytes() as i64,
                         );
+                        *self.words_due.lock() = Some(Instant::now());
                         // Definitions and footnotes from the whole document.
                         let r = self.push_window(&mut st, false);
                         let outline = st.md.tables().outline().len();
@@ -272,6 +287,75 @@ impl MdDoc {
                 std::thread::sleep(Duration::from_millis(50));
             }
         }
+    }
+
+    /// Counts the words of the current text, off the state lock; gives up
+    /// (to count again later) when the text changes meanwhile.
+    fn count_words(&self) {
+        let (snap, revision) = {
+            let st = self.state.lock();
+            (st.snap.clone(), st.revision)
+        };
+        *self.words_due.lock() = None;
+        let started = Instant::now();
+        let mut counter = WordCounter::new();
+        let len = snap.len();
+        let mut at = 0;
+        while at < len {
+            if self.pending.lock().is_some() || self.closed.load(Ordering::Acquire) {
+                *self.words_due.lock() = Some(Instant::now() + WORDS_DELAY);
+                return;
+            }
+            let end = (at + WORDS_CHUNK).min(len);
+            match snap.read(at..end) {
+                Ok(bytes) => counter.push(&bytes),
+                Err(e) => {
+                    tracing::warn!(%e, "word count stopped");
+                    return;
+                }
+            }
+            at = end;
+        }
+        let words = counter.finish();
+        tracing::debug!(
+            doc = self.doc,
+            words,
+            ms = started.elapsed().as_secs_f64() * 1000.0,
+            "words counted"
+        );
+        self.emit(json!({"kind": "words", "words": words, "revision": revision}));
+    }
+}
+
+/// Wait after an edit before counting words again.
+const WORDS_DELAY: Duration = Duration::from_millis(400);
+const WORDS_CHUNK: u64 = 1 << 20;
+
+impl MdDoc {
+    /// Kinds and ranges of the blocks overlapping `from..to`, for the source
+    /// view's decoration: per block u64 start, u64 end, u8 kind, u8 detail.
+    fn blocks_in(&self, from: u64, to: u64) -> CmdResult<Vec<u8>> {
+        let mut st = self.state.lock();
+        self.apply_pending(&mut st)?;
+        let MdState {
+            md, snap, revision, ..
+        } = &mut *st;
+        md.extend_to(&*snap, to).map_err(io_err)?;
+        let blocks = md.index().blocks();
+        let first = md.index().block_at(from).min(blocks.len());
+        let mut out = Vec::new();
+        out.extend_from_slice(&revision.to_le_bytes());
+        for b in blocks[first..]
+            .iter()
+            .take_while(|b| b.start < to)
+            .take(4096)
+        {
+            out.extend_from_slice(&b.start.to_le_bytes());
+            out.extend_from_slice(&b.end.to_le_bytes());
+            out.push(preview::kind_code(&b.kind));
+            out.push(preview::kind_detail(&b.kind));
+        }
+        Ok(out)
     }
 }
 
@@ -358,6 +442,7 @@ impl MdService {
                 cache_bytes: Mutex::new(Some(reg)),
                 index_bytes: self.governor.register_fixed("md-index", Some(DocId(doc))),
                 last_edit: Mutex::new(None),
+                words_due: Mutex::new(None),
             }
         });
         let weak = Arc::downgrade(&md);
@@ -491,4 +576,19 @@ pub async fn md_status(svc: State<'_, MdService>, doc: u64) -> CmdResult<Value> 
         "lastEdit": last.map(|(rev, ms)| json!({"revision": rev, "ms": ms})),
         "remote": svc.images.remote_enabled(doc),
     }))
+}
+
+/// Block kinds over a byte range (source view decoration), binary:
+/// u64 revision, then per block u64 start, u64 end, u8 kind, u8 detail.
+#[tauri::command]
+pub async fn md_blocks(
+    svc: State<'_, MdService>,
+    doc: u64,
+    from: u64,
+    to: u64,
+) -> CmdResult<Response> {
+    guarded(|| {
+        let m = svc.get(doc)?;
+        Ok(Response::new(m.blocks_in(from, to)?))
+    })
 }

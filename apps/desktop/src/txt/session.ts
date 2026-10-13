@@ -5,6 +5,7 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { ask, message, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { t } from "../i18n";
 import { getState, notify, reset, update, type DiskStatus, type DocStatus } from "./doc-store";
+import { MdController } from "../md/controller";
 import { TxtView } from "./txt-view";
 
 export interface Query {
@@ -74,6 +75,8 @@ export function subscribeUi(l: () => void): () => void {
 
 export class Session {
   view: TxtView | undefined;
+  /** Markdown panes, for a Markdown document (ADR-0030). */
+  md: MdController | undefined;
   private lastSearchRefresh = 0;
   private query: Query | undefined;
   private searchTimer = 0;
@@ -161,9 +164,12 @@ export class Session {
     return Session.create((channel) => invoke<DocInfo>("txt_recover", { journalPath, channel }));
   }
 
-  attach(host: HTMLElement): TxtView {
+  /** Builds the editor in `host`; a Markdown document also gets its preview
+   *  in `previewHost` and the view modes on `root`. */
+  attach(host: HTMLElement, md?: { root: HTMLElement; previewHost: HTMLElement }): TxtView {
     this.view = new TxtView(host, this.doc, {
       onHeader: (header) => {
+        this.md?.textChanged(header.revision);
         const st = getState().status;
         update({
           header,
@@ -183,11 +189,35 @@ export class Session {
         else notify("error", msg);
       },
       onCommand: (name) => {
-        this.commandHandler(name);
+        this.command(name);
+      },
+      onScroll: (offset) => {
+        this.md?.sourceScrolled(offset);
       },
     });
     this.view.focus();
+    if (md && getState().status?.markdown) {
+      const view = this.view;
+      MdController.attach(this.doc, md.root, view, md.previewHost, (name) => {
+        this.command(name);
+      })
+        .then((c) => {
+          if (this.view !== view) c.destroy();
+          else this.md = c;
+        })
+        .catch((err: unknown) => {
+          notify("error", String(err));
+        });
+    }
     return this.view;
+  }
+
+  /** A keyboard command: view modes go to the Markdown panes, the rest to
+   *  the chrome. */
+  command(name: string): void {
+    if (name === "toggleView" && this.md) this.md.toggleView();
+    else if (name === "toggleSplit" && this.md) this.md.toggleSplit();
+    else this.commandHandler(name);
   }
 
   private onEvent(e: CoreEvent): void {
@@ -439,6 +469,8 @@ export class Session {
 
   /** Closes without asking, dropping unsaved edits (benchmarks). */
   async discard(): Promise<void> {
+    this.md?.destroy();
+    this.md = undefined;
     await invoke("txt_close", { doc: this.doc, discard: true });
     this.view?.destroy();
     this.view = undefined;
@@ -451,6 +483,8 @@ export class Session {
       const choice = await ask(t("close.unsaved"), { title: t("close.title"), kind: "warning" });
       if (!choice) return false;
     }
+    this.md?.destroy();
+    this.md = undefined;
     await invoke("txt_close", { doc: this.doc, discard: true });
     this.view?.destroy();
     this.view = undefined;

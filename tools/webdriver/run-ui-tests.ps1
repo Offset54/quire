@@ -7,7 +7,7 @@
   Logs (tauri-driver and app output, verbose msedgedriver log) go to the
   run's directory under .cache/ui-tests; their tails are printed on failure.
 #>
-param([switch] $NoBuild)
+param([switch] $NoBuild, [string[]] $Tests = @("txt-flows", "md-flows"))
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 $app = Join-Path $root "target/release/quire.exe"
@@ -70,7 +70,8 @@ try {
   Start-Sleep -Milliseconds 800
   $env:QUIRE_APP = $app
   $env:QUIRE_UI_DIR = $dir
-  node --test --test-concurrency=1 (Join-Path $root "tests/ui/txt-flows.test.mjs")
+  $files = @($Tests | ForEach-Object { Join-Path $root "tests/ui/$_.test.mjs" })
+  node --test --test-concurrency=1 $files
   $code = $LASTEXITCODE
   if ($code -ne 0) {
     $probe | Wait-Job | Out-Null

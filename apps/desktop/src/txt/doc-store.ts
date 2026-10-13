@@ -39,6 +39,8 @@ export interface DocStatus {
   remote: string | null;
   revision: number;
   busy: boolean;
+  /** Opened as Markdown (by extension). */
+  markdown: boolean;
 }
 
 export interface DiskStatus {

@@ -45,6 +45,44 @@ pub fn kind_code(k: &BlockKind) -> u8 {
     }
 }
 
+/// Detail for a kind: a heading's level, 1 for a fenced code block.
+pub fn kind_detail(k: &BlockKind) -> u8 {
+    match k {
+        BlockKind::Heading { level, .. } => *level,
+        BlockKind::CodeBlock { fenced, .. } => u8::from(*fenced),
+        _ => 0,
+    }
+}
+
+/// Blocks larger than this aren't rendered: the preview shows the start of
+/// their source, labeled (§2: degrade honestly). The source view edits
+/// them as usual.
+pub const MAX_RENDER_BYTES: u64 = 512 * 1024;
+/// Source shown for such a block.
+const LARGE_PREFIX: usize = 16 * 1024;
+
+fn render_large(bytes: &[u8], total: u64) -> Rendered {
+    let mut cut = LARGE_PREFIX.min(bytes.len());
+    while cut > 0 && cut < bytes.len() && (bytes[cut] & 0xc0) == 0x80 {
+        cut -= 1;
+    }
+    let text = String::from_utf8_lossy(&bytes[..cut]);
+    let mut html = format!("<div class=\"md-too-large\" data-bytes=\"{total}\"><pre>");
+    for c in text.chars() {
+        match c {
+            '<' => html.push_str("&lt;"),
+            '>' => html.push_str("&gt;"),
+            '&' => html.push_str("&amp;"),
+            c => html.push(c),
+        }
+    }
+    html.push_str("</pre></div>\n");
+    Rendered {
+        html,
+        ..Rendered::default()
+    }
+}
+
 /// Hash of the table values a rendering used.
 pub fn signature(tables: &Tables, block: &Block, r: &Rendered) -> u64 {
     let mut h = Xxh3::new();
@@ -99,6 +137,8 @@ pub struct WindowBlock {
     pub kind: u8,
     /// Lines in the block (height estimates, scroll sync).
     pub lines: u32,
+    /// [`kind_detail`].
+    pub detail: u8,
     /// Revision of its rendering.
     pub rev: u64,
     /// The rendering, when the frontend doesn't have this revision.
@@ -232,9 +272,23 @@ impl Preview {
                 return Ok((e.rev, e.lines, Arc::clone(&e.rendered)));
             }
         }
-        let bytes = text.read(b.range())?;
-        let lines = (line_starts(&bytes).len() - usize::from(bytes.ends_with(b"\n"))).max(1) as u32;
-        let rendered = Arc::new(doc.render_bytes(&bytes, i, &self.opts));
+        let large = b.end - b.start > MAX_RENDER_BYTES;
+        let bytes = if large {
+            text.read(b.start..b.start + LARGE_PREFIX as u64 + 4)?
+        } else {
+            text.read(b.range())?
+        };
+        let lines = if large {
+            // Not counted for huge blocks: an estimate from the bytes.
+            ((b.end - b.start) / 40).min(u32::MAX as u64) as u32
+        } else {
+            (line_starts(&bytes).len() - usize::from(bytes.ends_with(b"\n"))).max(1) as u32
+        };
+        let rendered = Arc::new(if large {
+            render_large(&bytes, b.end - b.start)
+        } else {
+            doc.render_bytes(&bytes, i, &self.opts)
+        });
         let sig = signature(doc.tables(), &b, &rendered);
         let rev = self.next_rev;
         self.next_rev += 1;
@@ -295,6 +349,7 @@ impl Preview {
                 start: b.start,
                 end: b.end,
                 kind: kind_code(&b.kind),
+                detail: kind_detail(&b.kind),
                 lines,
                 rev,
                 html: (!have(b.id, rev)).then_some(r),
@@ -322,7 +377,7 @@ pub const MAGIC: u32 = u32::from_le_bytes(*b"MDW1");
 /// u64 len, u64 frontier, u32 first, u32 anchor, u32 indexed blocks,
 /// u32 count, then per block:
 ///   u64 id, u64 start, u64 end, u64 rev, u32 lines, u8 kind,
-///   u8 has_html, u16 reserved, u32 html bytes, html (UTF-8)
+///   u8 has_html, u8 detail, u8 reserved, u32 html bytes, html (UTF-8)
 /// ```
 ///
 /// `seq` is the request's sequence number (0 for pushed updates) and
@@ -353,7 +408,8 @@ pub fn encode(w: &Window, seq: u64, revision: u64) -> Vec<u8> {
         out.extend_from_slice(&b.lines.to_le_bytes());
         out.push(b.kind);
         out.push(u8::from(b.html.is_some()));
-        out.extend_from_slice(&0u16.to_le_bytes());
+        out.push(b.detail);
+        out.push(0);
         let h = b.html.as_ref().map_or("", |r| r.html.as_str());
         out.extend_from_slice(&(h.len() as u32).to_le_bytes());
         out.extend_from_slice(h.as_bytes());
@@ -470,5 +526,23 @@ mod tests {
         assert!(p.trim(0) > 0);
         assert_eq!(p.bytes(), 0);
         assert!(p.is_empty());
+    }
+
+    #[test]
+    fn huge_blocks_show_their_start_labeled() {
+        let mut text = String::from("```\n");
+        while text.len() < (MAX_RENDER_BYTES as usize) + 10 {
+            text.push_str("let x = 1; // <code>\n");
+        }
+        text.push_str("```\n\nafter\n");
+        let (mut doc, mut p) = setup(&text);
+        let w = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 1, &|_, _| false)
+            .unwrap();
+        let h = &w.blocks[0].html.as_ref().unwrap().html;
+        assert!(h.starts_with("<div class=\"md-too-large\""));
+        assert!(h.contains("&lt;code&gt;"));
+        assert!(h.len() < 40_000);
+        assert!(w.blocks[1].html.as_ref().unwrap().html.contains("after"));
     }
 }

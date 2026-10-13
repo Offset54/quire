@@ -18,3 +18,4 @@ pub mod sanitize;
 pub mod scan;
 pub mod tables;
 pub mod text;
+pub mod words;

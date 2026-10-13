@@ -1,0 +1,307 @@
+// Markdown UI flows (M2 task 14), driven through the real app with
+// WebDriver (ADR-0020). Run with `pwsh tools/webdriver/run-ui-tests.ps1`.
+//
+// QUIRE_APP: path to quire.exe. QUIRE_UI_DIR: a scratch directory.
+
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import zlib from "node:zlib";
+import { after, before, test } from "node:test";
+import { KEYS, WebDriver } from "./webdriver.mjs";
+
+const APP = process.env.QUIRE_APP;
+const DIR = process.env.QUIRE_UI_DIR;
+if (!APP || !DIR) throw new Error("QUIRE_APP and QUIRE_UI_DIR must be set");
+
+const wd = new WebDriver();
+const mdDir = path.join(DIR, "md");
+const sample = path.join(mdDir, "notes.md");
+
+/** A small valid PNG (solid color), so the image scheme has something to serve. */
+function png(w, h) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (buf) => {
+    let c = 0xffffffff;
+    for (const b of buf) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type, data) => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const td = Buffer.concat([Buffer.from(type), data]);
+    const c = Buffer.alloc(4);
+    c.writeUInt32BE(crc(td));
+    return Buffer.concat([len, td, c]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  const raw = Buffer.alloc((w * 3 + 1) * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) raw.set([40, 120, 200], y * (w * 3 + 1) + 1 + x * 3);
+  }
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", zlib.deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+function writeSample() {
+  fs.mkdirSync(path.join(mdDir, "img"), { recursive: true });
+  fs.writeFileSync(path.join(mdDir, "img", "blue.png"), png(64, 32));
+  const parts = [
+    "# Notes title\n",
+    "First paragraph with a [reference link][far] and **bold** text.\n",
+    "![local image](img/blue.png)\n",
+    "![tracker](https://tracker.invalid/pixel.png)\n",
+    "| a | b |\n|---|---|\n| 1 | 2 |\n",
+    '<script>window.__pwned = true</script>\n\n<div onclick="window.__pwned = true">raw div</div>\n',
+  ];
+  for (let i = 0; i < 400; i++) {
+    parts.push(`## Section ${i}\n`);
+    parts.push(`Paragraph ${i} with some words to fill the line, and more words after them.\n`);
+    if (i % 10 === 5) parts.push("- item one\n- item two\n  continued\n");
+  }
+  parts.push("[far]: https://example.com/far\n");
+  fs.writeFileSync(sample, parts.join("\n"));
+}
+
+/** Text of the preview blocks on screen, top to bottom. */
+function previewBlocks() {
+  return wd.exec(`
+    const host = document.querySelector('.md-viewport');
+    if (!host || host.offsetParent === null) return [];
+    const vp = host.getBoundingClientRect();
+    return [...document.querySelectorAll('.md-block')]
+      .map((b) => ({ r: b.getBoundingClientRect(), t: b.innerText, start: Number(b.dataset.start) }))
+      .filter((b) => b.r.bottom > vp.top && b.r.top < vp.bottom && b.r.height > 0)
+      .sort((a, b) => a.r.top - b.r.top)
+      .map((b) => ({ t: b.t, start: b.start, top: b.r.top - vp.top }));
+  `);
+}
+
+function sourceRows() {
+  return wd.exec(`
+    const vp = document.querySelector('.txt-viewport');
+    if (!vp || vp.offsetParent === null) return [];
+    const r0 = vp.getBoundingClientRect();
+    return [...document.querySelectorAll('.txt-row:not(.txt-probe)')]
+      .filter((r) => r.style.display !== 'none')
+      .map((r) => ({ y: r.getBoundingClientRect().top, t: r.querySelector('.txt-text').textContent }))
+      .filter((r) => r.y >= r0.top - 1 && r.y < r0.bottom)
+      .sort((a, b) => a.y - b.y);
+  `);
+}
+
+const mode = () => wd.exec("return document.querySelector('.editor-panes')?.dataset.mode ?? ''");
+const status = () => wd.exec("return document.querySelector('.statusbar')?.innerText ?? ''");
+const focusEditor = () => wd.exec("document.querySelector('.txt-input').focus()");
+
+async function keys(text) {
+  const actions = [];
+  for (const ch of text) actions.push({ type: "keyDown", value: ch }, { type: "keyUp", value: ch });
+  await wd.cmd("POST", "/actions", { actions: [{ type: "key", id: "kb", actions }] });
+  await wd.cmd("DELETE", "/actions");
+}
+
+before(() => {
+  writeSample();
+});
+
+/** State for a failure message. */
+async function dump() {
+  return JSON.stringify({
+    preview: (await previewBlocks()).slice(0, 3),
+    source: (await sourceRows()).slice(0, 3),
+    notices: await wd.exec("return document.querySelector('.notices')?.innerText ?? ''"),
+    errors: await wd.exec("return window.__errors ?? []"),
+  });
+}
+
+async function untilOrDump(fn, ms, what) {
+  try {
+    return await wd.until(fn, ms, what);
+  } catch (err) {
+    throw new Error(`${String(err)} ${await dump()}`, { cause: err });
+  }
+}
+
+after(async () => {
+  await wd.stop();
+});
+
+test("a .md file opens in the editing view with the Markdown status items", async () => {
+  await wd.start(APP, [sample]);
+  await wd.exec(
+    "window.__errors = []; window.addEventListener('error', (e) => window.__errors.push(String(e.message))); window.addEventListener('unhandledrejection', (e) => window.__errors.push(String(e.reason)));",
+  );
+  await wd.until(async () => (await sourceRows()).length > 5, 20_000, "source rows");
+  assert.equal(await mode(), "source");
+  const r = await sourceRows();
+  assert.equal(r[0].t, "# Notes title");
+  await wd.until(async () => /Reading/.test(await status()), 10_000, "view mode buttons");
+});
+
+test("split view shows both panes, and the preview renders the blocks", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, "\\"]);
+  await wd.until(async () => (await mode()) === "split", 5000, "split mode");
+  const blocks = await wd.until(
+    async () => {
+      const b = await previewBlocks();
+      return b.length > 3 && b;
+    },
+    10_000,
+    "preview blocks",
+  );
+  assert.equal(blocks[0].t.trim(), "Notes title");
+  assert.ok((await sourceRows()).length > 5, "source still shown");
+  // The definition at the end resolves the reference link at the top.
+  await wd.until(
+    () =>
+      wd.exec("return !!document.querySelector('.md-block a[href=\"https://example.com/far\"]')"),
+    10_000,
+    "reference resolved from the end of the document",
+  );
+  // Raw HTML was sanitized: no script ran, no handler kept.
+  assert.equal(await wd.exec("return window.__pwned === true"), false);
+  assert.equal(await wd.exec("return !!document.querySelector('.md-block [onclick]')"), false);
+  assert.equal(await wd.exec("return !!document.querySelector('.md-block script')"), false);
+});
+
+test("a local image loads through the image scheme; a remote one is a placeholder", async () => {
+  await wd.until(
+    () =>
+      wd.exec(
+        "const i = document.querySelector('.md-block img'); return !!i && i.complete && i.naturalWidth === 64",
+      ),
+    10_000,
+    "local image decoded",
+  );
+  const src = await wd.exec("return document.querySelector('.md-block img').getAttribute('src')");
+  assert.match(src, /quire-img/);
+  assert.match(
+    await wd.exec("return document.querySelector('.md-image-blocked')?.innerText ?? ''"),
+    /tracker\.invalid/,
+  );
+  await wd.until(
+    () =>
+      wd.exec("return /remote images/.test(document.querySelector('.banner')?.innerText ?? '')"),
+    5000,
+    "remote-content banner",
+  );
+});
+
+test("the remote-content toggle renders the document again with remote images allowed", async () => {
+  await wd.exec(
+    "[...document.querySelectorAll('.banner button')].find((b) => b.innerText === 'Load remote content').click()",
+  );
+  await wd.until(async () => /Remote content on/.test(await status()), 5000, "toggle on");
+  // tracker.invalid can't resolve: the placeholder now says the image failed.
+  await wd.until(
+    () =>
+      wd.exec(
+        "return [...document.querySelectorAll('.md-image-blocked')].some((e) => e.classList.contains('error'))",
+      ),
+    20_000,
+    "remote image attempted",
+  );
+  await wd.exec(
+    "[...document.querySelectorAll('.statusbar button')].find((b) => b.innerText === 'Remote content on').click()",
+  );
+  await wd.until(async () => !/Remote content on/.test(await status()), 5000, "toggle off");
+});
+
+test("typing in the source updates the preview", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, KEYS.home]);
+  await keys("Hello ");
+  await wd.until(
+    async () => ((await previewBlocks())[0]?.t ?? "").includes("Hello # Notes title"),
+    5000,
+    "preview updated",
+  );
+});
+
+test("scrolling the preview scrolls the source (and back)", async () => {
+  await wd.exec(`
+    const vp = document.querySelector('.md-viewport');
+    for (let i = 0; i < 10; i++) vp.dispatchEvent(new WheelEvent('wheel', { deltaY: 400, bubbles: true, cancelable: true }));
+  `);
+  const top = await wd.until(
+    async () => {
+      const b = await previewBlocks();
+      const m = /Section (\d+)/.exec(b[0]?.t ?? "");
+      return m && Number(m[1]) > 5 && Number(m[1]);
+    },
+    5000,
+    "preview scrolled",
+  );
+  await untilOrDump(
+    async () => {
+      const r = await sourceRows();
+      const m = /Section (\d+)/.exec(r.map((x) => x.t).join("\n"));
+      return m && Math.abs(Number(m[1]) - top) <= 3;
+    },
+    5000,
+    "source followed",
+  );
+  await wd.exec(`
+    const vp = document.querySelector('.txt-viewport');
+    for (let i = 0; i < 10; i++) vp.dispatchEvent(new WheelEvent('wheel', { deltaY: 400, bubbles: true, cancelable: true }));
+  `);
+  await wd.until(
+    async () => {
+      const m = /Section (\d+)/.exec((await previewBlocks()).map((b) => b.t).join("\n"));
+      return m && Number(m[1]) > top + 5;
+    },
+    5000,
+    "preview followed",
+  );
+});
+
+test("Ctrl+E switches to the reading view and back, keeping the position", async () => {
+  const before = (await previewBlocks())[0]?.t ?? "";
+  await focusEditor();
+  await wd.chord([KEYS.control, "e"]);
+  await wd.until(async () => (await mode()) === "preview", 5000, "reading view");
+  assert.equal((await sourceRows()).length, 0, "source hidden");
+  const m = /Section (\d+)/.exec(before);
+  await untilOrDump(
+    async () => {
+      // The heading or the paragraph right after it (the pane got wider).
+      const t = (await previewBlocks()).map((b) => b.t).join("\n");
+      return !m || t.includes(`Section ${m[1]}`) || t.includes(`Paragraph ${m[1]} `);
+    },
+    5000,
+    "same position",
+  );
+  await wd.chord([KEYS.control, "e"]);
+  await wd.until(async () => (await mode()) === "source", 5000, "editing view");
+  await wd.until(
+    async () => {
+      const t = (await sourceRows()).map((r) => r.t).join("\n");
+      return !m || t.includes(`Section ${Number(m[1])}`) || t.includes(`Paragraph ${m[1]}`);
+    },
+    5000,
+    "source at the same place",
+  );
+});
+
+test("save writes the edit and leaves the rest byte-exact", async () => {
+  const original = fs.readFileSync(sample, "utf8");
+  await focusEditor();
+  await wd.chord([KEYS.control, "s"]);
+  await wd.until(async () => /Saved/.test(await status()), 10_000, "saved");
+  const disk = fs.readFileSync(sample, "utf8");
+  assert.equal(disk, "Hello " + original);
+});

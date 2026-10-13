@@ -4,6 +4,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { t, type MessageId } from "../i18n";
+import { MdBanner, MdStatusItems } from "../md/MdChrome";
 import { dismiss, endingLabel, useDocState } from "./doc-store";
 import { getUi, setUi, subscribeUi, type Query, type Session } from "./session";
 
@@ -49,9 +50,16 @@ export function EditorScreen({
   onToggleWrap: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const previewHost = useRef<HTMLDivElement>(null);
+  const markdown = useDocState().status?.markdown ?? false;
   useEffect(() => {
     if (!host.current) return;
-    const view = session.attach(host.current);
+    const md =
+      root.current && previewHost.current
+        ? { root: root.current, previewHost: previewHost.current }
+        : undefined;
+    const view = session.attach(host.current, md);
     view.setWrap(wrap);
     const onFocus = () => {
       void session.checkDisk();
@@ -70,9 +78,13 @@ export function EditorScreen({
   return (
     <div className="editor">
       <Banners session={session} />
+      {markdown && <MdBanner session={session} />}
       {ui.find !== "off" && <FindPanel session={session} replace={ui.find === "replace"} />}
       {ui.goto && <GotoLine session={session} />}
-      <div className="editor-surface" ref={host} />
+      <div className={markdown ? "editor-panes markdown" : "editor-panes"} ref={root}>
+        <div className="editor-surface" ref={host} />
+        {markdown && <div className="md-preview-host" ref={previewHost} />}
+      </div>
       <StatusBar session={session} wrap={wrap} onToggleWrap={onToggleWrap} />
       <Notices />
     </div>
@@ -472,6 +484,7 @@ function StatusBar({
         <span>{t("status.selected", { size: bytes(c.selectedBytes) })}</span>
       )}
       <span className="spacer" />
+      {st.markdown && <MdStatusItems session={session} />}
       {indexing && <span className="progress">{indexing}</span>}
       <span>{lines}</span>
       <span>{bytes(st.len)}</span>

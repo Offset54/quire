@@ -307,6 +307,7 @@ fn main() {
         md::md_view,
         md::md_set_remote,
         md::md_status,
+        md::md_blocks,
         bench::bench_scenario,
         bench::bench_open_synthetic,
         bench::bench_report,
@@ -356,6 +357,7 @@ fn main() {
         md::md_view,
         md::md_set_remote,
         md::md_status,
+        md::md_blocks,
     ]);
 
     let build_span = tracing::info_span!("tauri_build").entered();

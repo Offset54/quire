@@ -98,6 +98,7 @@ fn known(cache: &str) -> Option<(&'static str, CacheClass)> {
     match cache {
         "tile-bitmaps" => Some(("tile-bitmaps", CacheClass::Raster)),
         "preview-images" => Some(("preview-images", CacheClass::DecodedImage)),
+        "md-preview-dom" => Some(("md-preview-dom", CacheClass::Layout)),
         _ => None,
     }
 }

@@ -67,6 +67,64 @@ export type Action =
   | { type: "setSelections"; ranges: [number, number][] }
   | { type: "cut" };
 
+/** Extra styling for one row (Markdown source decoration): a class for
+ *  the row and classed spans of its text (UTF-16 ranges, sorted, disjoint). */
+export interface RowDeco {
+  cls: string;
+  spans: [number, number, string][];
+}
+
+export type RowDecorator = (row: Row) => RowDeco | undefined;
+
+/** Text node and offset holding UTF-16 index `u` of `root`'s text. */
+function pointIn(root: Node, u: number): [Text, number] | undefined {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let left = u;
+  let last: Text | undefined;
+  for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+    const len = n.data.length;
+    if (left <= len) return [n, left];
+    left -= len;
+    last = n;
+  }
+  return last ? [last, last.data.length] : undefined;
+}
+
+/** UTF-16 index in `root`'s text of (`node`, `offset`), if `node` is in it. */
+function indexIn(root: Node, node: Node, offset: number): number | undefined {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let at = 0;
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    if (n === node) return at + offset;
+    at += (n as Text).data.length;
+  }
+  return undefined;
+}
+
+/** Sets a row's text, with classed spans. */
+function renderText(
+  tx: HTMLElement,
+  text: string,
+  spans: [number, number, string][] | undefined,
+): void {
+  if (!spans || spans.length === 0) {
+    tx.textContent = text;
+    return;
+  }
+  const parts: Node[] = [];
+  let at = 0;
+  for (const [a, b, cls] of spans) {
+    if (a > at) parts.push(document.createTextNode(text.slice(at, a)));
+    const sp = document.createElement("span");
+    sp.className = cls;
+    sp.textContent = text.slice(a, b);
+    parts.push(sp);
+    at = b;
+  }
+  if (at < text.length) parts.push(document.createTextNode(text.slice(at)));
+  tx.replaceChildren(...parts);
+}
+
 export interface ViewRequest {
   anchor: number;
   caret: boolean;
@@ -92,6 +150,8 @@ export interface TxtCallbacks {
   onError(message: string): void;
   /** Keyboard commands the chrome handles (find, save, ...). */
   onCommand(name: string): void;
+  /** The top row moved: byte offset of the viewport's top (scroll sync). */
+  onScroll?(offset: number): void;
 }
 
 /** Latency of one input, for the HUD and benchmarks. */
@@ -214,6 +274,8 @@ export class TxtView {
   private dragAnchor: number | undefined;
   private destroyed = false;
   private resizeObserver: ResizeObserver;
+  private lastScrollOffset = -1;
+  private decorator: RowDecorator | undefined;
   /** Matches to highlight are part of each view message. */
 
   constructor(
@@ -314,6 +376,52 @@ export class TxtView {
   async reveal(offset: number): Promise<void> {
     const rowsAbove = Math.floor(this.visibleRows / 3);
     await this.fetch({ anchor: offset, caret: false }, rowsAbove);
+  }
+
+  /** Styles rows (Markdown source decoration); `undefined` removes it. */
+  setDecorator(d: RowDecorator | undefined): void {
+    this.decorator = d;
+    this.invalidateAll();
+  }
+
+  /** Redraws decorations (the decorator's data changed). */
+  redecorate(): void {
+    this.invalidateAll();
+  }
+
+  /** Byte range of the fetched window (what decoration needs to cover). */
+  windowRange(): [number, number] {
+    const first = this.rows[0];
+    const last = this.rows[this.rows.length - 1];
+    return [first?.start ?? 0, last?.end ?? 0];
+  }
+
+  /** Byte offset at the viewport's top, interpolated within the top row. */
+  scrollOffset(): number {
+    const i = Math.floor(this.top);
+    const r = this.rows[i];
+    if (!r) return 0;
+    return Math.floor(r.start + (this.top - i) * (r.end - r.start));
+  }
+
+  /** Scrolls so `offset`'s row is at the top (scroll sync). Keeps the
+   *  current window when the row is in it. */
+  scrollToOffset(offset: number): void {
+    const i = this.rowIndexOf(offset);
+    const row = i === undefined ? undefined : this.rows[i];
+    // Only a row that holds the offset (rowIndexOf gives the last row for
+    // offsets past the window).
+    if (i !== undefined && row && offset >= row.start && offset <= row.end) {
+      const r = row;
+      const frac = r.end > r.start ? (offset - r.start) / (r.end - r.start) : 0;
+      this.top = i + Math.min(0.999, Math.max(0, frac));
+      this.clampTop();
+      this.maybeFetch();
+      this.lastScrollOffset = this.scrollOffset();
+      this.invalidate();
+      return;
+    }
+    void this.fetch({ anchor: offset, caret: false }, 0);
   }
 
   /** Jumps to a scrollbar fraction 0..1. */
@@ -795,10 +903,13 @@ export class TxtView {
       // Keys are independent of the row's offset, so an edit redraws only
       // the rows whose text or decorations changed, not every row after it.
       const ln = row.flags & FLAG_FIRST && row.line >= 0 ? String(row.line + 1) : "";
-      const key = `${ln}\u0000${row.text}`;
+      const deco = this.decorator?.(row);
+      const dk = deco ? `${deco.cls}|${deco.spans.map((x) => x.join(",")).join(";")}` : "";
+      const key = `${ln}\u0000${row.text}\u0000${dk}`;
       if (el.key !== key) {
         el.key = key;
-        el.tx.textContent = row.text;
+        renderText(el.tx, row.text, deco?.spans);
+        el.root.className = deco?.cls ? `txt-row ${deco.cls}` : "txt-row";
         el.ln.textContent = ln;
         el.decoKey = "";
       }
@@ -811,6 +922,13 @@ export class TxtView {
     }
     this.updateScrollbars();
     this.placeInput();
+    if (this.cb.onScroll) {
+      const off = this.scrollOffset();
+      if (off !== this.lastScrollOffset) {
+        this.lastScrollOffset = off;
+        this.cb.onScroll(off);
+      }
+    }
     if (!firstContentMarked && this.rows.length > 0) {
       firstContentMarked = true;
       performance.mark("txt-first-content");
@@ -845,15 +963,14 @@ export class TxtView {
     primary: [number, number],
   ): void {
     el.overlay.replaceChildren();
-    const node = el.tx.firstChild;
     const textEndOff = row.end;
     const lastOfLine = (row.flags & FLAG_LAST) !== 0;
     const rangeX = (u: number): number => {
-      if (!node || u <= 0) return 0;
-      const len = node.textContent?.length ?? 0;
+      const pt = u > 0 ? pointIn(el.tx, u) : undefined;
+      if (!pt) return 0;
       const r = document.createRange();
-      r.setStart(node, Math.min(u, len));
-      r.setEnd(node, Math.min(u, len));
+      r.setStart(pt[0], pt[1]);
+      r.setEnd(pt[0], pt[1]);
       const base = el.tx.getBoundingClientRect().left;
       const rect = r.getClientRects()[0] ?? r.getBoundingClientRect();
       return rect.left - base;
@@ -1161,6 +1278,10 @@ export class TxtView {
         return command("open");
       case "n":
         return command("new");
+      case "e":
+        return command("toggleView");
+      case "\\":
+        return command("toggleSplit");
       default:
         return false;
     }
@@ -1209,7 +1330,7 @@ export class TxtView {
     const py = tr.top + tr.height / 2;
     let u: number | undefined;
     const pos = document.caretPositionFromPoint(x, py);
-    if (pos?.offsetNode === node) u = pos.offset;
+    if (pos) u = indexIn(el.tx, pos.offsetNode, pos.offset);
     if (u === undefined) u = x < tr.left ? 0 : row.text.length;
     return offsetAt(row, u);
   }
