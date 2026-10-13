@@ -20,7 +20,7 @@
 - Save ratio (user decision, M1_PLAN): save vs. the mean of raw writes right before and after, median of 5 runs. Raw 2 GiB writes on this SSD vary 1.1–2.4 s, worse after many test writes; let the disk rest before ref-sim runs.
 - Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
 - Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
-- Still owed before M3: report the webview tile-bitmap cache to the memory governor (PROGRESS.md known gaps).
+- Webview caches count against the memory governor through `memory_report` (`src-tauri/src/frontend_cache.rs`): the frontend reports bytes, the governor answers with a `memory-trim` event. Use it for any new webview-side cache (preview images in M2, PDF tiles in M3).
 - The user declined screen control (computer use) for checking the app: verify UI through the WebDriver flows (`pwsh tools/webdriver/run-ui-tests.ps1`) and the in-app bench scenarios instead.
 
 ## Layout and key pieces

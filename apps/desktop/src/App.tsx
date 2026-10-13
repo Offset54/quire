@@ -5,7 +5,7 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "./i18n";
 import { notify, useDocState } from "./txt/doc-store";
-import { EditorScreen } from "./txt/EditorScreen";
+import { EditorScreen, Notices } from "./txt/EditorScreen";
 import { Session, getUi, setUi } from "./txt/session";
 
 interface Orphan {
@@ -79,10 +79,17 @@ export function App() {
   // Startup: a file from the command line (already opening in the core),
   // and journals left by a crash.
   useEffect(() => {
-    void Session.startup().then((s) => {
-      if (s) show(s);
-      performance.measure("txt-startup-ready");
-    });
+    Session.startup()
+      .then((s) => {
+        if (s) show(s);
+      })
+      .catch((err: unknown) => {
+        // The welcome screen stays; say why the file isn't open.
+        notify("error", t("app.openFailed", { error: String(err) }), 0);
+      })
+      .finally(() => {
+        performance.measure("txt-startup-ready");
+      });
     void invoke<Orphan[]>("txt_recovery_list").then(setOrphans);
   }, [show]);
 
@@ -238,6 +245,7 @@ export function App() {
           </div>
         )}
       </div>
+      <Notices />
     </main>
   );
 }

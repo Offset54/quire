@@ -3,6 +3,8 @@
   "app.open": "Open…",
   "app.new": "New document",
   "app.decoding": "Decoding the file to open it… {pct}%",
+  "app.openFailed": "The file couldn't be opened: {error}",
+  "app.reopenCancelled": "Reopening was cancelled; the document is unchanged.",
   "hud.title": "Performance",
   "hud.frames": "Frames",
   "hud.longTasks": "Long tasks (> 50 ms)",

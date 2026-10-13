@@ -37,7 +37,7 @@
 | 12 | Corpora, fixtures and fuzzing | Not started |
 | 13 | Benchmarks | Not started |
 | 14 | WebDriver UI flows | Not started |
-| 15 | Carried from M1 | Not started |
+| 15 | Carried from M1 | Done: webview tile-bitmap cache reported to the governor (`frontend_cache.rs`; bench: 160 MiB counted on both sides after scrolling); command-line open failure shown on the welcome screen; reopen with another encoding shows progress with Cancel (UI flows 10 and 11) |
 | 16 | M2 report | Not started |
 
 ## M1 tasks
@@ -174,10 +174,6 @@ Benchmarks that count against §4 run in the ref-sim profile ([ADR-0021](adr/002
 
 ## Known gaps
 
-- The webview's tile bitmap cache (LRU, ten viewports of tiles) is capped by count but not reported to the core memory governor, so the HUD's cache memory excludes it. To be fixed when the governor gets a frontend-reported budget (before M3, where PDF tiles dominate memory).
-
-- A command-line file that fails to open (not cancelled) rejects `Session.startup()` without a message: the welcome screen doesn't render notices. Found in M1, not fixed.
 - The Microsoft IMEs (Korean, Japanese, Chinese) haven't been checked by hand; the UI flow replays the Korean IME's composition events.
-- Reopening with another encoding (`txt_reopen`) decodes without progress or cancel; only opening reports them.
 
 - Windows long paths are enabled on this PC, and git uses `core.longpaths = true` for this repo. The app must still declare `longPathAware` in its manifest (§9), because users' machines may have the setting off.

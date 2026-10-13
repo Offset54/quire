@@ -3,6 +3,7 @@
 
 #[cfg(feature = "bench-fixtures")]
 mod bench;
+mod frontend_cache;
 #[cfg(feature = "bench-fixtures")]
 mod synthetic;
 mod tracing_setup;
@@ -16,6 +17,7 @@ mod view;
 
 use std::sync::Arc;
 
+use frontend_cache::{EventSink, FrontendCaches};
 use quire_core::memory::{GovernorConfig, GovernorStats, MemoryGovernor};
 use quire_core::scheduler::{JobRecord, Scheduler, SchedulerConfig, SchedulerStats};
 use quire_core::trace::ExternalEvent;
@@ -67,6 +69,29 @@ async fn view_relayout(
 #[tauri::command]
 async fn view_close(views: State<'_, ViewService>, view: u64) -> Result<(), String> {
     views.close(view);
+    Ok(())
+}
+
+/// The size of a webview cache (`tile-bitmaps` per view), so it counts
+/// against the memory governor (§5.5).
+#[tauri::command]
+async fn memory_report(
+    caches: State<'_, FrontendCaches>,
+    cache: String,
+    key: u64,
+    doc: Option<u64>,
+    bytes: u64,
+) -> Result<(), String> {
+    caches.report(&cache, key, doc, bytes)
+}
+
+#[tauri::command]
+async fn memory_release(
+    caches: State<'_, FrontendCaches>,
+    cache: String,
+    key: u64,
+) -> Result<(), String> {
+    caches.release(&cache, key);
     Ok(())
 }
 
@@ -223,7 +248,7 @@ fn main() {
     let builder = builder
         .manage(tracing)
         .manage(ViewService::new(scheduler))
-        .manage(governor)
+        .manage(governor.clone())
         .manage(txt);
 
     #[cfg(feature = "bench-fixtures")]
@@ -234,6 +259,8 @@ fn main() {
         view_relayout,
         view_close,
         perf_stats,
+        memory_report,
+        memory_release,
         txt::txt_startup,
         txt::txt_open,
         txt::txt_new,
@@ -276,6 +303,8 @@ fn main() {
         view_relayout,
         view_close,
         perf_stats,
+        memory_report,
+        memory_release,
         txt::txt_startup,
         txt::txt_open,
         txt::txt_new,
@@ -309,7 +338,9 @@ fn main() {
         .on_page_load(|_, payload| {
             tracing::info!(event = ?payload.event(), url = %payload.url(), "page load");
         })
-        .setup(|app| {
+        .setup(move |app| {
+            let sink = Arc::new(EventSink(app.handle().clone()));
+            app.manage(FrontendCaches::new(governor, sink));
             #[cfg(feature = "bench-fixtures")]
             app.add_capability(include_str!("../dev-capabilities/bench.json"))?;
             Ok(create_main_window(app)?)

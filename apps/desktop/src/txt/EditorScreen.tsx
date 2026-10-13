@@ -1,6 +1,7 @@
 // Chrome around the TXT editor surface: banners, find/replace, go to line,
 // status bar. React renders only these; the text itself is TxtView's.
 
+import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { t, type MessageId } from "../i18n";
 import { dismiss, endingLabel, useDocState } from "./doc-store";
@@ -78,7 +79,7 @@ export function EditorScreen({
   );
 }
 
-function Notices() {
+export function Notices() {
   const { notices } = useDocState();
   return (
     <div className="notices" role="status">
@@ -163,6 +164,24 @@ function Banners({ session }: { session: Session }) {
     banners.push(
       <div className="banner info" key="shared">
         <span>{t("banner.sharedWriter")}</span>
+      </div>,
+    );
+  }
+  if (s.opening) {
+    const o = s.opening;
+    const fraction = o.total > 0 ? o.done / o.total : 0;
+    banners.push(
+      <div className="banner info" key="reopen" role="status">
+        <span>{t("app.decoding", { pct: Math.floor(fraction * 100) })}</span>
+        <progress max={1} value={fraction} />
+        <button
+          type="button"
+          onClick={() => {
+            void invoke("txt_open_cancel");
+          }}
+        >
+          {t("common.cancel")}
+        </button>
       </div>,
     );
   }

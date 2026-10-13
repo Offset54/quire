@@ -8,6 +8,8 @@ fn main() {
         "view_relayout",
         "view_close",
         "perf_stats",
+        "memory_report",
+        "memory_release",
         "txt_startup",
         "txt_open",
         "txt_new",

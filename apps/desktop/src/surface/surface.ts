@@ -9,6 +9,7 @@
 // keyboard and a custom scrollbar; nothing scrolls natively.
 
 import { Channel, invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { tileKey, type TileId } from "./protocol";
 import { ScrollModel } from "./scroll-model";
 import { neededTiles, visibleTiles, wantedRange } from "./tile-grid";
@@ -65,6 +66,18 @@ export function openSurfaces(): DocumentSurface[] {
 }
 let sharedListenerInstalled = false;
 
+let trimListenerInstalled = false;
+
+/** The core's memory governor asks for tile bitmaps back (frontend_cache.rs). */
+function installTrimListener(): void {
+  if (trimListenerInstalled) return;
+  trimListenerInstalled = true;
+  void listen<{ cache: string; key: number; bytes: number }>("memory-trim", (e) => {
+    if (e.payload.cache !== "tile-bitmaps") return;
+    surfacesByView.get(e.payload.key)?.trimCache(e.payload.bytes);
+  });
+}
+
 /** One listener for all surfaces; routes shared buffers by view id. */
 function installSharedBufferListener(): void {
   if (sharedListenerInstalled || !webview2) return;
@@ -99,10 +112,24 @@ function installSharedBufferListener(): void {
   });
 }
 
-/** LRU cache of tile bitmaps for one surface. */
+function bitmapBytes(b: ImageBitmap): number {
+  return b.width * b.height * 4;
+}
+
+/**
+ * LRU cache of tile bitmaps for one surface. Capped by count, and its bytes
+ * are reported to the core memory governor, which can ask for a trim.
+ */
 class TileCache {
   private readonly tiles = new Map<string, ImageBitmap>();
+  bytes = 0;
   constructor(public capacity: number) {}
+
+  private drop(key: string, b: ImageBitmap): void {
+    this.bytes -= bitmapBytes(b);
+    b.close();
+    this.tiles.delete(key);
+  }
 
   get(key: string): ImageBitmap | undefined {
     const bitmap = this.tiles.get(key);
@@ -119,19 +146,31 @@ class TileCache {
   }
 
   put(key: string, bitmap: ImageBitmap): void {
-    this.tiles.get(key)?.close();
-    this.tiles.delete(key);
+    const old = this.tiles.get(key);
+    if (old) this.drop(key, old);
     this.tiles.set(key, bitmap);
+    this.bytes += bitmapBytes(bitmap);
     while (this.tiles.size > this.capacity) {
       const [oldest, b] = this.tiles.entries().next().value!;
-      b.close();
-      this.tiles.delete(oldest);
+      this.drop(oldest, b);
     }
+  }
+
+  /** Evicts least recently used tiles until `bytes` are freed; returns the bytes freed. */
+  trim(bytes: number): number {
+    let freed = 0;
+    while (freed < bytes && this.tiles.size > 0) {
+      const [oldest, b] = this.tiles.entries().next().value!;
+      freed += bitmapBytes(b);
+      this.drop(oldest, b);
+    }
+    return freed;
   }
 
   clear(): void {
     for (const b of this.tiles.values()) b.close();
     this.tiles.clear();
+    this.bytes = 0;
   }
 
   get size(): number {
@@ -144,6 +183,7 @@ export interface SurfaceDiagnostics {
   transport: string;
   cachedTiles: number;
   cacheCapacity: number;
+  cacheBytes: number;
   counters: TileCounters;
 }
 
@@ -174,6 +214,8 @@ export class DocumentSurface {
   private direction: -1 | 0 | 1 = 0;
   private frameHandle = 0;
   private resizeObserver: ResizeObserver;
+  private reportTimer = 0;
+  private reportedBytes = 0;
   overlay: OverlayPainter | undefined;
 
   constructor(
@@ -209,6 +251,7 @@ export class DocumentSurface {
     this.resizeObserver.observe(this.element);
     this.resize();
     installSharedBufferListener();
+    installTrimListener();
   }
 
   /** A Channel for the command that opens this surface's view (fallback transport). */
@@ -221,11 +264,18 @@ export class DocumentSurface {
   }
 
   attach(info: ViewInfo): void {
-    if (this.info) surfacesByView.delete(this.info.view);
+    if (this.info) {
+      surfacesByView.delete(this.info.view);
+      if (this.info.view !== info.view) {
+        void invoke("memory_release", { cache: "tile-bitmaps", key: this.info.view });
+        this.reportedBytes = 0;
+      }
+    }
     this.info = info;
     surfacesByView.set(info.view, this);
     this.scroll.setExtent(info.extent.height);
     this.cache.clear();
+    this.reportMemory();
     this.invalidate(true);
   }
 
@@ -289,6 +339,7 @@ export class DocumentSurface {
       transport: this.info.transport,
       cachedTiles: this.cache.size,
       cacheCapacity: this.cache.capacity,
+      cacheBytes: this.cache.bytes,
       counters: { ...this.counters },
     };
   }
@@ -306,19 +357,51 @@ export class DocumentSurface {
     }
     this.counters.received++;
     this.cache.put(tileKey(id), bitmap);
+    this.reportMemory();
     this.invalidate(false);
+  }
+
+  /** Frees tile bitmaps on the memory governor's request. */
+  trimCache(bytes: number): void {
+    this.cache.trim(bytes);
+    this.reportMemory();
+    // Trimmed visible tiles show placeholders and are requested again.
+    this.invalidate(true);
   }
 
   async close(): Promise<void> {
     cancelAnimationFrame(this.frameHandle);
+    clearTimeout(this.reportTimer);
     this.resizeObserver.disconnect();
     this.worker.terminate();
     this.cache.clear();
     if (this.info) {
       surfacesByView.delete(this.info.view);
-      await invoke("view_close", { view: this.info.view });
+      await Promise.all([
+        invoke("view_close", { view: this.info.view }),
+        invoke("memory_release", { cache: "tile-bitmaps", key: this.info.view }),
+      ]);
     }
     this.element.remove();
+  }
+
+  /** Reports the cache's bytes to the core, at most every 250 ms. */
+  private reportMemory(): void {
+    if (this.reportTimer !== 0) return;
+    this.reportTimer = window.setTimeout(() => {
+      this.reportTimer = 0;
+      const info = this.info;
+      if (!info || this.cache.bytes === this.reportedBytes) return;
+      this.reportedBytes = this.cache.bytes;
+      void invoke("memory_report", {
+        cache: "tile-bitmaps",
+        key: info.view,
+        doc: null,
+        bytes: this.cache.bytes,
+      }).catch((err: unknown) => {
+        console.error("memory_report failed", err);
+      });
+    }, 250);
   }
 
   // ---- internals -------------------------------------------------------------

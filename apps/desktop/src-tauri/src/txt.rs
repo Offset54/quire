@@ -525,7 +525,7 @@ impl TxtService {
         }
         let dirty = s.file.lock().doc.is_dirty();
         if !dirty && status.change != watch::DiskChange::Deleted {
-            self.reload(s, None)
+            self.reload(s, None, &|_| true)
                 .map_err(|e| format!("reload failed: {e}"))?;
             s.emit(json!({"kind": "reloaded", "doc": s.id, "change": status.change}));
             return Ok(Some(status));
@@ -535,10 +535,13 @@ impl TxtService {
     }
 
     /// Re-reads the file into the session, keeping the caret near where it was.
+    /// `progress(raw bytes decoded)` is called while a non-UTF-8 file is
+    /// transcoded; returning false cancels and leaves the session unchanged.
     fn reload(
         &self,
         s: &Arc<Session>,
         encoding: Option<&'static encoding_rs::Encoding>,
+        progress: &dyn Fn(u64) -> bool,
     ) -> CmdResult<()> {
         let (path, caret, layout) = {
             let f = s.file.lock();
@@ -550,7 +553,7 @@ impl TxtService {
             &path,
             &self.governor,
             Some(DocId(s.id)),
-            &Self::settings(encoding, &|_| true),
+            &Self::settings(encoding, progress),
         )
         .map_err(io_err)?;
         new.doc.layout = layout;
@@ -642,7 +645,13 @@ pub async fn txt_startup(
     }) else {
         return Ok(None);
     };
-    let id = result?;
+    let id = match result {
+        Err(e) if svc.open_cancel.load(Ordering::Acquire) => {
+            tracing::info!(%e, "command-line open cancelled");
+            return Err("cancelled".into());
+        }
+        r => r?,
+    };
     let s = svc.session(id)?;
     *s.events.lock() = Some(channel);
     let status = s.status(&s.file.lock());
@@ -1249,8 +1258,37 @@ pub async fn txt_reopen(
         return Err("save or discard your changes before reopening with another encoding".into());
     }
     let enc = encoding_rs::Encoding::for_label(encoding.as_bytes()).ok_or("unknown encoding")?;
-    svc.reload(&s, Some(enc))?;
-    Ok(s.status(&s.file.lock()))
+    // Decoding a large file takes seconds: progress on the document's channel
+    // (at most every 100 ms), cancelled by `txt_open_cancel`.
+    svc.open_cancel.store(false, Ordering::Release);
+    let total = s
+        .file
+        .lock()
+        .path
+        .as_ref()
+        .and_then(|p| std::fs::metadata(p).ok())
+        .map_or(0, |m| m.len());
+    let last = Mutex::new(None::<Instant>);
+    let progress = |done: u64| {
+        let mut last = last.lock();
+        if last.is_none_or(|t| t.elapsed() >= Duration::from_millis(100)) {
+            *last = Some(Instant::now());
+            s.emit(json!({"kind": "opening", "done": done, "total": total}));
+        }
+        !svc.open_cancel.load(Ordering::Acquire)
+    };
+    let result = svc.reload(&s, Some(enc), &progress);
+    s.emit(json!({"kind": "opened"}));
+    match result {
+        Err(e) if svc.open_cancel.load(Ordering::Acquire) => {
+            tracing::info!(%e, "reopen cancelled");
+            Err("cancelled".into())
+        }
+        r => {
+            r?;
+            Ok(s.status(&s.file.lock()))
+        }
+    }
 }
 
 /// Allows editing a file that looked binary (the user confirmed).
@@ -1287,7 +1325,7 @@ pub async fn txt_disk_resolve(
     let s = svc.session(doc)?;
     match choice.as_str() {
         "reload" => {
-            svc.reload(&s, None)?;
+            svc.reload(&s, None, &|_| true)?;
             Ok(json!({"reloaded": true}))
         }
         "keep" => {

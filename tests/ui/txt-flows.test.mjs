@@ -272,3 +272,76 @@ test("a large non-UTF-8 file shows decode progress and can be cancelled", async 
   assert.equal(await wd.exec("return document.querySelectorAll('.notice.error').length"), 0);
   fs.rmSync(big);
 });
+
+test("a command-line file that can't be read says why on the welcome screen", async () => {
+  const locked = path.join(DIR, "unreadable.txt");
+  fs.writeFileSync(locked, "secret\n");
+  // Deny reading the file's data (its attributes stay readable, so it still
+  // counts as an existing file on the command line).
+  const user = process.env.USERNAME;
+  execFileSync("icacls", [locked, "/deny", `${user}:(RD)`]);
+  try {
+    await wd.stop().catch(() => {});
+    await launch([locked]);
+    const text = await wd.until(
+      async () => {
+        const t = await wd.exec(
+          "return document.querySelector('.welcome') && document.querySelector('.notice.error')?.innerText",
+        );
+        return t || false;
+      },
+      10_000,
+      "error notice on the welcome screen",
+    );
+    assert.match(text, /couldn't be opened/);
+  } finally {
+    execFileSync("icacls", [locked, "/remove:d", user]);
+    fs.rmSync(locked);
+  }
+});
+
+test("reopening with another encoding shows progress and can be cancelled", async () => {
+  // 512 MiB of UTF-8 opens at once; decoding it as Shift_JIS takes seconds.
+  const big = path.join(DIR, "big-utf8.txt");
+  const line = Buffer.from("UTF-8 line with 한국어 and 日本語, to decode again\n", "utf8");
+  const block = Buffer.concat(
+    Array.from({ length: Math.ceil((16 << 20) / line.length) }, () => line),
+  );
+  const fd = fs.openSync(big, "w");
+  for (let i = 0; i < 32; i++) fs.writeSync(fd, block);
+  fs.closeSync(fd);
+  try {
+    await wd.stop().catch(() => {});
+    await launch([big]);
+    await wd.until(async () => (await rows()).length > 5, 20_000, "the file's rows");
+    await wd.exec(
+      "[...document.querySelectorAll('.statusbar button')].find((b) => b.innerText.startsWith('UTF-8')).click()",
+    );
+    // The second Shift_JIS entry is under "Reopen with".
+    await wd.exec(
+      "[...document.querySelectorAll('.statusbar .menu button')].filter((b) => b.innerText === 'Shift_JIS')[1].click()",
+    );
+    await wd.until(
+      () => wd.exec("return /Decoding/.test(document.querySelector('.banner')?.innerText ?? '')"),
+      10_000,
+      "decode progress",
+    );
+    await wd.exec(
+      "[...document.querySelectorAll('.banner button')].find((b) => b.innerText === 'Cancel').click()",
+    );
+    await wd.until(
+      async () =>
+        /cancelled/.test(
+          await wd.exec("return document.querySelector('.notices')?.innerText ?? ''"),
+        ),
+      10_000,
+      "cancelled notice",
+    );
+    assert.equal(await wd.exec("return !!document.querySelector('.banner')"), false);
+    assert.match(await status(), /UTF-8/);
+    assert.match((await rows())[0].t, /^UTF-8 line with 한국어/);
+  } finally {
+    await wd.stop().catch(() => {});
+    fs.rmSync(big, { force: true });
+  }
+});

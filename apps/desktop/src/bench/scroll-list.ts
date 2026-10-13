@@ -124,8 +124,21 @@ export async function run(host: HTMLElement): Promise<unknown> {
   await nextFrame();
   snapshots.end = surface.snapshot();
 
-  const stats = await invoke<unknown>("perf_stats");
+  // The tile-bitmap cache counts against the core memory governor: after the
+  // report interval, the core sees what the surface holds.
+  await sleep(400);
+  const stats = await invoke<{ memory: { caches: { name: string; bytes: number }[] } }>(
+    "perf_stats",
+  );
+  const coreTileBytes = stats.memory.caches
+    .filter((c) => c.name === "tile-bitmaps")
+    .reduce((sum, c) => sum + c.bytes, 0);
+  const tileCacheMemory = {
+    surfaceBytes: surface.diagnostics()?.cacheBytes ?? 0,
+    governorBytes: coreTileBytes,
+  };
   return {
+    tileCacheMemory,
     scenario: "scroll-list",
     env: {
       userAgent: navigator.userAgent,

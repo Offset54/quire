@@ -50,7 +50,8 @@ type CoreEvent =
   | { kind: "reloaded"; change: string }
   | { kind: "sharedWriter" }
   | { kind: "saving" }
-  | { kind: "opening"; done: number; total: number };
+  | { kind: "opening"; done: number; total: number }
+  | { kind: "opened" };
 
 export type UiMode = { find: "off" | "find" | "replace"; goto: boolean };
 
@@ -111,9 +112,10 @@ export class Session {
     const early: CoreEvent[] = [];
     let opened = false;
     const channel = Session.channel((e) => {
-      if (e.kind === "opening") {
-        if (!opened) update({ opening: { done: e.done, total: e.total } });
-      } else if (holder.session) holder.session.onEvent(e);
+      // Decode progress while opening; later ones (reopening with another
+      // encoding) go to the session.
+      if (e.kind === "opening" && !opened) update({ opening: { done: e.done, total: e.total } });
+      else if (holder.session) holder.session.onEvent(e);
       else early.push(e);
     });
     let info: DocInfo | null;
@@ -247,6 +249,13 @@ export class Session {
       case "saving":
         update({ saving: true });
         break;
+      // Reopening with another encoding (decode progress, then done).
+      case "opening":
+        update({ opening: { done: e.done, total: e.total } });
+        break;
+      case "opened":
+        update({ opening: undefined });
+        break;
     }
   }
 
@@ -320,7 +329,10 @@ export class Session {
       update({ status });
       this.view?.refresh();
     } catch (err) {
-      notify("error", String(err));
+      if (String(err).includes("cancelled")) notify("info", t("app.reopenCancelled"));
+      else notify("error", String(err));
+    } finally {
+      update({ opening: undefined });
     }
   }
 

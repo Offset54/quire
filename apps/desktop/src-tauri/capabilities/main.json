@@ -11,6 +11,8 @@
     "allow-view-relayout",
     "allow-view-close",
     "allow-perf-stats",
+    "allow-memory-report",
+    "allow-memory-release",
     "allow-txt-startup",
     "allow-txt-open",
     "allow-txt-new",
