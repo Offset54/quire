@@ -67,6 +67,27 @@ describe("platform frame stalls", () => {
     expect(frameWaitStallMs([], 1000, 1010)).toBe(0);
   });
 
+  it("subtracts all our work in long frames overlapping a frame wait", () => {
+    // Run 5's 509.9 ms wrapped-scroll interval: an idle wait, then a 427 ms
+    // long frame with 0.8 ms of our work (no scripts, rendering only).
+    const run5: Loaf = {
+      startTime: 1526,
+      duration: 427,
+      blockingDuration: 0,
+      renderStart: 1952.2,
+      scripts: [],
+    };
+    const end = 1953;
+    const stall = frameWaitStallMs([run5], end - 509.9, end);
+    expect(stall).toBeCloseTo(509.9 - ownWorkMs(run5) - FRAME_MS, 1);
+    // Run 2's 244.3 ms interval keeps 11.5 ms of our work and one frame.
+    const gapEnd = 11608.6;
+    expect(244.3 - frameWaitStallMs([run2], gapEnd - 244.3, gapEnd)).toBeCloseTo(
+      11.5 + FRAME_MS,
+      0,
+    );
+  });
+
   it("counts a frame wait fully as ours if a task blocked in it", () => {
     const blocking: Loaf = { ...run2, startTime: 1100, duration: 80, blockingDuration: 30 };
     expect(frameWaitStallMs([blocking], 1000, 1223)).toBe(0);

@@ -74,16 +74,21 @@ function stallsIn(from: number, to: number) {
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
+/** The platform's part of a wait for a requested frame (ADR-0024). */
+function frameWaitStall(requested: number, drawn: number): number {
+  stallsIn(0, 0); // collect pending entries
+  return frameWaitStallMs(loafs, requested, drawn);
+}
+
 /** From the first rows' arrival to the frame that drew them, and the part of
  * that wait the platform didn't deliver a frame (ADR-0024). */
 function firstFrameWait() {
   const ready = performance.getEntriesByName("txt-first-rows-ready", "mark")[0];
   const drawn = performance.getEntriesByName("txt-first-content", "mark")[0];
   if (!ready || !drawn) return { waitMs: null, waitStallMs: 0 };
-  stallsIn(0, 0); // collect pending entries
   return {
     waitMs: round1(drawn.startTime - ready.startTime),
-    waitStallMs: frameWaitStallMs(loafs, ready.startTime, drawn.startTime),
+    waitStallMs: frameWaitStall(ready.startTime, drawn.startTime),
   };
 }
 
@@ -145,6 +150,9 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
     log(`jump to ${line}`);
     const t0 = performance.now();
     const r = await session.gotoLine(line);
+    // The last frame wait is a pure wait for a frame; the IPC before it
+    // could be our host and is never subtracted (ADR-0024).
+    const requested = performance.now();
     await nextFrame();
     const t1 = performance.now();
     const ms = t1 - t0;
@@ -152,7 +160,7 @@ async function jumps(session: Session, view: TxtView, lines: number[]) {
     out.push({
       line,
       ms,
-      ownMs: ms - stallTotal(stallsIn(t0, t1)),
+      ownMs: ms - frameWaitStall(requested, t1),
       coreMs: r.ms,
       viewCoreMs: (view.currentHeader?.coreUs ?? 0) / 1000,
       invokeMs: r.invokeMs,
@@ -191,9 +199,15 @@ async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: n
     if (view.placeholderRows() > 0) blank++;
     last = t;
   }
-  // Each interval without the platform's stall time in it (ADR-0024).
-  const stalls = stallsIn(start, last);
-  const own = gaps.map(([a, b]) => b - a - stallTotal(stallsIn(a, b)));
+  // Each interval is a wait for a requested frame: without the platform's
+  // stall time in it (ADR-0024).
+  const perGap = gaps.map(([a, b]) => frameWaitStall(a, b));
+  const own = gaps.map(([a, b], i) => b - a - perGap[i]!);
+  const stalls = gaps.flatMap(([a, b], i) =>
+    perGap[i]! > 0
+      ? [{ atMs: Math.round(a - start), gapMs: round1(b - a), stallMs: perGap[i]! }]
+      : [],
+  );
   // Where a slow frame's time went (script, style and layout, or nothing on
   // the main thread).
   const longFrames = loafs
