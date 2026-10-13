@@ -36,6 +36,7 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0024 | Platform frame stalls in budgets | [Accepted](0024-platform-frame-stalls.md): judge frame and first-paint rows without frames the platform did not deliver; report the stalls separately | Count them against our budgets; ship a compositor keep-alive | M1 |
 | 0025 | Repository visibility | [Accepted](0025-public-repository.md): public, so standard Actions runners are free | Stay private and trim CI; no Actions for a month; rewrite history first | M1 |
 | 0026 | Markdown parser | [Accepted](0026-markdown-parser.md): comrak 0.56 (BSD-2-Clause), default features off, rendering through our own formatter overrides | pulldown-cmark (MIT; no extended autolinks, no renderer hooks); markdown-rs (MIT); our own parser | M2 (spike) |
+| 0027 | Markdown incremental parsing | [Accepted](0027-markdown-incremental-parsing.md): top-level block index tiled by start lines, built in stretches, edits re-scanned until a block starts where an old one did; definitions found by probing; document-wide tables | Whole re-parse; our own block scanner; comrak end positions; a second parser for definitions | M2 |
 
 ## Template
 

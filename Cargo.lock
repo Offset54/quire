@@ -3149,6 +3149,7 @@ dependencies = [
  "caseless",
  "comrak",
  "proptest",
+ "quire-core",
  "quire-text",
  "xxhash-rust",
 ]

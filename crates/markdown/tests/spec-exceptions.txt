@@ -1,0 +1,11 @@
+# Spec examples that fail, as: <suite> <number> <reason>. See docs/markdown-spec-exceptions.md.
+gfm 398 spec drift: CommonMark 0.31.2 example 389 expects the opposite, and passes
+gfm 426 spec drift: CommonMark 0.31.2 example 417 expects the opposite, and passes
+gfm 434 spec drift: CommonMark 0.31.2 example 425 expects the opposite, and passes
+gfm 435 spec drift: CommonMark 0.31.2 example 426 expects the opposite, and passes
+gfm 436 spec drift: CommonMark 0.31.2 example 427 expects the opposite, and passes
+gfm 473 spec drift: CommonMark 0.31.2 example 464 expects the opposite, and passes
+gfm 474 spec drift: CommonMark 0.31.2 example 465 expects the opposite, and passes
+gfm 475 spec drift: CommonMark 0.31.2 example 466 expects the opposite, and passes
+gfm 477 spec drift: CommonMark 0.31.2 example 468 expects the opposite, and passes
+gfm-ext 19 comrak doesn't autolink a URL whose host has an emoji (http://🍄.ga/); the 30 other URLs in the example match

@@ -14,6 +14,7 @@ xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 [dev-dependencies]
 proptest = "1"
+quire-core = { path = "../core" }
 
 [lints]
 workspace = true

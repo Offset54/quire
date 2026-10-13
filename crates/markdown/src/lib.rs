@@ -7,7 +7,11 @@
 //! rendered on its own with comrak (ADR-0026); reference definitions and
 //! footnotes, which can be defined anywhere, live in document-wide tables.
 
+pub mod analysis;
+pub mod document;
 pub mod index;
 pub mod options;
+pub mod render;
 pub mod scan;
+pub mod tables;
 pub mod text;

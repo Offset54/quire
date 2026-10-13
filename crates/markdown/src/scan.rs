@@ -13,7 +13,7 @@ use std::ops::Range;
 use comrak::nodes::NodeValue;
 use comrak::{Arena, parse_document};
 
-use crate::options;
+use crate::options::{self, Flavor};
 use crate::text::{line_starts, same_len_utf8};
 
 /// What a top-level block is.
@@ -107,7 +107,27 @@ pub fn front_matter_end_within<T: crate::text::Text + ?Sized>(
     text: &T,
     limit: u64,
 ) -> std::io::Result<Option<u64>> {
-    let head = text.read(0..limit.min(FRONT_MATTER_MAX).min(text.len()))?;
+    // Read in growing windows: front matter is usually short.
+    let max = limit.min(FRONT_MATTER_MAX).min(text.len());
+    let mut window = 4096u64.min(max);
+    loop {
+        let head = text.read(0..window)?;
+        let found = front_matter_in(&head, window == text.len())?;
+        if found.is_some() || window >= max || found_open_fails(&head) {
+            return Ok(found);
+        }
+        window = (window * 4).min(max);
+    }
+}
+
+/// Whether `head` can't start front matter at all.
+fn found_open_fails(head: &[u8]) -> bool {
+    let body = head.strip_prefix(b"\xef\xbb\xbf").unwrap_or(head);
+    !(body.starts_with(b"---\n") || body.starts_with(b"---\r\n"))
+}
+
+/// Front matter end within `head`; `whole` when `head` is the whole text.
+fn front_matter_in(head: &[u8], whole: bool) -> std::io::Result<Option<u64>> {
     let bom = if head.starts_with(b"\xef\xbb\xbf") {
         3
     } else {
@@ -126,7 +146,7 @@ pub fn front_matter_end_within<T: crate::text::Text + ?Sized>(
         let line = &body[first + s..first + e];
         let content = line.strip_suffix(b"\n").unwrap_or(line);
         let content = content.strip_suffix(b"\r").unwrap_or(content);
-        let complete = e < lines_end || (head.len() as u64) == text.len();
+        let complete = e < lines_end || whole;
         if content == b"---" && complete {
             return Ok(Some((bom + first + e) as u64));
         }
@@ -142,10 +162,10 @@ pub fn front_matter_end_within<T: crate::text::Text + ?Sized>(
 /// Only start lines are used. comrak sets them when a block opens, so they
 /// are exact; its end positions are not always (an unclosed fence inside a
 /// list item ended by a blank line reports its first line as its end).
-pub fn scan(bytes: &[u8]) -> Vec<Found> {
+pub fn scan(bytes: &[u8], flavor: &Flavor) -> Vec<Found> {
     let text = same_len_utf8(bytes);
     let arena = Arena::new();
-    let root = parse_document(&arena, &text, &options::block());
+    let root = parse_document(&arena, &text, &options::block(flavor));
     let starts = line_starts(bytes);
     let len = bytes.len();
 
@@ -205,8 +225,12 @@ pub fn scan(bytes: &[u8]) -> Vec<Found> {
 }
 /// Every top-level block of a whole text, front matter included: the
 /// reference the chunked index is tested against.
-pub fn scan_document(bytes: &[u8]) -> Vec<Found> {
-    let fm = front_matter_end(bytes).ok().flatten().unwrap_or(0) as usize;
+pub fn scan_document(bytes: &[u8], flavor: &Flavor) -> Vec<Found> {
+    let fm = if flavor.front_matter {
+        front_matter_end(bytes).ok().flatten().unwrap_or(0) as usize
+    } else {
+        0
+    };
     let mut out = Vec::new();
     if fm > 0 {
         out.push(Found {
@@ -215,7 +239,7 @@ pub fn scan_document(bytes: &[u8]) -> Vec<Found> {
             may_vanish: false,
         });
     }
-    out.extend(scan(&bytes[fm..]).into_iter().map(|f| Found {
+    out.extend(scan(&bytes[fm..], flavor).into_iter().map(|f| Found {
         range: f.range.start + fm..f.range.end + fm,
         ..f
     }));
@@ -227,7 +251,7 @@ mod tests {
     use super::*;
 
     fn blocks(s: &str) -> Vec<(&str, BlockKind)> {
-        scan_document(s.as_bytes())
+        scan_document(s.as_bytes(), &Flavor::PRODUCT)
             .into_iter()
             .map(|f| (&s[f.range], f.kind))
             .collect()
@@ -312,7 +336,7 @@ mod tests {
     #[test]
     fn blocks_tile_the_text() {
         let s = "a\n\n\n> q\n> r\n\n| x |\n|---|\n| 1 |\n\n***\n\n$$\nx\n$$\n\n<div>\nhi\n</div>\n";
-        let b = scan(s.as_bytes());
+        let b = scan(s.as_bytes(), &Flavor::PRODUCT);
         assert_eq!(b[0].range.start, 0);
         for w in b.windows(2) {
             assert_eq!(w[0].range.end, w[1].range.start);

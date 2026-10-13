@@ -5,7 +5,7 @@ use crate::scan::scan_document;
 
 /// (start, end, kind) of every block of a whole-document scan.
 fn truth(text: &[u8]) -> Vec<(u64, u64, BlockKind)> {
-    scan_document(text)
+    scan_document(text, &Flavor::PRODUCT)
         .into_iter()
         .map(|f| (f.range.start as u64, f.range.end as u64, f.kind))
         .collect()

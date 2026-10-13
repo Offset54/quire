@@ -47,8 +47,13 @@ jobs:
         run: cargo fmt --all --check
       - name: clippy
         run: cargo clippy --workspace --all-targets --locked
+      - name: Markdown spec corpora
+        run: pwsh tools/corpora/fetch-markdown-spec.ps1
       - name: Tests
         run: cargo test --workspace --locked
+        env:
+          # The CommonMark/GFM spec harness must run here, not skip.
+          QUIRE_SPEC_REQUIRED: "1"
 
   ui-flows:
     # WebDriver UI flows against the release app (ADR-0020): tauri-driver

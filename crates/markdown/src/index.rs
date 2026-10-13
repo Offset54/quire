@@ -19,6 +19,7 @@ use std::ops::Range;
 
 use xxhash_rust::xxh3::xxh3_64;
 
+use crate::options::Flavor;
 use crate::scan::{BlockKind, FRONT_MATTER_MAX, front_matter_end, front_matter_end_within, scan};
 use crate::text::Text;
 
@@ -67,6 +68,7 @@ pub struct BlockIndex {
     next_id: u64,
     /// Bytes per scanned stretch.
     chunk: usize,
+    flavor: Flavor,
 }
 
 /// Default stretch: large enough for the first viewport of typical text, and
@@ -75,6 +77,9 @@ pub const CHUNK: usize = 64 * 1024;
 
 /// Bytes an edit may re-parse before it leaves the rest to the background.
 pub const EDIT_BUDGET: u64 = 128 * 1024;
+
+/// Stretch size for an edit's re-scan.
+const EDIT_CHUNK: usize = 4 * 1024;
 
 /// Where a stretch starting at `from` ends: `from + chunk` moved to the end
 /// of that line, or the end of the text.
@@ -136,13 +141,23 @@ impl BlockIndex {
 
     /// As [`new`](Self::new), scanning `chunk` bytes per stretch.
     pub fn with_chunk(len: u64, chunk: usize) -> Self {
+        Self::with_flavor(len, chunk, Flavor::PRODUCT)
+    }
+
+    /// An index of Markdown with the given extensions.
+    pub fn with_flavor(len: u64, chunk: usize, flavor: Flavor) -> Self {
         Self {
             blocks: Vec::new(),
             frontier: 0,
             len,
             next_id: 1,
             chunk: chunk.max(16),
+            flavor,
         }
+    }
+
+    pub fn flavor(&self) -> &Flavor {
+        &self.flavor
     }
 
     pub fn blocks(&self) -> &[Block] {
@@ -182,10 +197,12 @@ impl BlockIndex {
         &self,
         text: &T,
         from: u64,
+        chunk: usize,
         limit: u64,
     ) -> io::Result<(Vec<Scanned>, u64)> {
         let len = text.len();
         if from == 0
+            && self.flavor.front_matter
             && let Some(end) = front_matter_end(text)?
         {
             let hash = xxh3_64(&text.read(0..end)?);
@@ -197,11 +214,11 @@ impl BlockIndex {
             };
             return Ok((vec![fm], end));
         }
-        let mut chunk = self.chunk;
+        let mut chunk = chunk;
         loop {
             let end = stretch_end(text, from, chunk)?;
             let bytes = text.read(from..end)?;
-            let mut found = scan(&bytes);
+            let mut found = scan(&bytes, &self.flavor);
             let at_end = end >= len;
             let next = if at_end {
                 len
@@ -248,7 +265,7 @@ impl BlockIndex {
         if self.frontier >= self.len {
             return Ok(first..first);
         }
-        let (found, next) = self.scan_stretch(text, self.frontier, u64::MAX)?;
+        let (found, next) = self.scan_stretch(text, self.frontier, self.chunk, u64::MAX)?;
         for s in found {
             let id = self.id();
             self.blocks.push(s.into_block(id));
@@ -295,7 +312,7 @@ impl BlockIndex {
             .blocks
             .first()
             .is_some_and(|b| b.kind == BlockKind::FrontMatter);
-        if from > 0 && !had_front_matter && from < FRONT_MATTER_MAX {
+        if self.flavor.front_matter && from > 0 && !had_front_matter && from < FRONT_MATTER_MAX {
             let head = text.read(0..5)?;
             if (head.starts_with(b"---\n") || head.starts_with(b"---\r\n"))
                 && front_matter_end_within(text, new_end + 4096)?.is_some()
@@ -350,8 +367,11 @@ impl BlockIndex {
         let mut scanned = 0u64;
         // (index of the first old block kept, new frontier, truncated)
         let (tail, frontier, truncated) = loop {
-            let limit = budget.saturating_sub(scanned).max(self.chunk as u64);
-            let (found, next) = self.scan_stretch(text, pos, limit)?;
+            // Edits re-scan in small stretches: most line up within a few
+            // blocks. A stretch grows when one block doesn't fit.
+            let chunk = EDIT_CHUNK.min(self.chunk);
+            let limit = budget.saturating_sub(scanned).max(chunk as u64);
+            let (found, next) = self.scan_stretch(text, pos, chunk, limit)?;
             if next == pos && next < self.len {
                 // One block longer than the budget is still open here: the
                 // index ends at its start until the background reaches its end.
@@ -391,8 +411,9 @@ impl BlockIndex {
         // Reuse the ids of replaced blocks with the same bytes, so unchanged
         // blocks aren't re-rendered.
         let replaced_end = tail.unwrap_or(self.blocks.len());
-        let replaced: Vec<Block> = self.blocks.drain(first..replaced_end).collect();
+        let replaced = &self.blocks[first..replaced_end];
         let mut pool: Vec<Option<&Block>> = replaced.iter().map(Some).collect();
+        let mut next_id = self.next_id;
         let mut new_blocks = Vec::with_capacity(fresh.len());
         for s in fresh {
             let reuse = pool
@@ -401,18 +422,24 @@ impl BlockIndex {
                 .and_then(Option::take);
             let id = match reuse {
                 Some(b) => b.id,
-                None => self.id(),
+                None => {
+                    next_id += 1;
+                    next_id - 1
+                }
             };
             new_blocks.push(s.into_block(id));
         }
         let removed_ids: Vec<u64> = pool.into_iter().flatten().map(|b| b.id).collect();
-        // The kept old blocks (now at `first..`) only move.
-        for b in &mut self.blocks[first..] {
-            b.start = shift(b.start);
-            b.end = shift(b.end);
+        self.next_id = next_id;
+        // The kept old blocks only move.
+        if delta != 0 {
+            for b in &mut self.blocks[replaced_end..] {
+                b.start = shift(b.start);
+                b.end = shift(b.end);
+            }
         }
         let inserted_count = new_blocks.len();
-        self.blocks.splice(first..first, new_blocks);
+        self.blocks.splice(first..replaced_end, new_blocks);
         self.frontier = frontier;
         Ok(Change {
             first,
