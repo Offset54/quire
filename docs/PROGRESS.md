@@ -26,7 +26,7 @@
 | 1 | Parser spike | Done: comrak 0.56 ([ADR-0026](adr/0026-markdown-parser.md)); CommonMark 0.31.2 100 %, GFM spec 98.5 %, extensions 93 % as shipped; 20 MiB parse 693 ms raw (background), one block 2 µs |
 | 2 | Block index and incremental parsing | Done: `crates/markdown` index, analysis, tables ([ADR-0027](adr/0027-markdown-incremental-parsing.md)); property test 100,000 cases; 20 MiB index 593 ms raw (background), edit 0.1–0.6 ms |
 | 3 | Block rendering and spec suite | In progress: per-block rendering through comrak's formatter; spec harness 1,342/1,352 (99.26 %), exceptions in [markdown-spec-exceptions.md](markdown-spec-exceptions.md) |
-| 4 | Sanitization and content loading | Not started |
+| 4 | Sanitization and content loading | In progress: allowlist sanitizer written and tested (`sanitize.rs`), not yet wired into rendering; image policy and remote toggle to do |
 | 5 | Code highlighting | Not started |
 | 6 | Preview surface | Not started |
 | 7 | KaTeX and Mermaid | Not started |

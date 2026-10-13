@@ -12,6 +12,7 @@ pub mod document;
 pub mod index;
 pub mod options;
 pub mod render;
+pub mod sanitize;
 pub mod scan;
 pub mod tables;
 pub mod text;
