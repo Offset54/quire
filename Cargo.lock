@@ -3143,6 +3143,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "quire-markdown"
+version = "0.0.0"
+dependencies = [
+ "caseless",
+ "comrak",
+ "proptest",
+ "quire-text",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "quire-raster"
 version = "0.0.0"
 dependencies = [
