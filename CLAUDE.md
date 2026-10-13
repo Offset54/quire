@@ -15,7 +15,7 @@
 
 ## State (2026-10-13)
 
-- **M0 and M1 are complete** (`docs/M0_REPORT.md`, `docs/M1_REPORT.md`). Ref-sim run 6 met all 21 TXT budgets. Next: M2 (Markdown); re-read its brief sections and write `docs/M2_PLAN.md` first.
+- **M0 and M1 are complete** (`docs/M0_REPORT.md`, `docs/M1_REPORT.md`). Ref-sim run 6 met all 21 TXT budgets. **M2 (Markdown): plan approved 2026-10-13** (`docs/M2_PLAN.md`, including the user's decisions A–D); execution starts at task 1 (parser spike) with task 15 alongside.
 - Platform frame stalls (RISKS #12): on this machine the display path stalls 90–500 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). User decision (ADR-0024): budgets are judged on our own frame work; the bench subtracts pure waits for a requested frame (`apps/desktop/src/bench/stalls.ts`) and reports raw values and stalls next to them. Never subtract time that could be the host (IPC). Results carry `platformStalls`.
 - Save ratio (user decision, M1_PLAN): save vs. the mean of raw writes right before and after, median of 5 runs. Raw 2 GiB writes on this SSD vary 1.1–2.4 s, worse after many test writes; let the disk rest before ref-sim runs.
 - Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
