@@ -161,6 +161,26 @@ test("go to line", async () => {
   );
 });
 
+test("scrolling keeps going forward across window refetches", async () => {
+  // The view holds a window of rows and refetches near its edges; each
+  // refetch must keep the top row where it was.
+  const topLine = async () => Number((await rows()).find((r) => r.ln !== "")?.ln ?? NaN);
+  let prev = await topLine();
+  const start = prev;
+  for (let i = 0; i < 40; i++) {
+    await wd.exec(`
+      const vp = document.querySelector('.txt-viewport');
+      vp.dispatchEvent(new WheelEvent('wheel', { deltaY: 200, bubbles: true, cancelable: true }));
+    `);
+    await new Promise((r) => setTimeout(r, 30));
+    const now = await topLine();
+    assert.ok(now >= prev, `the top line went back from ${prev} to ${now}`);
+    prev = now;
+  }
+  // 40 × 200 px at about 20 px per row.
+  await wd.until(async () => (await topLine()) >= start + 300, 5000, "scrolled about 400 lines");
+});
+
 test("find counts matches and replace-all is one undo step", async () => {
   await focusEditor();
   await wd.chord([KEYS.control, "f"]);

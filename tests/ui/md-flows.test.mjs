@@ -102,6 +102,12 @@ function sourceRows() {
   `);
 }
 
+/** The section number shown first in `texts` (a heading or its paragraph). */
+function firstSection(texts) {
+  const m = /(?:Section|Paragraph) (\d+)/.exec(texts.join("\n"));
+  return m ? Number(m[1]) : undefined;
+}
+
 const mode = () => wd.exec("return document.querySelector('.editor-panes')?.dataset.mode ?? ''");
 const status = () => wd.exec("return document.querySelector('.statusbar')?.innerText ?? ''");
 const focusEditor = () => wd.exec("document.querySelector('.txt-input').focus()");
@@ -124,6 +130,9 @@ async function dump() {
     source: (await sourceRows()).slice(0, 3),
     notices: await wd.exec("return document.querySelector('.notices')?.innerText ?? ''"),
     errors: await wd.exec("return window.__errors ?? []"),
+    offsets: await wd.exec(
+      "const s = window.__quire?.session; return s ? { preview: s.md?.preview.topOffset(), source: s.view?.scrollOffset() } : null",
+    ),
   });
 }
 
@@ -239,18 +248,16 @@ test("scrolling the preview scrolls the source (and back)", async () => {
   `);
   const top = await wd.until(
     async () => {
-      const b = await previewBlocks();
-      const m = /Section (\d+)/.exec(b[0]?.t ?? "");
-      return m && Number(m[1]) > 5 && Number(m[1]);
+      const n = firstSection((await previewBlocks()).map((b) => b.t));
+      return n !== undefined && n > 5 && n;
     },
     5000,
     "preview scrolled",
   );
   await untilOrDump(
     async () => {
-      const r = await sourceRows();
-      const m = /Section (\d+)/.exec(r.map((x) => x.t).join("\n"));
-      return m && Math.abs(Number(m[1]) - top) <= 3;
+      const n = firstSection((await sourceRows()).map((r) => r.t));
+      return n !== undefined && Math.abs(n - top) <= 3;
     },
     5000,
     "source followed",
@@ -261,8 +268,8 @@ test("scrolling the preview scrolls the source (and back)", async () => {
   `);
   await wd.until(
     async () => {
-      const m = /Section (\d+)/.exec((await previewBlocks()).map((b) => b.t).join("\n"));
-      return m && Number(m[1]) > top + 5;
+      const n = firstSection((await previewBlocks()).map((b) => b.t));
+      return n !== undefined && n > top + 5;
     },
     5000,
     "preview followed",
@@ -270,30 +277,25 @@ test("scrolling the preview scrolls the source (and back)", async () => {
 });
 
 test("Ctrl+E switches to the reading view and back, keeping the position", async () => {
-  const before = (await previewBlocks())[0]?.t ?? "";
+  const before = firstSection((await previewBlocks()).map((b) => b.t));
+  assert.ok(before !== undefined && before > 5, "scrolled into the document");
+  const near = (n) => n !== undefined && Math.abs(n - before) <= 1;
   await focusEditor();
   await wd.chord([KEYS.control, "e"]);
   await wd.until(async () => (await mode()) === "preview", 5000, "reading view");
   assert.equal((await sourceRows()).length, 0, "source hidden");
-  const m = /Section (\d+)/.exec(before);
+  // The same section (the pane got wider, so a neighbour may lead).
   await untilOrDump(
-    async () => {
-      // The heading or the paragraph right after it (the pane got wider).
-      const t = (await previewBlocks()).map((b) => b.t).join("\n");
-      return !m || t.includes(`Section ${m[1]}`) || t.includes(`Paragraph ${m[1]} `);
-    },
+    async () => near(firstSection((await previewBlocks()).map((b) => b.t))),
     5000,
-    "same position",
+    `same position (from section ${before})`,
   );
   await wd.chord([KEYS.control, "e"]);
   await wd.until(async () => (await mode()) === "source", 5000, "editing view");
-  await wd.until(
-    async () => {
-      const t = (await sourceRows()).map((r) => r.t).join("\n");
-      return !m || t.includes(`Section ${Number(m[1])}`) || t.includes(`Paragraph ${m[1]}`);
-    },
+  await untilOrDump(
+    async () => near(firstSection((await sourceRows()).map((r) => r.t))),
     5000,
-    "source at the same place",
+    `source at the same place (from section ${before})`,
   );
 });
 

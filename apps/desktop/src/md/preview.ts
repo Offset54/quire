@@ -458,6 +458,10 @@ export class MdPreview {
 
   private draw(): void {
     if (!this.dirty || this.destroyed) return;
+    // Hidden (the editing view): every block would measure 0 px and the
+    // anchor would run to the window's end. Wait to be shown (the resize
+    // observer draws again then).
+    if (this.viewH === 0 || this.viewport.offsetParent === null) return;
     this.dirty = false;
     // 1. The window's blocks, in order, in the DOM.
     const want = new Set(this.win.map((b) => b.id));

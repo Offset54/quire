@@ -572,9 +572,11 @@ export class TxtView {
     return this.rows[Math.floor(this.top)]?.start ?? 0;
   }
 
-  /** Keeps the current position (scrolling, refreshes, layout changes). */
+  /** Keeps the current position (scrolling, refreshes, layout changes):
+   *  `anchor` is the top row's start, and it stays the top row. (The window
+   *  still extends two viewports above it: `runFetches` asks for them.) */
   private fetchAt(anchor: number, frac: number): Promise<void> {
-    return this.fetch({ anchor, caret: false }, this.visibleRows * OVERSCAN_VIEWPORTS, frac, false);
+    return this.fetch({ anchor, caret: false }, 0, frac, false);
   }
 
   /**
