@@ -13,10 +13,11 @@
 - Make small, focused commits and push to `origin main` (public repo Offset54/quire, ADR-0025) as you go. Keep CI green.
 - Keep the user posted with short progress lines during long work.
 
-## State (2026-10-12)
+## State (2026-10-13)
 
-- **M0 is complete** (`docs/M0_REPORT.md`). **M1 (TXT engine): all tasks done, report written** (`docs/M1_REPORT.md`); waiting on the user's decision about platform frame stalls (RISKS #12) and the save-ratio measurement before M1 closes. The WebDriver UI-flow CI job is green (9/9) since 2026-10-12.
-- Platform frame stalls: on this machine the display path stalls 90–340 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). Ref-sim runs that start right after the screen has been static are affected; check `longFrames`/`worstFrame` in results before blaming our code.
+- **M0 and M1 are complete** (`docs/M0_REPORT.md`, `docs/M1_REPORT.md`). Ref-sim run 6 met all 21 TXT budgets. Next: M2 (Markdown); re-read its brief sections and write `docs/M2_PLAN.md` first.
+- Platform frame stalls (RISKS #12): on this machine the display path stalls 90–500 ms after ~0.6 s with no frames, in plain Edge too (`tools/bench/edge-idle-probe.mjs`). User decision (ADR-0024): budgets are judged on our own frame work; the bench subtracts pure waits for a requested frame (`apps/desktop/src/bench/stalls.ts`) and reports raw values and stalls next to them. Never subtract time that could be the host (IPC). Results carry `platformStalls`.
+- Save ratio (user decision, M1_PLAN): save vs. the mean of raw writes right before and after, median of 5 runs. Raw 2 GiB writes on this SSD vary 1.1–2.4 s, worse after many test writes; let the disk rest before ref-sim runs.
 - Fuzzing: `cd fuzz; cargo +nightly fuzz run <target>`; on Windows put the MSVC ASan runtime dir (`VC\Tools\MSVC\<ver>\bin\Hostx64\x64`) on PATH.
 - Startup budget revised by the user (ADR-0022): warm ≤ 0.75 s, cold ≤ 1.7 s. M1 opens a command-line file before the webview is ready (done; measure with the `launch-2g` scenario). M7: opt-in "fast start" resident process.
 - Still owed before M3: report the webview tile-bitmap cache to the memory governor (PROGRESS.md known gaps).

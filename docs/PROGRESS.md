@@ -11,7 +11,7 @@
 | Milestone | Status | DoD |
 |---|---|---|
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
-| M1 TXT engine | Report written, one decision open ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | Ref-sim run 1: 19 of 21 TXT budgets; both misses fixed since. Run 2 hit platform frame stalls (RISKS #12), decision pending |
+| M1 TXT engine | Done ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | All 4 met. Ref-sim run 6 (2026-10-13): 21 of 21 TXT budgets, platform frame stalls reported separately (ADR-0024) |
 | M2 Markdown | Not started | n/a |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
