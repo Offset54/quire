@@ -10,7 +10,7 @@
 ## How the user wants work done
 
 - Work autonomously through a whole milestone. Stop only when a decision is genuinely theirs: scope, licensing, UX trade-offs, or a budget that can't be met (§2: bring data and options, never relax a budget quietly).
-- Make small, focused commits and push to `origin main` (private repo Offset54/quire) as you go. Keep CI green.
+- Make small, focused commits and push to `origin main` (public repo Offset54/quire, ADR-0025) as you go. Keep CI green.
 - Keep the user posted with short progress lines during long work.
 
 ## State (2026-10-12)

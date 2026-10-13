@@ -48,7 +48,7 @@ Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, t
 |---|---|---|
 | 1 | Workspace scaffold | Done (85ac033) |
 | 2 | License and dependency gates | Done (85ac033) |
-| 3 | CI | Done: [Offset54/quire](https://github.com/Offset54/quire) (private); Windows runs every gate, macOS and Linux build and test; first run green on all three |
+| 3 | CI | Done: [Offset54/quire](https://github.com/Offset54/quire) (private; public since 2026-10-13, ADR-0025); Windows runs every gate, macOS and Linux build and test; first run green on all three |
 | 8 | Tracing | Done: Chrome-trace recorder in `quire-core::trace`, frontend measures and long tasks merged (`QUIRE_TRACE=<file>`) |
 | 5 | Job scheduler | Done: `quire-core::scheduler`, 12 unit tests + a model-based property test, criterion benches |
 | 6 | Memory governor | Done: `quire-core::memory` (per-document and global budgets, background-first and cheapest-class-first eviction, `LruCache`), 9 tests incl. a budget-invariant proptest and a concurrency accounting check |
@@ -64,7 +64,7 @@ Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, t
 ## Decisions recorded on plan approval (2026-10-08)
 
 - License allowlist extended with Unicode-3.0, BSL-1.0, CC0-1.0, 0BSD; OFL-1.1 for bundled fonts and FTL for PDFium's FreeType. MIT-0 and `Apache-2.0 WITH LLVM-exception` are also allowed, since both are strictly more permissive than an already-allowed license.
-- Hosting: private GitHub repo with Actions.
+- Hosting: private GitHub repo with Actions. Made public on 2026-10-13 ([ADR-0025](adr/0025-public-repository.md)).
 - Benchmarking: ref-sim profile on this machine (ADR-0021) instead of a reference laptop.
 - TypeScript is pinned to 6.0.x: typescript-eslint 8.71 supports `<6.1`, so TS 7 waits for it.
 

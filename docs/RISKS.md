@@ -21,6 +21,7 @@ Likelihood (L) and impact (I) are rated High, Medium or Low. "Retires" is the ea
 
 ## Watch list
 
+- **No license on a public repo.** Since 2026-10-13 (ADR-0025) the code is public with no `LICENSE`, so all rights reserved. Choosing a license is the user's call.
 - **License creep.** ICU4X (Unicode-3.0) and the bundled fonts (OFL-1.1) aren't on §0's list. cargo-deny will catch new cases.
 - **EMF/WMF and chart coverage** in real PPTX decks (M5).
 - **Hybrid CPUs.** On P/E-core machines, "physical cores minus one" may overcommit slow cores (M3).

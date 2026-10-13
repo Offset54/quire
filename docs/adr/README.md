@@ -34,6 +34,7 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0021 | Benchmarking without a reference machine | [Accepted](0021-reference-machine-emulation.md): ref-sim profile (exact viewport, core pinning, derated thresholds, cold-cache purge, RAM ballast) | Raw dev numbers; power-plan frequency cap (system-wide setting); Job Object CPU-rate cap (adds stalls); VM; buying a reference laptop | M0 |
 | 0023 | TXT surface | [Accepted](0023-txt-surface-dom-rows.md): virtualized DOM rows from core layout, local echo for typing | Core-rendered tiles; canvas fillText; contenteditable; EditContext | M1 |
 | 0024 | Platform frame stalls in budgets | [Accepted](0024-platform-frame-stalls.md): judge frame and first-paint rows without frames the platform did not deliver; report the stalls separately | Count them against our budgets; ship a compositor keep-alive | M1 |
+| 0025 | Repository visibility | [Accepted](0025-public-repository.md): public, so standard Actions runners are free | Stay private and trim CI; no Actions for a month; rewrite history first | M1 |
 
 ## Template
 
