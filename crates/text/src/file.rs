@@ -276,6 +276,11 @@ pub struct SaveReport {
     /// Undo steps dropped to bound memory or because the text changed.
     pub history_trimmed: u64,
     pub millis: u64,
+    /// Where the time went: streaming into the temp file, its fsync, and
+    /// replacing the target and mapping the new file.
+    pub write_millis: u64,
+    pub fsync_millis: u64,
+    pub commit_millis: u64,
 }
 
 #[derive(Debug)]
@@ -959,6 +964,8 @@ pub struct PreparedSave {
     format: SaveFormat,
     stats: Option<WriteStats>,
     started: Instant,
+    write_millis: u64,
+    fsync_millis: u64,
 }
 
 impl Drop for PreparedSave {
@@ -991,11 +998,13 @@ pub fn prepare_save(
         .write(true)
         .create_new(true)
         .open(&temp)?;
+    let mut written = started;
     let result = ThreadedWriter::new(out)
         .map_err(SaveError::from)
         .and_then(|w| write_content(w, snap, origin, &format, on_unmappable))
         .and_then(|(stats, w)| {
             let f = w.finish()?;
+            written = Instant::now();
             f.sync_all()?;
             Ok(stats)
         });
@@ -1007,6 +1016,8 @@ pub fn prepare_save(
             format,
             stats: Some(stats),
             started,
+            write_millis: (written - started).as_millis() as u64,
+            fsync_millis: written.elapsed().as_millis() as u64,
         }),
         Err(e) => {
             let _ = std::fs::remove_file(&temp);
@@ -1024,6 +1035,7 @@ pub fn commit_save(
     opts: &SaveOptions<'_>,
 ) -> Result<SaveReport, SaveError> {
     let stats = prepared.stats.take().expect("prepared once");
+    let committing = Instant::now();
     let (temp, target, same_file, format, started) = (
         prepared.temp.clone(),
         prepared.target.clone(),
@@ -1031,6 +1043,7 @@ pub fn commit_save(
         prepared.format,
         prepared.started,
     );
+    let (write_millis, fsync_millis) = (prepared.write_millis, prepared.fsync_millis);
     drop(prepared);
     let changed_text =
         format.line_ending.is_some() || (stats.unmappable > 0) || (stats.invalid > 0);
@@ -1074,6 +1087,10 @@ pub fn commit_save(
         }
         return Err(e.into());
     }
+    // The old file is replaced; its mapping is no longer needed. Unmapping
+    // a large, resident mapping takes a while (about 0.5 s for 2 GiB), so it
+    // happens off the saving thread.
+    release_in_background(old_origin);
 
     // 5. Map the new file and re-point the document at it.
     let opened = source::open(&target, &file.governor, file.doc_id)?;
@@ -1167,7 +1184,17 @@ pub fn commit_save(
         losses,
         history_trimmed: trimmed,
         millis: started.elapsed().as_millis() as u64,
+        write_millis,
+        fsync_millis,
+        commit_millis: committing.elapsed().as_millis() as u64,
     })
+}
+
+/// Drops `value` on a short-lived thread (or here, if none can be started).
+fn release_in_background<T: Send + 'static>(value: T) {
+    let _ = std::thread::Builder::new()
+        .name("release-mapping".into())
+        .spawn(move || drop(value));
 }
 
 /// After a failed replace: map the untouched original again.

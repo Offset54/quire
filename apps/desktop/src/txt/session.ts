@@ -289,6 +289,7 @@ export class Session {
         performance.measure("txt-save", {
           start: performance.now() - r.millis,
           duration: r.millis,
+          detail: r,
         });
         update({ disk: undefined });
         this.view?.refresh();
@@ -453,6 +454,9 @@ type SaveOutcome =
         losses: string[];
         historyTrimmed: number;
         millis: number;
+        writeMillis: number;
+        fsyncMillis: number;
+        commitMillis: number;
         bytesWritten: number;
         rawCopied: number;
       };
