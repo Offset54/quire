@@ -9,6 +9,7 @@
 
 pub mod analysis;
 pub mod document;
+pub mod images;
 pub mod index;
 pub mod options;
 pub mod render;

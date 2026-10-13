@@ -12,6 +12,8 @@
 
 use std::fmt::Write as _;
 
+pub use crate::images::ImageSrc;
+
 /// Tags kept (GitHub's list, without forms and media).
 const ALLOWED_TAGS: &[&str] = &[
     "a",
@@ -138,15 +140,6 @@ const GLOBAL_ATTRS: &[&str] = &[
     "cite",
     "abbr",
 ];
-
-/// What to do with an image source.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ImageSrc {
-    /// Use this URL (already rewritten, e.g. to our image scheme).
-    Url(String),
-    /// Blocked (remote content not enabled): show a placeholder naming it.
-    Placeholder(String),
-}
 
 /// Schemes an `href` may use; relative and fragment links are fine too.
 fn safe_href(url: &str) -> bool {
@@ -409,6 +402,11 @@ pub fn sanitize(
                         match image(v) {
                             ImageSrc::Url(u) => {
                                 out.push_str(" src=\"");
+                                escape_attr(&u, &mut out);
+                                out.push('"');
+                            }
+                            ImageSrc::Lazy(u) => {
+                                out.push_str(" data-src=\"");
                                 escape_attr(&u, &mut out);
                                 out.push('"');
                             }

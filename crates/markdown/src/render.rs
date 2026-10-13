@@ -18,7 +18,9 @@ use comrak::options::{BrokenLinkReference, Plugins};
 use comrak::{Arena, ResolvedReference, parse_document};
 
 use crate::analysis::{footnote_candidates, normalize_label};
+use crate::images::{ImagePolicy, ImageSrc};
 use crate::options::{self, Flavor};
+use crate::sanitize::sanitize;
 use crate::tables::Tables;
 use crate::text::same_len_utf8;
 
@@ -33,6 +35,10 @@ pub struct RenderOptions {
     /// the footnotes section at the end, as GitHub renders them. Otherwise
     /// (the preview) they stay where they are written.
     pub document: bool,
+    /// Raw HTML through the allowlist sanitizer and image sources through
+    /// this policy (ADR-0028). `None` only for the spec harness, which
+    /// compares the renderer's output before sanitization.
+    pub sanitize: Option<ImagePolicy>,
 }
 
 impl Default for RenderOptions {
@@ -42,6 +48,7 @@ impl Default for RenderOptions {
             heading_ids: true,
             flavor: Flavor::PRODUCT,
             document: false,
+            sanitize: Some(ImagePolicy::default()),
         }
     }
 }
@@ -63,6 +70,9 @@ struct State<'r> {
     base_lines: usize,
     opts: &'r RenderOptions,
     headings: usize,
+    /// An element dropped with its content (`<script>`, …) is open: raw HTML
+    /// and text are left out until it closes (one state per block).
+    skip: Option<String>,
 }
 
 fn is_stub<'a>(node: &'a AstNode<'a>, base: usize) -> bool {
@@ -215,9 +225,27 @@ fn format<'a>(
             if entering {
                 context.write_str("<img")?;
                 sourcepos(context, node)?;
-                context.write_str(" src=\"")?;
-                if !dangerous(&l.url) {
-                    context.escape_href(&l.url)?;
+                match &context.user.opts.sanitize {
+                    Some(policy) => match policy.resolve(&l.url) {
+                        ImageSrc::Url(u) => {
+                            context.write_str(" src=\"")?;
+                            context.escape_href(&u)?;
+                        }
+                        ImageSrc::Lazy(u) => {
+                            context.write_str(" data-src=\"")?;
+                            context.escape(&u)?;
+                        }
+                        ImageSrc::Placeholder(u) => {
+                            context.write_str(" data-blocked-src=\"")?;
+                            context.escape(&u)?;
+                        }
+                    },
+                    None => {
+                        context.write_str(" src=\"")?;
+                        if !dangerous(&l.url) {
+                            context.escape_href(&l.url)?;
+                        }
+                    }
                 }
                 context.write_str("\" alt=\"")?;
                 return Ok(ChildRendering::Plain);
@@ -228,6 +256,27 @@ fn format<'a>(
             }
             context.write_str("\" />")?;
             Ok(ChildRendering::HTML)
+        }
+        NodeValue::HtmlBlock(ref h) if context.user.opts.sanitize.is_some() => {
+            if entering {
+                context.cr()?;
+                let clean = clean_html(context, &h.literal);
+                context.write_str(&clean)?;
+                context.cr()?;
+            }
+            Ok(ChildRendering::HTML)
+        }
+        NodeValue::HtmlInline(ref s) if context.user.opts.sanitize.is_some() => {
+            if entering {
+                let clean = clean_html(context, s);
+                context.write_str(&clean)?;
+            }
+            Ok(ChildRendering::HTML)
+        }
+        NodeValue::Text(_) | NodeValue::Code(_) | NodeValue::SoftBreak | NodeValue::LineBreak
+            if context.user.skip.is_some() =>
+        {
+            Ok(ChildRendering::Skip)
         }
         NodeValue::HtmlBlock(ref h) if context.user.opts.flavor.tagfilter => {
             if entering {
@@ -339,6 +388,17 @@ fn format<'a>(
     }
 }
 
+/// Raw HTML through the sanitizer, image sources through the policy.
+fn clean_html(context: &mut Context<State<'_>>, html: &str) -> String {
+    let state = &mut context.user;
+    let policy = state.opts.sanitize.as_ref();
+    let mut image = |src: &str| match policy {
+        Some(p) => p.resolve(src),
+        None => ImageSrc::Placeholder(src.to_owned()),
+    };
+    sanitize(html, &mut image, &mut state.skip)
+}
+
 /// Renders one block's bytes. `block` is its id (heading ids, footnote
 /// reference ids).
 pub fn render_block(bytes: &[u8], block: u64, tables: &Tables, opts: &RenderOptions) -> Rendered {
@@ -381,6 +441,7 @@ pub fn render_block(bytes: &[u8], block: u64, tables: &Tables, opts: &RenderOpti
         base_lines,
         opts,
         headings: 0,
+        skip: None,
     };
     let _ = format_document_with_formatter(root, &o, &mut html, &Plugins::default(), format, state);
     let deps = std::mem::take(&mut *deps.lock().unwrap_or_else(|e| e.into_inner()));

@@ -235,6 +235,10 @@ pub struct TextDocument {
     saved_format: SaveFormat,
     pub read_only: bool,
     pending: Vec<Record>,
+    /// Every text change since the last [`take_change`](Self::take_change),
+    /// folded into one envelope (derived state like the Markdown index
+    /// follows the text through it).
+    change: Option<TextChange>,
     /// Where large derived buffers (replace-all results) are written.
     pub temp_dir: std::path::PathBuf,
 }
@@ -252,6 +256,33 @@ fn kind_of(code: u8) -> Kind {
         1 => Kind::Typing,
         2 => Kind::Deleting,
         _ => Kind::Other,
+    }
+}
+
+/// A text change: `removed` bytes at `from` became `inserted` bytes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TextChange {
+    pub from: u64,
+    pub removed: u64,
+    pub inserted: u64,
+}
+
+impl TextChange {
+    /// The single change equal to `self` followed by `next` (`next` in the
+    /// coordinates after `self`).
+    pub fn then(self, next: TextChange) -> TextChange {
+        // `self` covers old `from..from + removed`, now
+        // `from..from + inserted`. Outside it, old and current offsets
+        // differ by the length change before them, or not at all.
+        let start = self.from.min(next.from);
+        let cur_end = (self.from + self.inserted).max(next.from + next.removed);
+        let old_end = self.from + self.removed + (cur_end - (self.from + self.inserted));
+        let new_end = cur_end + next.inserted - next.removed;
+        TextChange {
+            from: start,
+            removed: old_end - start,
+            inserted: new_end - start,
+        }
     }
 }
 
@@ -304,6 +335,7 @@ impl TextDocument {
             saved_format: format,
             read_only: false,
             pending: Vec::new(),
+            change: None,
             temp_dir: std::env::temp_dir(),
         }
     }
@@ -314,6 +346,23 @@ impl TextDocument {
             SaveFormat::default(),
             LineEnding::Lf,
         )
+    }
+
+    /// The text changes since the last call, as one envelope.
+    pub fn take_change(&mut self) -> Option<TextChange> {
+        self.change.take()
+    }
+
+    fn note(&mut self, from: u64, removed: u64, inserted: u64) {
+        let c = TextChange {
+            from,
+            removed,
+            inserted,
+        };
+        self.change = Some(match self.change {
+            Some(prev) => prev.then(c),
+            None => c,
+        });
     }
 
     pub fn buffer(&self) -> &TextBuffer {
@@ -632,6 +681,7 @@ impl TextDocument {
         let mut rec_ops = Vec::with_capacity(edits.len());
         for (from, to, text) in edits.iter().rev() {
             let r = self.buf.replace(*from, *to, text)?;
+            self.note(*from, to - from, text.len() as u64);
             rec_ops.push((*from, to - from, text.clone()));
             ops.push(Op {
                 at: *from,
@@ -737,9 +787,14 @@ impl TextDocument {
                 for op in ops.iter().rev() {
                     self.buf
                         .replace_pieces(op.at, op.at + op.inserted.len(), &op.removed)?;
+                    self.note(op.at, op.inserted.len(), op.removed.len());
                 }
             }
-            Change::Tree { before, .. } => self.buf.set_tree(before.clone()),
+            Change::Tree { before, .. } => {
+                let old = self.len();
+                self.buf.set_tree(before.clone());
+                self.note(0, old, self.len());
+            }
             Change::Format { before, .. } => self.format = *before,
         }
         self.sels = tx.sel_before.clone();
@@ -760,9 +815,14 @@ impl TextDocument {
                 for op in ops {
                     self.buf
                         .replace_pieces(op.at, op.at + op.removed.len(), &op.inserted)?;
+                    self.note(op.at, op.removed.len(), op.inserted.len());
                 }
             }
-            Change::Tree { after, .. } => self.buf.set_tree(after.clone()),
+            Change::Tree { after, .. } => {
+                let old = self.len();
+                self.buf.set_tree(after.clone());
+                self.note(0, old, self.len());
+            }
             Change::Format { after, .. } => self.format = *after,
         }
         self.sels = tx.sel_after.clone();
@@ -778,7 +838,9 @@ impl TextDocument {
     pub fn swap_tree(&mut self, after: PieceTree, record: Record) {
         let before = self.buf.tree().clone();
         let sel_before = self.sels.clone();
+        let old = self.len();
         self.buf.set_tree(after.clone());
+        self.note(0, old, self.len());
         self.sels = vec![Selection::caret(self.primary().head.min(self.len()))];
         self.primary = 0;
         let tx = Transaction {
@@ -834,6 +896,7 @@ impl TextDocument {
                 let mut tops = Vec::new();
                 for (at, del, ins) in ops {
                     let rr = self.buf.replace(*at, at + del, ins)?;
+                    self.note(*at, *del, ins.len() as u64);
                     tops.push(Op {
                         at: *at,
                         removed: rr.pieces,

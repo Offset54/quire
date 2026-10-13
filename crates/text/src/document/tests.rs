@@ -283,3 +283,41 @@ proptest! {
         }
     }
 }
+
+fn check_envelope(before: &[u8], after: &[u8], c: Option<TextChange>) -> Result<(), TestCaseError> {
+    let Some(c) = c else {
+        prop_assert_eq!(before, after);
+        return Ok(());
+    };
+    let (f, r, i) = (c.from as usize, c.removed as usize, c.inserted as usize);
+    prop_assert!(f + r <= before.len() && f + i <= after.len());
+    prop_assert_eq!(&before[..f], &after[..f]);
+    prop_assert_eq!(&before[f + r..], &after[f + i..]);
+    Ok(())
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 500, ..ProptestConfig::default() })]
+
+    /// The change envelope covers every byte that changed, whether actions
+    /// are taken one at a time or several are folded together.
+    #[test]
+    fn change_envelope_covers_the_edit(
+        original in "[a \n\r한]{0,40}",
+        actions in prop::collection::vec(action(), 1..40),
+        fold_every in 1usize..5,
+    ) {
+        let mut d = TextDocument::from_bytes(original.as_bytes());
+        let mut before = d.snapshot().read(0..d.len()).unwrap();
+        for (n, a) in actions.iter().enumerate() {
+            d.apply(a).unwrap();
+            if (n + 1) % fold_every == 0 {
+                let after = d.snapshot().read(0..d.len()).unwrap();
+                check_envelope(&before, &after, d.take_change())?;
+                before = after;
+            }
+        }
+        let after = d.snapshot().read(0..d.len()).unwrap();
+        check_envelope(&before, &after, d.take_change())?;
+    }
+}
