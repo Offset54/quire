@@ -71,6 +71,10 @@ function writeSample() {
     parts.push(`Paragraph ${i} with some words to fill the line, and more words after them.\n`);
     if (i % 10 === 5) parts.push("- item one\n- item two\n  continued\n");
   }
+  // A table large enough to be shown as pieces (crates/markdown/src/pieces.rs).
+  const rows = ["| Name | Value | Note |\n|---|--:|---|"];
+  for (let i = 0; i < 300; i++) rows.push(`| row ${i} | ${i * 3} | 한국어 ${i % 7} |`);
+  parts.push(rows.join("\n") + "\n");
   parts.push("[far]: https://example.com/far\n");
   fs.writeFileSync(sample, parts.join("\n"));
 }
@@ -306,4 +310,31 @@ test("save writes the edit and leaves the rest byte-exact", async () => {
   await wd.until(async () => /Saved/.test(await status()), 10_000, "saved");
   const disk = fs.readFileSync(sample, "utf8");
   assert.equal(disk, "Hello " + original);
+});
+
+// After the save: the preview reads the saved file through a new
+// snapshot (an old one would read it shifted by the unsaved edits).
+test("a large table shows as aligned pieces with one header", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, "\\"]);
+  await wd.until(async () => (await mode()) === "split", 5000, "split mode");
+  const at = fs.readFileSync(sample).indexOf(Buffer.from("| row 150 |"));
+  await wd.exec(`window.__quire.session.md.preview.reveal(${at})`);
+  const shape = await untilOrDump(
+    () =>
+      wd.exec(`
+        const pieces = [...document.querySelectorAll('.md-piece-table')];
+        if (pieces.length < 3) return false;
+        const lefts = pieces.map((t) => [...(t.querySelector('tbody tr')?.children ?? [])].map((c) => Math.round(c.getBoundingClientRect().left)));
+        const heads = [...document.querySelectorAll('.md-piece thead')].filter((h) => h.offsetParent !== null).length;
+        const firstShown = !!document.querySelector('.md-piece-first');
+        return { n: pieces.length, lefts, heads, firstShown, text: document.querySelector('.md-viewport').innerText.includes('row 150') };
+      `),
+    10_000,
+    "table pieces",
+  );
+  assert.ok(shape.text, "row 150 is shown");
+  for (const l of shape.lefts) assert.deepEqual(l, shape.lefts[0], "columns line up");
+  assert.ok(shape.heads <= 1, "at most one header");
+  if (shape.firstShown) assert.equal(shape.heads, 1);
 });

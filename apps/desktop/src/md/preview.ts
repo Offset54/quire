@@ -68,10 +68,9 @@ export class MdPreview {
   private readonly placed = new Map<number, Placed>();
   private readonly patchListeners = new Set<(s: PatchSample) => void>();
   private win: BlockMeta[] = [];
-  private first = 0;
   private len = 0;
-  private complete = false;
-  private indexed = 0;
+  private atStart = false;
+  private atEnd = false;
   revision = 0;
   /** Anchor: block id, its start (to find it again after edits) and px. */
   private anchorId = -1;
@@ -290,13 +289,17 @@ export class MdPreview {
     for (const b of m.blocks) {
       if (b.html !== undefined) this.html.set(b.id, { rev: b.rev, html: b.html });
     }
+    // An edit can also arrive in a requested window (md_view applies a
+    // pending change, and the worker then has nothing to push).
+    if (m.revision > this.revision && !this.pendingPatch) {
+      this.pendingPatch = { revision: m.revision, arrived: performance.now() };
+    }
     this.revision = Math.max(this.revision, m.revision);
     this.len = m.len;
-    this.complete = m.complete;
-    this.indexed = m.indexedBlocks;
+    this.atStart = m.atStart;
+    this.atEnd = m.atEnd;
     const prevAnchor = this.anchorId;
     this.win = m.blocks;
-    this.first = m.first;
     // The placed range in the new window: the span of blocks already placed
     // (an edited block inside it, with a new id, is placed by draw()).
     let lo = -1;
@@ -360,11 +363,11 @@ export class MdPreview {
   }
 
   private atDocStart(): boolean {
-    return this.first === 0;
+    return this.atStart;
   }
 
   private atDocEnd(): boolean {
-    return this.complete && this.first + this.win.length >= this.indexed;
+    return this.atEnd;
   }
 
   private maybeFetch(): void {

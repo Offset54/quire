@@ -146,6 +146,7 @@ fn main() -> std::io::Result<()> {
         let t = Instant::now();
         let ch = doc.edit(&snap, c.from, c.removed, c.inserted)?;
         preview.forget(&ch.removed);
+        let edit_ms = ms(t);
         preview.set_provisional(true);
         preview.window(&mut doc, &snap, at, 40, 80, &|_, _| true)?;
         let first_ms = ms(t);
@@ -154,7 +155,7 @@ fn main() -> std::io::Result<()> {
         let t = Instant::now();
         preview.window(&mut doc, &snap, at, 40, 80, &|_, _| true)?;
         println!(
-            "{what}: edit and provisional window {first_ms:.2} ms (tables pending: {pending}); corrections {:.2} ms",
+            "{what}: edit and provisional window {first_ms:.2} ms (edit {edit_ms:.2} ms; tables pending: {pending}); corrections {:.2} ms",
             ms(t)
         );
     }

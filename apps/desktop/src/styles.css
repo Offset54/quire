@@ -813,6 +813,41 @@ input {
   margin-top: 16px;
 }
 
+/* Pieces of a large table or code block (crates/markdown/src/pieces.rs):
+   consecutive blocks that read as one. Table pieces share column widths
+   from their <colgroup>; only the first shows the header. */
+.markdown-body .md-piece > table.md-piece-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  overflow-wrap: anywhere;
+}
+
+.markdown-body .md-piece:not(.md-piece-first) thead {
+  display: none;
+}
+
+.markdown-body .md-piece:not(.md-piece-first) tbody tr:first-child > td {
+  border-top: 0;
+}
+
+.markdown-body .md-piece:not(.md-piece-last) > table,
+.markdown-body .md-piece:not(.md-piece-last) > pre {
+  margin-bottom: 0;
+}
+
+.markdown-body .md-piece:not(.md-piece-first) > pre {
+  padding-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.markdown-body .md-piece:not(.md-piece-last) > pre {
+  padding-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 /* Markdown source decoration (decorate.ts) */
 
 .txt-row.md-src-h .txt-text {

@@ -34,15 +34,19 @@ export interface BlockMeta {
 
 export interface WindowMessage {
   complete: boolean;
+  /** The window holds the document's first entry / its last one. */
+  atStart: boolean;
+  atEnd: boolean;
   /** Request sequence number; 0 for updates the host pushed. */
   seq: number;
   /** Text revision shown. */
   revision: number;
   len: number;
   frontier: number;
-  /** Index of the first block in the document. */
+  /** Index of the document block the window starts in. */
   first: number;
-  /** Position of the requested offset's block in `blocks`. */
+  /** Position of the requested offset's entry in `blocks` (a block, or a
+   *  piece of a large one). */
   anchor: number;
   indexedBlocks: number;
   blocks: BlockMeta[];
@@ -57,6 +61,8 @@ export function decodeWindow(buf: ArrayBuffer): WindowMessage {
   const flags = v.getUint32(4, true);
   const m: WindowMessage = {
     complete: (flags & 1) !== 0,
+    atStart: (flags & 2) !== 0,
+    atEnd: (flags & 4) !== 0,
     seq: u64(8),
     revision: u64(16),
     len: u64(24),

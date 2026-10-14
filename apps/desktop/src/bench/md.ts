@@ -132,6 +132,10 @@ async function find(session: Session, pattern: string, from: number): Promise<nu
 interface EditTiming {
   /** Keystroke to the frame that shows the pushed window with the edit. */
   ms: number;
+  /** Keystroke to the pushed window's arrival (the host's part). */
+  arrivedMs: number;
+  /** The host's part: text change to window pushed (md_status). */
+  hostMs: number | null;
   /** Keystroke to the frame with the table corrections, when there were any. */
   correctionsMs: number | null;
 }
@@ -166,9 +170,14 @@ async function keystrokeToPreview(
     // Corrections (table rebuild) arrive as a second window, if at all.
     await sleep(120);
     stop();
+    const st = await invoke<{ lastEdit: { revision: number; ms: number } | null }>("md_status", {
+      doc: md.doc,
+    });
     const later = patches.filter((p) => p !== first && p.revision === first.revision);
     out.push({
       ms: round1(first.painted - t0),
+      arrivedMs: round1(first.arrived - t0),
+      hostMs: st.lastEdit ? round1(st.lastEdit.ms) : null,
       correctionsMs: later.length > 0 ? round1(later[later.length - 1]!.painted - t0) : null,
     });
   }
@@ -231,6 +240,7 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
     string,
     {
       ms: ReturnType<typeof summarize>;
+      arrivedMs: ReturnType<typeof summarize>;
       correctionsMs: ReturnType<typeof summarize> | null;
       runs: EditTiming[];
     }
@@ -242,6 +252,7 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
     const corr = runs.flatMap((r) => (r.correctionsMs === null ? [] : [r.correctionsMs]));
     edits[name] = {
       ms: summarize(runs.map((r) => r.ms)),
+      arrivedMs: summarize(runs.map((r) => r.arrivedMs)),
       correctionsMs: corr.length > 0 ? summarize(corr) : null,
       runs,
     };

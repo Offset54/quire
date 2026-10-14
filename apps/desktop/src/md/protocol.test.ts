@@ -12,7 +12,7 @@ function encode(blocks: { id: number; start: number; end: number; html?: string 
     for (let i = 0n; i < 8n; i++) parts.push(Number((b >> (8n * i)) & 0xffn));
   };
   u32(MAGIC);
-  u32(1);
+  u32(1 | 4);
   u64(7);
   u64(3);
   u64(1000);
@@ -44,6 +44,8 @@ describe("preview window messages", () => {
       ]),
     );
     expect(m.complete).toBe(true);
+    expect(m.atStart).toBe(false);
+    expect(m.atEnd).toBe(true);
     expect(m.seq).toBe(7);
     expect(m.revision).toBe(3);
     expect(m.first).toBe(10);
