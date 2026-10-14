@@ -19,23 +19,23 @@ import { getState } from "../txt/doc-store";
 import { Session } from "../txt/session";
 import type { EditSample, InputSample, TxtView } from "../txt/txt-view";
 
-const log = (message: string) => {
+export const log = (message: string) => {
   void invoke("bench_log", { message });
 };
 
-const nextFrame = () => new Promise<number>((r) => requestAnimationFrame(r));
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export const nextFrame = () => new Promise<number>((r) => requestAnimationFrame(r));
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface Env {
   file: string | null;
   phase: string | null;
 }
 
-async function env(): Promise<Env> {
+export async function env(): Promise<Env> {
   return invoke<Env>("bench_env");
 }
 
-async function until<T>(
+export async function until<T>(
   f: () => T | undefined | false,
   timeoutMs: number,
   what: string,
@@ -54,7 +54,7 @@ async function until<T>(
 const loafs: Loaf[] = [];
 let loafObserver: PerformanceObserver | undefined;
 
-function watchFrames() {
+export function watchFrames() {
   if (loafObserver) return;
   loafObserver = new PerformanceObserver((l) => {
     for (const e of l.getEntries()) loafs.push(e.toJSON() as Loaf);
@@ -67,15 +67,69 @@ function watchFrames() {
 }
 
 /** Platform stalls inside [from, to] (performance.now() times). */
-function stallsIn(from: number, to: number) {
+export function stallsIn(from: number, to: number) {
   for (const e of loafObserver?.takeRecords() ?? []) loafs.push(e.toJSON() as Loaf);
   return framesStalls(loafs, from, to);
 }
 
-const round1 = (v: number) => Math.round(v * 10) / 10;
+const longTaskEntries: { startTime: number; duration: number }[] = [];
+let longTaskObserver: PerformanceObserver | undefined;
+
+/** Long tasks (start, duration) seen so far, buffered from page start. */
+export function longTasksSeen(): { startTime: number; duration: number }[] {
+  if (!longTaskObserver) {
+    longTaskObserver = new PerformanceObserver((l) => {
+      for (const e of l.getEntries())
+        longTaskEntries.push({ startTime: e.startTime, duration: e.duration });
+    });
+    try {
+      longTaskObserver.observe({ type: "longtask", buffered: true });
+    } catch {
+      // not supported
+    }
+  }
+  for (const e of longTaskObserver.takeRecords()) {
+    longTaskEntries.push({ startTime: e.startTime, duration: e.duration });
+  }
+  return longTaskEntries;
+}
+
+/** Frames over 50 ms with a blocking task inside [from, to], with their
+ *  script attribution (where a long task's time went). */
+export function longFramesIn(from: number, to: number): unknown[] {
+  stallsIn(0, 0); // collect pending entries
+  return loafs
+    .filter((f) => f.blockingDuration > 0 && f.startTime < to && f.startTime + f.duration > from)
+    .map((f) => {
+      const j = f as unknown as {
+        scripts: {
+          invoker?: string;
+          sourceFunctionName?: string;
+          sourceURL?: string;
+          duration: number;
+          forcedStyleAndLayoutDuration?: number;
+        }[];
+      };
+      return {
+        atMs: Math.round(f.startTime - from),
+        durationMs: Math.round(f.duration),
+        blockingMs: Math.round(f.blockingDuration),
+        renderMs: f.renderStart > 0 ? Math.round(f.startTime + f.duration - f.renderStart) : 0,
+        scripts: j.scripts.map((x) => ({
+          invoker: x.invoker,
+          fn: x.sourceFunctionName,
+          url: x.sourceURL?.split("/").pop(),
+          ms: Math.round(x.duration),
+          layoutMs: Math.round(x.forcedStyleAndLayoutDuration ?? 0),
+        })),
+      };
+    });
+}
+
+export const round1 = (v: number) => Math.round(v * 10) / 10;
 
 /** The platform's part of a wait for a requested frame (ADR-0024). */
-function frameWaitStall(requested: number, drawn: number): number {
+export function frameWaitStall(requested: number, drawn: number): number {
   stallsIn(0, 0); // collect pending entries
   return frameWaitStallMs(loafs, requested, drawn);
 }
@@ -181,7 +235,29 @@ function rand(seed: number) {
   };
 }
 
+/** Something that scrolls, for frame measurements. */
+export interface Scroller {
+  /** Scrolls by `px` CSS pixels. */
+  scrollPx(px: number): void;
+  /** Whether a placeholder is on screen. */
+  showsPlaceholder(): boolean;
+}
+
+function txtScroller(view: TxtView, lineH: number): Scroller {
+  return {
+    scrollPx: (px) => {
+      view.scrollByRows(px / lineH);
+    },
+    showsPlaceholder: () => view.placeholderRows() > 0,
+  };
+}
+
 async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: number) {
+  return measureScroll(txtScroller(view, 20), durationMs, rowsPerSecond * 20);
+}
+
+/** Scrolls `s` at `pxPerSecond` for `durationMs` and measures the frames. */
+export async function measureScroll(s: Scroller, durationMs: number, pxPerSecond: number) {
   watchFrames();
   const gaps: [number, number][] = []; // [from, to]
   let blank = 0;
@@ -194,9 +270,9 @@ async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: n
     const t = await nextFrame();
     gaps.push([last, t]);
     if (t - last > worst.gapMs) worst = { gapMs: t - last, atMs: Math.round(last - start) };
-    view.scrollByRows((rowsPerSecond * (t - last)) / 1000);
+    s.scrollPx((pxPerSecond * (t - last)) / 1000);
     frames++;
-    if (view.placeholderRows() > 0) blank++;
+    if (s.showsPlaceholder()) blank++;
     last = t;
   }
   // Each interval is a wait for a requested frame: without the platform's
@@ -230,7 +306,7 @@ async function measureFrames(view: TxtView, durationMs: number, rowsPerSecond: n
   };
 }
 
-async function typing(view: TxtView, count: number, intervalMs: number) {
+export async function typing(view: TxtView, count: number, intervalMs: number) {
   const samples: InputSample[] = [];
   const edits: EditSample[] = [];
   const stop = view.onInputSample((s) => samples.push(s));
@@ -268,7 +344,7 @@ async function typing(view: TxtView, count: number, intervalMs: number) {
   };
 }
 
-async function memory(): Promise<{ privateBytes: number; workingSet: number } | null> {
+export async function memory(): Promise<{ privateBytes: number; workingSet: number } | null> {
   return invoke("bench_memory");
 }
 

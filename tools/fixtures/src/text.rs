@@ -168,13 +168,25 @@ fn paragraph(rng: &mut Rng, i: u64, out: &mut String) {
                 let _ = write!(out, "~~{w}~~");
             }
             5 => out.push_str("<https://example.org/auto>"),
+            // A reference link; its definition is at the end of the document.
+            6 => {
+                let _ = write!(out, "[{w}][ref-{}]", k % REFERENCES);
+            }
             _ => out.push_str(w),
         }
     }
     let _ = write!(out, "[^{i}].\n\n");
 }
 
-/// 20 MiB of Markdown exercising every construct §3.1 lists.
+/// Reference definitions, all at the end of the Markdown fixture.
+const REFERENCES: usize = 32;
+/// The section with the big table (about the middle), and its rows.
+const BIG_TABLE_SECTION: u64 = 8000;
+const BIG_TABLE_ROWS: u64 = 1500;
+
+/// 20 MiB of Markdown exercising every construct §3.1 lists, with a big
+/// table in the middle and reference links defined at the end (the M2
+/// edit positions).
 pub fn markdown(path: &Path, seed: u64) -> io::Result<serde_json::Value> {
     let target = (20 * MIB) as usize;
     let mut rng = Rng::new(seed);
@@ -195,7 +207,11 @@ pub fn markdown(path: &Path, seed: u64) -> io::Result<serde_json::Value> {
 
         doc.push_str("- first item\n  - nested item\n    - deeper item\n- [ ] open task\n- [x] done task\n\n1. one\n2. two\n   1. two-a\n3. three\n\n");
 
-        let rows = rng.range(3, 8);
+        let rows = if i == BIG_TABLE_SECTION {
+            BIG_TABLE_ROWS
+        } else {
+            rng.range(3, 8)
+        };
         doc.push_str("| Column A | Column B | Column C |\n|:---|:---:|---:|\n");
         for r in 0..rows {
             let mut cell = String::new();
@@ -237,6 +253,18 @@ pub fn markdown(path: &Path, seed: u64) -> io::Result<serde_json::Value> {
         );
         let _ = write!(doc, "[^{i}]: Footnote {i}, with `code`.\n\n---\n\n");
     }
+    doc.push_str("## References\n\n");
+    for r in 0..REFERENCES {
+        let _ = writeln!(
+            doc,
+            "[ref-{r}]: https://example.net/ref/{r} \"Reference {r}\""
+        );
+    }
     std::fs::write(path, doc.as_bytes())?;
-    Ok(serde_json::json!({ "sections": sections }))
+    Ok(serde_json::json!({
+        "sections": sections,
+        "bigTableSection": BIG_TABLE_SECTION,
+        "bigTableRows": BIG_TABLE_ROWS,
+        "references": REFERENCES,
+    }))
 }

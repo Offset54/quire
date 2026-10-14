@@ -14,6 +14,8 @@ const scenarios: Record<string, () => Promise<Scenario>> = {
   "txt-save": () => import("./txt").then((m) => ({ run: m.txtSave })),
   "txt-300m": () => import("./txt").then((m) => ({ run: m.txt300m })),
   "launch-2g": () => import("./txt").then((m) => ({ run: m.launch2g })),
+  "md-20m": () => import("./md").then((m) => ({ run: m.md20m })),
+  "md-20m-edit": () => import("./md").then((m) => ({ run: m.md20mEdit })),
 };
 
 /**

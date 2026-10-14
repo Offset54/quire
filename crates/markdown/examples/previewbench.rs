@@ -115,9 +115,23 @@ fn main() -> std::io::Result<()> {
     let para = (heading..n)
         .find(|&i| doc.index().blocks()[i].kind == quire_markdown::scan::BlockKind::Paragraph)
         .expect("a paragraph");
+    // The biggest table, and the last block (the fixture's reference
+    // definitions are there).
+    let table = (0..n)
+        .filter(|&i| doc.index().blocks()[i].kind == quire_markdown::scan::BlockKind::Table)
+        .max_by_key(|&i| {
+            let b = &doc.index().blocks()[i];
+            b.end - b.start
+        })
+        .expect("a table");
+    let tb = &doc.index().blocks()[table];
+    println!("biggest table: {} bytes", tb.end - tb.start);
+    let defs = n - 1;
     for (what, i, text) in [
         ("heading text", heading, "x"),
         ("new footnote reference", para, "[^0]"),
+        ("inside the big table", table, "x"),
+        ("a reference definition", defs, "x"),
     ] {
         let b = doc.index().blocks()[i].clone();
         let at = b.end - 2;

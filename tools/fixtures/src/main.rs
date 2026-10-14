@@ -26,7 +26,9 @@ use sha2::{Digest, Sha256};
 
 /// Bump when any generator's output changes, so results can name the
 /// fixture version they were measured on.
-const GENERATOR_VERSION: u32 = 1;
+/// 2 (2026-10-14): the Markdown fixture gained a 1,500-row table and
+/// reference links defined at its end.
+const GENERATOR_VERSION: u32 = 2;
 
 struct Fixture {
     name: &'static str,
@@ -55,7 +57,7 @@ const FIXTURES: &[Fixture] = &[
         name: "md-20m",
         file: "document-20mib.md",
         seed: 0x6d64_3230,
-        description: "20 MiB CommonMark + GFM: front matter, headings, lists, task lists, tables, code, math, Mermaid, footnotes",
+        description: "20 MiB CommonMark + GFM: front matter, headings, lists, task lists, tables (one of 1,500 rows mid-document), code, math, Mermaid, footnotes, reference links defined at the end",
         generate: text::markdown,
     },
     Fixture {
