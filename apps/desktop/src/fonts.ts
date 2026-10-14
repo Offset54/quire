@@ -5,7 +5,7 @@
 // in one task (60–78 ms in md-20m, over §4's 50 ms). Laying out a sample of
 // each script in each stack, one per task after the first frame, moves that
 // cost off the open path in pieces. Scripts not sampled here still pay on
-// first use (RISKS #19).
+// first use (RISKS #13).
 
 /** (class of the stack's element, sample text) */
 const SAMPLES: [string, string][] = [

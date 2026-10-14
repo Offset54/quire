@@ -4,7 +4,7 @@
 |---|---|
 | Phase | M2 (Markdown) in progress |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-13 |
+| Last updated | 2026-10-14 |
 
 ## Milestones
 
@@ -25,20 +25,22 @@
 |---|---|---|
 | 1 | Parser spike | Done: comrak 0.56 ([ADR-0026](adr/0026-markdown-parser.md)); CommonMark 0.31.2 100 %, GFM spec 98.5 %, extensions 93 % as shipped; 20 MiB parse 693 ms raw (background), one block 2 µs |
 | 2 | Block index and incremental parsing | Done: `crates/markdown` index, analysis, tables ([ADR-0027](adr/0027-markdown-incremental-parsing.md)); property test 100,000 cases; 20 MiB index 593 ms raw (background), edit 0.1–0.6 ms |
-| 3 | Block rendering and spec suite | In progress: per-block rendering through comrak's formatter; spec harness 1,342/1,352 (99.26 %), exceptions in [markdown-spec-exceptions.md](markdown-spec-exceptions.md) |
-| 4 | Sanitization and content loading | In progress: allowlist sanitizer written and tested (`sanitize.rs`), not yet wired into rendering; image policy and remote toggle to do |
+| 3 | Block rendering and spec suite | Done: per-block rendering through comrak's formatter; spec harness 1,342/1,352 (99.26 %), exceptions in [markdown-spec-exceptions.md](markdown-spec-exceptions.md) |
+| 4 | Sanitization and content loading | Done ([ADR-0028](adr/0028-markdown-sanitization-and-content-loading.md)): allowlist sanitizer in rendering, one image policy, `quire-img` scheme (display-size decode, remote images behind the per-document toggle), hostile-HTML set |
 | 5 | Code highlighting | Not started |
-| 6 | Preview surface | Not started |
+| 6 | Preview surface | Done ([ADR-0030](adr/0030-markdown-preview-surface.md)): byte-anchored DOM blocks in host windows, render cache with dependency signatures, provisional windows then corrections, progressive placement, large tables and code as pieces, font warm-up. Ref-sim: first paint 76–136 ms raw (333 ms effective), preview scrolling max frame ≤ 16 ms, no long tasks |
 | 7 | KaTeX and Mermaid | Not started |
-| 8 | Source view and incremental preview | Not started |
-| 9 | Scroll sync, outline, click-to-source | Not started |
+| 8 | Source view and incremental preview | Mostly done: `.md` in the TXT view with decoration, view modes (Ctrl+E, Ctrl+\\, remembered), keystroke → provisional window → corrections, word count. Keystroke → preview in ref-sim: p50 12–15 ms; 14 % of keystrokes (after a pause) hit platform stalls of 150–370 ms (open decision below) |
+| 9 | Scroll sync, outline, click-to-source | In progress: two-way scroll sync and click-to-source done (UI flows); outline rail to do |
 | 10 | Editing helpers | Not started |
 | 11 | Exports | Not started |
 | 12 | Corpora, fixtures and fuzzing | Not started |
-| 13 | Benchmarks | Not started |
-| 14 | WebDriver UI flows | Not started |
+| 13 | Benchmarks | In progress: `md-20m`, `md-20m-edit`, `tools/bench/refsim-md.ps1`, `md` rows in `bench/budgets.json`, two ref-sim runs (`bench/results/m2/`); criterion benches to do |
+| 14 | WebDriver UI flows | In progress: 9 Markdown flows (open, split view, images and remote toggle, typing, scroll sync, Ctrl+E, save, large table pieces after a save); image paste, table format, export to do |
 | 15 | Carried from M1 | Done: webview tile-bitmap cache reported to the governor (`frontend_cache.rs`; bench: 160 MiB counted on both sides after scrolling); command-line open failure shown on the welcome screen; reopen with another encoding shows progress with Cancel (UI flows 10 and 11) |
 | 16 | M2 report | Not started |
+
+Open decision (2026-10-14): the Markdown keystroke → preview row in ref-sim. 86 % of keystrokes meet it (p95 22–24 ms, max 29–31 ms, 33.3 ms effective); the 14 % that follow a pause wait 150–370 ms for a frame the platform doesn't deliver (RISKS #12). ADR-0024 judges typing and host-waiting rows raw, so the row fails.
 
 ## M1 tasks
 
@@ -61,7 +63,9 @@
 | 15 | WebDriver UI flows | Done: 9/9 pass locally and in CI (Windows runner). The runner's WebView2 ignored msedgedriver's switches; the app now applies them under tauri-driver (ADR-0020 addendum) |
 | 16 | M1 report | Written ([M1_REPORT.md](M1_REPORT.md)); awaiting the decision on platform frame stalls |
 
-Open decision (2026-10-09): platform frame stalls (RISKS #12). Typing latency, the earlier open issue, is fixed: ref-sim p95 8.1–9.4 ms with local echo (ADR-0023).
+Found and fixed during M2: TXT `fetchAt` jumped back two screens on every refetch (TXT scrolling to be re-measured in ref-sim); find-previous could return a match the forward search skips when matches overlap (nightly fuzz, regression input kept); after a save, the Markdown state read the text through a stale snapshot (a readers gate in `txt.rs` now covers the save's hand-over).
+
+Open decision (2026-10-09, decided 2026-10-12 as ADR-0024): platform frame stalls (RISKS #12). Typing latency, the earlier open issue, is fixed: ref-sim p95 8.1–9.4 ms with local echo (ADR-0023).
 
 ## M0 tasks
 

@@ -37,6 +37,8 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0025 | Repository visibility | [Accepted](0025-public-repository.md): public, so standard Actions runners are free | Stay private and trim CI; no Actions for a month; rewrite history first | M1 |
 | 0026 | Markdown parser | [Accepted](0026-markdown-parser.md): comrak 0.56 (BSD-2-Clause), default features off, rendering through our own formatter overrides | pulldown-cmark (MIT; no extended autolinks, no renderer hooks); markdown-rs (MIT); our own parser | M2 (spike) |
 | 0027 | Markdown incremental parsing | [Accepted](0027-markdown-incremental-parsing.md): top-level block index tiled by start lines, built in stretches, edits re-scanned until a block starts where an old one did; definitions found by probing; document-wide tables | Whole re-parse; our own block scanner; comrak end positions; a second parser for definitions | M2 |
+| 0028 | Markdown sanitization and content loading | [Accepted](0028-markdown-sanitization-and-content-loading.md): allowlist sanitizer in the core for raw HTML; every image source through one policy; local images through the `quire-img` scheme at display size; remote content behind a per-document toggle, fetched by the host | ammonia; DOMPurify in the frontend; Tauri's asset protocol; the webview loading remote images; reqwest; ureq with rustls | M2 |
+| 0030 | Markdown preview surface | [Accepted](0030-markdown-preview-surface.md): byte-anchored DOM blocks in windows the host sends (HTML only for what the frontend lacks), provisional windows then corrections, progressive placement, large tables and code blocks as pieces, font warm-up | Core-rendered tiles; one DOM node per document; whole-document height estimates | M2 |
 
 ## Template
 
