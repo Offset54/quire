@@ -13,7 +13,7 @@
     "zero": "pass if value is 0",
     "ratio": "pass if value ≤ budget; a ratio of two measurements on this machine, not derated"
   },
-  "platformStalls": "TXT and MD frame and first-paint rows are judged on own values: the measured time minus platform frame stalls (frames the platform did not deliver while the main thread was idle). Raw values and the stalls are reported in the results (ADR-0024).",
+  "platformStalls": "TXT and MD frame and first-paint rows and the typing rows are judged on own values: the measured time minus platform frame stalls (frames the platform did not deliver while the main thread was idle); the MD keystroke row on keystrokes the platform did not stall. Raw values and the stalls are reported in the results (ADR-0024 and its addenda).",
   "budgets": [
     {
       "id": "startup.warm",
@@ -189,20 +189,20 @@
     {
       "id": "txt.typing.p95",
       "suite": "txt",
-      "metric": "txt2g.typing.latencyMs.p95",
+      "metric": "txt2g.typing.ownLatencyMs.p95",
       "budget": 16,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4: input → visual response p95 ≤ 16 ms"
+      "ref": "§4: input → visual response p95 ≤ 16 ms; own values, raw reported (user decision 2026-10-15, ADR-0024 addendum 2)"
     },
     {
       "id": "txt.typing.p99",
       "suite": "txt",
-      "metric": "txt2g.typing.latencyMs.p99",
+      "metric": "txt2g.typing.ownLatencyMs.p99",
       "budget": 33,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4: input → visual response p99 ≤ 33 ms"
+      "ref": "§4: input → visual response p99 ≤ 33 ms; own values, raw reported (user decision 2026-10-15, ADR-0024 addendum 2)"
     },
     {
       "id": "txt.scroll.steady.p99",
@@ -333,20 +333,20 @@
     {
       "id": "md.typing.p95",
       "suite": "md",
-      "metric": "md20mEdit.typing.latencyMs.p95",
+      "metric": "md20mEdit.typing.ownLatencyMs.p95",
       "budget": 16,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4: input → visual response p95 ≤ 16 ms (source view, split, the preview following)"
+      "ref": "§4: input → visual response p95 ≤ 16 ms (source view, split, the preview following); own values, raw reported (user decision 2026-10-15, ADR-0024 addendum 2)"
     },
     {
       "id": "md.typing.p99",
       "suite": "md",
-      "metric": "md20mEdit.typing.latencyMs.p99",
+      "metric": "md20mEdit.typing.ownLatencyMs.p99",
       "budget": 33,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4: input → visual response p99 ≤ 33 ms"
+      "ref": "§4: input → visual response p99 ≤ 33 ms; own values, raw reported (user decision 2026-10-15, ADR-0024 addendum 2)"
     },
     {
       "id": "md.preview.steady.p99",

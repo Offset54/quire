@@ -157,7 +157,7 @@ $results = [ordered]@{
   txt2g = $t2gMid
   txt2gAll = [ordered]@{
     firstPaintMs = @($t2g | ForEach-Object { $_.firstPaintMs }); ownFirstPaintMs = @($t2g | ForEach-Object { $_.ownFirstPaintMs }); indexMs = @($t2g | ForEach-Object { $_.indexMs })
-    typingP95 = @($t2g | ForEach-Object { $_.typing.latencyMs.p95 }); insertP95 = @($t2g | ForEach-Object { $_.insertMs.p95 })
+    typingP95 = @($t2g | ForEach-Object { $_.typing.latencyMs.p95 }); typingOwnP95 = @($t2g | ForEach-Object { $_.typing.ownLatencyMs.p95 }); insertP95 = @($t2g | ForEach-Object { $_.insertMs.p95 })
   }
   search = $searchMid
   searchAll = @($search | ForEach-Object { [ordered]@{ totalMs = $_.totalMs; firstHitMs = $_.firstHitMs; matches = $_.matches } })
@@ -175,6 +175,7 @@ $results = [ordered]@{
     steady = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.steady.frameIntervalMs.max; ownMax = $_.steady.ownFrameIntervalMs.max; stalls = $_.steady.platformStalls.count; worstStallMs = $_.steady.platformStalls.worstMs } })
     fling = @($t2g | ForEach-Object { [ordered]@{ rawMax = $_.fling.frameIntervalMs.max; ownMax = $_.fling.ownFrameIntervalMs.max; stalls = $_.fling.platformStalls.count; worstStallMs = $_.fling.platformStalls.worstMs } })
     wrappedScroll = @($t300 | ForEach-Object { [ordered]@{ rawMax = $_.wrappedScroll.frameIntervalMs.max; ownMax = $_.wrappedScroll.ownFrameIntervalMs.max; stalls = $_.wrappedScroll.platformStalls.count; worstStallMs = $_.wrappedScroll.platformStalls.worstMs } })
+    typing = @($t2g | ForEach-Object { [ordered]@{ rawP95 = $_.typing.latencyMs.p95; rawP99 = $_.typing.latencyMs.p99; rawMax = $_.typing.latencyMs.max; ownP95 = $_.typing.ownLatencyMs.p95; ownP99 = $_.typing.ownLatencyMs.p99; ownMax = $_.typing.ownLatencyMs.max } })
     scrollAfterIdle = @($t2g | ForEach-Object { , @($_.scrollAfterIdle) })
   }
   longTasks = $long
@@ -211,6 +212,7 @@ Write-Host "Platform frame stalls (ADR-0024; reported, not judged):"
 $ps = $results.platformStalls
 Write-Host ("  2 GB first paint raw/own: " + (($ps.txt2gFirstPaint | ForEach-Object { "$($_.rawMs)/$($_.ownMs)" }) -join ", ") + " ms")
 Write-Host ("  300 MB first paint raw/own: " + (($ps.txt300mFirstPaint | ForEach-Object { "$($_.rawMs)/$($_.ownMs)" }) -join ", ") + " ms")
+Write-Host ("  typing p95/p99/max raw → own: " + (($ps.typing | ForEach-Object { "$($_.rawP95)/$($_.rawP99)/$($_.rawMax) → $($_.ownP95)/$($_.ownP99)/$($_.ownMax)" }) -join ", ") + " ms")
 foreach ($k in "steady", "fling", "wrappedScroll") {
   Write-Host ("  $k max frame raw/own (stalls): " + (($ps.$k | ForEach-Object { "$($_.rawMax)/$($_.ownMax) ($($_.stalls))" }) -join ", ") + " ms")
 }

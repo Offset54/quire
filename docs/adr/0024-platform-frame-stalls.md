@@ -17,7 +17,7 @@ Budgets are unchanged. The TXT rows that end on a presented frame are judged on 
 
 For the first paint, the stalls inside long frames over the whole measurement (the idle time before `renderStart`, less our scripts, less one frame) are also computed; the larger of the two values is used, never the sum.
 
-**Where it applies:** the 2 GB and 300 MB first paints, the jumps before and after indexing, and the scrolling rows (steady, fling, wrapped 300 MB): p99 and max frame interval. Typing latency and the core-timed rows are judged raw. `launch-2g` reports both values; it has no row of its own.
+**Where it applies:** the 2 GB and 300 MB first paints, the jumps before and after indexing, and the scrolling rows (steady, fling, wrapped 300 MB): p99 and max frame interval. Typing latency (until addendum 2) and the core-timed rows are judged raw. `launch-2g` reports both values; it has no row of its own.
 
 ## Why the attribution holds
 
@@ -44,4 +44,10 @@ Run 5 (`bench/results/m1/refsim-txt-2026-10-13-170828.json`) failed two rows tha
 
 M2's keystroke → preview row (§4: ≤ 50 ms; 33.3 ms effective in ref-sim) ends on a presented frame after a host round trip, like a jump. In ref-sim on 2026-10-14 (`bench/results/m2/refsim-md-2026-10-14-234605.json`), 14 of 100 keystrokes per run, those after the bench's pause between keystrokes, waited 150–370 ms for a frame the platform did not deliver; the other 86 had p95 22–24 ms and max 29–31 ms. Reducing the stalled samples by their frame wait alone (the rule for jumps above) left p95 38.8 ms, because those windows also arrived later (median 13–15 ms against 7–8 ms).
 
-Decision: the row is judged on the keystrokes the platform did not stall: samples whose wait from the window's arrival to the frame that showed it has no platform stall by the rule above (`frameWaitStallMs` = 0). The stalled samples are reported with every run: their count, raw times and stall times (`keystrokeToPreview.stalled` in the scenario's results, printed by `tools/bench/refsim-md.ps1`). The raw and own distributions stay in the results too. Typing latency remains judged raw.
+Decision: the row is judged on the keystrokes the platform did not stall: samples whose wait from the window's arrival to the frame that showed it has no platform stall by the rule above (`frameWaitStallMs` = 0). The stalled samples are reported with every run: their count, raw times and stall times (`keystrokeToPreview.stalled` in the scenario's results, printed by `tools/bench/refsim-md.ps1`). The raw and own distributions stay in the results too. Typing latency remains judged raw (changed by addendum 2).
+
+## Addendum 2 (2026-10-15, user decision): typing rows, TXT and Markdown
+
+The typing rows (§4: input → visual response p95 ≤ 16 ms, p99 ≤ 33 ms) were judged raw. Each sample ends on the first frame that shows the keystroke: the local echo, or the core's result when no echo was possible. From the moment that frame is requested to its rAF the page only waits for the platform. In the clean Markdown ref-sim run of 2026-10-15 (`bench/results/m2/refsim-md-2026-10-15-003943.json`), one run of three had typing p99 71.1 ms raw: a keystroke after the bench's pause waited for a frame the platform did not deliver. Its own p99 was 17.6 ms.
+
+Decision: the typing rows of TXT (`txt.typing.p95/p99`) and Markdown (`md.typing.p95/p99`) are judged on **own** latency, `typing().ownLatencyMs` in `apps/desktop/src/bench/txt.ts`: each sample less the platform stall in its frame wait (the pure frame-wait rule above, `frameWaitStallMs`, from the sample's `requested` to its `drawn`). The time before the frame is requested, which includes the round trip to the core when there is no echo, is never reduced. Raw latency stays in the results; `tools/bench/refsim-txt.ps1` and `tools/bench/refsim-md.ps1` print raw → own for every run, and the results store both under `platformStalls.typing`.
