@@ -132,6 +132,9 @@ async function find(session: Session, pattern: string, from: number): Promise<nu
 interface EditTiming {
   /** Keystroke to the frame that shows the pushed window with the edit. */
   ms: number;
+  /** Less the platform's part of the wait from the window's arrival to
+   *  that frame (ADR-0024; the host is done by then). */
+  ownMs: number;
   /** Keystroke to the pushed window's arrival (the host's part). */
   arrivedMs: number;
   /** The host's part: text change to window pushed (md_status). */
@@ -176,6 +179,7 @@ async function keystrokeToPreview(
     const later = patches.filter((p) => p !== first && p.revision === first.revision);
     out.push({
       ms: round1(first.painted - t0),
+      ownMs: round1(first.painted - t0 - frameWaitStall(first.arrived, first.painted)),
       arrivedMs: round1(first.arrived - t0),
       hostMs: st.lastEdit ? round1(st.lastEdit.ms) : null,
       correctionsMs: later.length > 0 ? round1(later[later.length - 1]!.painted - t0) : null,
@@ -240,23 +244,27 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
     string,
     {
       ms: ReturnType<typeof summarize>;
+      ownMs: ReturnType<typeof summarize>;
       arrivedMs: ReturnType<typeof summarize>;
       correctionsMs: ReturnType<typeof summarize> | null;
       runs: EditTiming[];
     }
   > = {};
   const all: number[] = [];
+  const allOwn: number[] = [];
   for (const [name, offset] of positions) {
     log(`keystroke → preview at ${name} (${offset})`);
     const runs = await keystrokeToPreview(view, md, offset, 20);
     const corr = runs.flatMap((r) => (r.correctionsMs === null ? [] : [r.correctionsMs]));
     edits[name] = {
       ms: summarize(runs.map((r) => r.ms)),
+      ownMs: summarize(runs.map((r) => r.ownMs)),
       arrivedMs: summarize(runs.map((r) => r.arrivedMs)),
       correctionsMs: corr.length > 0 ? summarize(corr) : null,
       runs,
     };
     all.push(...runs.map((r) => r.ms));
+    allOwn.push(...runs.map((r) => r.ownMs));
   }
 
   // Typing in the source view (split, the preview following).
@@ -281,7 +289,7 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
   return {
     scenario: "md-20m-edit",
     file: e.file,
-    keystrokeToPreview: { ms: summarize(all), positions: edits },
+    keystrokeToPreview: { ms: summarize(all), ownMs: summarize(allOwn), positions: edits },
     typing: type,
     previewSteady: steady,
     previewFling: fling,

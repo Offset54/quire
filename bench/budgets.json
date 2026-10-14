@@ -13,7 +13,7 @@
     "zero": "pass if value is 0",
     "ratio": "pass if value ≤ budget; a ratio of two measurements on this machine, not derated"
   },
-  "platformStalls": "TXT frame and first-paint rows are judged on own values: the measured time minus platform frame stalls (frames the platform did not deliver while the main thread was idle). Raw values and the stalls are reported in the results (ADR-0024).",
+  "platformStalls": "TXT and MD frame and first-paint rows are judged on own values: the measured time minus platform frame stalls (frames the platform did not deliver while the main thread was idle). Raw values and the stalls are reported in the results (ADR-0024).",
   "budgets": [
     {
       "id": "startup.warm",
@@ -302,6 +302,105 @@
       "unit": "ms",
       "kind": "raw",
       "ref": "§4: no frame over 50 ms (scrolling the wrapped 300 MB line)"
+    },
+    {
+      "id": "md.firstPaint",
+      "suite": "md",
+      "metric": "md20m.ownFirstPaintMs",
+      "budget": 500,
+      "unit": "ms",
+      "kind": "mixed",
+      "ref": "§4 MD 20 MB: first paint of source and preview ≤ 500 ms (cold file, split view: source rows drawn and the preview's visible blocks rendered; M2_PLAN)"
+    },
+    {
+      "id": "md.keystroke.p95",
+      "suite": "md",
+      "metric": "md20mEdit.keystrokeToPreview.ms.p95",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms (the frame showing the edited block re-rendered; start, middle, 1,500-row table, list, reference definition; M2_PLAN)"
+    },
+    {
+      "id": "md.keystroke.max",
+      "suite": "md",
+      "metric": "md20mEdit.keystrokeToPreview.ms.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms"
+    },
+    {
+      "id": "md.typing.p95",
+      "suite": "md",
+      "metric": "md20mEdit.typing.latencyMs.p95",
+      "budget": 16,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4: input → visual response p95 ≤ 16 ms (source view, split, the preview following)"
+    },
+    {
+      "id": "md.typing.p99",
+      "suite": "md",
+      "metric": "md20mEdit.typing.latencyMs.p99",
+      "budget": 33,
+      "unit": "ms",
+      "kind": "cpu",
+      "ref": "§4: input → visual response p99 ≤ 33 ms"
+    },
+    {
+      "id": "md.preview.steady.p99",
+      "suite": "md",
+      "metric": "md20mEdit.previewSteady.ownFrameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: scrolling at 60 fps (preview, 2,400 px/s)"
+    },
+    {
+      "id": "md.preview.steady.max",
+      "suite": "md",
+      "metric": "md20mEdit.previewSteady.ownFrameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "md.preview.fling.p99",
+      "suite": "md",
+      "metric": "md20mEdit.previewFling.ownFrameIntervalMs.p99",
+      "budget": 16.7,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: scrolling at 60 fps (preview fling, 24,000 px/s)"
+    },
+    {
+      "id": "md.preview.fling.max",
+      "suite": "md",
+      "metric": "md20mEdit.previewFling.ownFrameIntervalMs.max",
+      "budget": 50,
+      "unit": "ms",
+      "kind": "raw",
+      "ref": "§4: no frame over 50 ms"
+    },
+    {
+      "id": "md.longTasks",
+      "suite": "md",
+      "metric": "longTasks",
+      "budget": 0,
+      "unit": "tasks",
+      "kind": "zero",
+      "ref": "§4: no UI-thread task over 50 ms, ever (md-20m open and md-20m-edit, all runs)"
+    },
+    {
+      "id": "md.memory",
+      "suite": "md",
+      "metric": "md20m.memory.privateGrowthMiB",
+      "budget": 1536,
+      "unit": "MiB",
+      "kind": "raw",
+      "ref": "§4: resident memory beyond the mapped source ≤ 1.5 GB per document (private bytes growth, after the index completes)"
     }
   ]
 }

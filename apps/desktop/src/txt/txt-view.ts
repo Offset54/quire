@@ -161,6 +161,10 @@ export interface InputSample {
   latencyMs: number;
   /** That frame showed a local echo (the core's result came later). */
   echo: boolean;
+  /** When that frame was requested (the echo or the result ready) and
+   *  drawn, performance.now(): a pure frame wait (ADR-0024). */
+  requested: number;
+  drawn: number;
 }
 
 /** One edit request to the core, for the HUD and benchmarks. */
@@ -435,9 +439,13 @@ export class TxtView {
     const at = performance.now();
     const echo = action.type === "type" && this.echoAllowed() && this.echo(action.text);
     if (echo) {
+      const requested = performance.now();
       requestAnimationFrame(() => {
-        const latencyMs = performance.now() - at;
-        for (const l of this.sampleListeners) l({ kind, latencyMs, echo: true });
+        const drawn = performance.now();
+        const latencyMs = drawn - at;
+        for (const l of this.sampleListeners) {
+          l({ kind, latencyMs, echo: true, requested, drawn });
+        }
       });
     }
     const last = this.queue[this.queue.length - 1];
@@ -772,11 +780,15 @@ export class TxtView {
         const adoptMs = performance.now() - got;
         const { at, kind, echo } = item;
         const waitMs = sent - at;
+        const requested = performance.now();
         requestAnimationFrame(() => {
           // The frame that draws the result has been produced.
-          const confirmMs = performance.now() - at;
+          const drawn = performance.now();
+          const confirmMs = drawn - at;
           if (!echo) {
-            for (const l of this.sampleListeners) l({ kind, latencyMs: confirmMs, echo: false });
+            for (const l of this.sampleListeners) {
+              l({ kind, latencyMs: confirmMs, echo: false, requested, drawn });
+            }
           }
           for (const l of this.editListeners) {
             l({ kind, confirmMs, roundTripMs, waitMs, adoptMs, coreMs, echoMatched });

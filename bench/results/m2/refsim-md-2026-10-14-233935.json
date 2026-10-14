@@ -1,0 +1,1295 @@
+{
+  "profile": "ref-sim-v1",
+  "date": "2026-10-14T23:39:33.8204490+09:00",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 258V",
+    "ramGiB": 31.5,
+    "performanceCores": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "power": {
+      "batteryPercent": 99,
+      "ok": true,
+      "onAc": true
+    },
+    "webview2": "155.0.4283.45",
+    "commit": "242d0d0"
+  },
+  "refSim": {
+    "pinning": "job object, performance cores",
+    "logicalCpusReported": 8,
+    "viewport": "1280x720 logical (1920x1080 device px at 150 %)",
+    "dCpu": 1.5,
+    "dIo": 1.222,
+    "coldReadMBps": 2444.065118338713
+  },
+  "runs": 3,
+  "md20m": {
+    "cpuLogicalOverride": "8",
+    "file": "C:\\Users\\MSJin\\dev\\quire\\.claude\\worktrees\\loving-sammet-2565a5\\.cache\\fixtures\\document-20mib.md",
+    "firstFrameWaitStallMs": 0,
+    "firstPaintLongFrames": [],
+    "firstPaintLongTasks": 0,
+    "firstPaintMs": 88.3,
+    "firstPaintStalls": [],
+    "indexMs": 980.5,
+    "longTaskTimes": [],
+    "memory": {
+      "after": {
+        "peakWorkingSet": 102379520,
+        "privateBytes": 63107072,
+        "workingSet": 101961728
+      },
+      "before": {
+        "peakWorkingSet": 29872128,
+        "privateBytes": 5857280,
+        "workingSet": 27623424
+      },
+      "privateGrowthMiB": 55
+    },
+    "openMs": 5.6,
+    "ownFirstPaintMs": 88.3,
+    "processCreatedEpochMs": 1791988648175.6875,
+    "scenario": "md-20m",
+    "status": {
+      "blocks": 208644,
+      "cacheBytes": 35179,
+      "complete": true,
+      "frontier": 20973256,
+      "indexMs": 980.4841,
+      "lastEdit": null,
+      "len": 20973256,
+      "remote": false,
+      "revision": 0
+    }
+  },
+  "md20mAll": {
+    "firstPaintMs": [
+      93.2,
+      86.5,
+      88.3
+    ],
+    "ownFirstPaintMs": [
+      93.2,
+      86.5,
+      88.3
+    ],
+    "indexMs": [
+      959.7,
+      1005.1,
+      980.5
+    ],
+    "longTasks": [
+      0,
+      0,
+      0
+    ],
+    "privateGrowthMiB": [
+      54,
+      54,
+      55
+    ]
+  },
+  "md20mEdit": {
+    "cpuLogicalOverride": "8",
+    "file": "C:\\Users\\MSJin\\dev\\quire\\.claude\\worktrees\\loving-sammet-2565a5\\.cache\\fixtures\\document-20mib.md",
+    "keystrokeToPreview": {
+      "ms": {
+        "max": 368.6,
+        "mean": 36.64,
+        "n": 100,
+        "p50": 13.2,
+        "p95": 314.8,
+        "p99": 332
+      },
+      "positions": {
+        "bigTable": {
+          "arrivedMs": {
+            "max": 13.4,
+            "mean": 10.18,
+            "n": 20,
+            "p50": 9.4,
+            "p95": 13.2,
+            "p99": 13.4
+          },
+          "correctionsMs": {
+            "max": 377.2,
+            "mean": 65.5,
+            "n": 11,
+            "p50": 34.6,
+            "p95": 377.2,
+            "p99": 377.2
+          },
+          "ms": {
+            "max": 329,
+            "mean": 30.8,
+            "n": 20,
+            "p50": 14,
+            "p95": 20.6,
+            "p99": 329
+          },
+          "runs": [
+            {
+              "arrivedMs": 9.1,
+              "correctionsMs": null,
+              "hostMs": 5,
+              "ms": 17.1
+            },
+            {
+              "arrivedMs": 8.4,
+              "correctionsMs": null,
+              "hostMs": 5.2,
+              "ms": 13.4
+            },
+            {
+              "arrivedMs": 8.9,
+              "correctionsMs": null,
+              "hostMs": 5.4,
+              "ms": 14.3
+            },
+            {
+              "arrivedMs": 8.7,
+              "correctionsMs": null,
+              "hostMs": 5,
+              "ms": 13.5
+            },
+            {
+              "arrivedMs": 8.8,
+              "correctionsMs": null,
+              "hostMs": 5.7,
+              "ms": 16.7
+            },
+            {
+              "arrivedMs": 9.4,
+              "correctionsMs": 377.2,
+              "hostMs": 7.6,
+              "ms": 14
+            },
+            {
+              "arrivedMs": 12,
+              "correctionsMs": 36.4,
+              "hostMs": 9.7,
+              "ms": 14.6
+            },
+            {
+              "arrivedMs": 10.4,
+              "correctionsMs": 32.5,
+              "hostMs": 7.7,
+              "ms": 13.5
+            },
+            {
+              "arrivedMs": 12.9,
+              "correctionsMs": null,
+              "hostMs": 6.9,
+              "ms": 20.6
+            },
+            {
+              "arrivedMs": 9.9,
+              "correctionsMs": 37.7,
+              "hostMs": 6.9,
+              "ms": 14.6
+            },
+            {
+              "arrivedMs": 13.4,
+              "correctionsMs": null,
+              "hostMs": 6.7,
+              "ms": 329
+            },
+            {
+              "arrivedMs": 13.2,
+              "correctionsMs": null,
+              "hostMs": 7.8,
+              "ms": 20.5
+            },
+            {
+              "arrivedMs": 9.9,
+              "correctionsMs": 35.9,
+              "hostMs": 7.2,
+              "ms": 13.8
+            },
+            {
+              "arrivedMs": 10.3,
+              "correctionsMs": 32.7,
+              "hostMs": 7.2,
+              "ms": 12.9
+            },
+            {
+              "arrivedMs": 9.3,
+              "correctionsMs": 32.5,
+              "hostMs": 7.1,
+              "ms": 13.4
+            },
+            {
+              "arrivedMs": 8.8,
+              "correctionsMs": 36.6,
+              "hostMs": 6.9,
+              "ms": 14
+            },
+            {
+              "arrivedMs": 8.4,
+              "correctionsMs": 32.3,
+              "hostMs": 6.4,
+              "ms": 12.1
+            },
+            {
+              "arrivedMs": 9,
+              "correctionsMs": 32.1,
+              "hostMs": 6.8,
+              "ms": 13.1
+            },
+            {
+              "arrivedMs": 13,
+              "correctionsMs": null,
+              "hostMs": 7.1,
+              "ms": 19.8
+            },
+            {
+              "arrivedMs": 9.8,
+              "correctionsMs": 34.6,
+              "hostMs": 7.8,
+              "ms": 15.1
+            }
+          ]
+        },
+        "list": {
+          "arrivedMs": {
+            "max": 15.7,
+            "mean": 9.09,
+            "n": 20,
+            "p50": 8.7,
+            "p95": 13.3,
+            "p99": 15.7
+          },
+          "correctionsMs": null,
+          "ms": {
+            "max": 314.8,
+            "mean": 36.91,
+            "n": 20,
+            "p50": 13.3,
+            "p95": 169.4,
+            "p99": 314.8
+          },
+          "runs": [
+            {
+              "arrivedMs": 8.7,
+              "correctionsMs": null,
+              "hostMs": 3.9,
+              "ms": 32.9
+            },
+            {
+              "arrivedMs": 11.9,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 18.2
+            },
+            {
+              "arrivedMs": 6.7,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 13.3
+            },
+            {
+              "arrivedMs": 10.7,
+              "correctionsMs": null,
+              "hostMs": 2.6,
+              "ms": 15.2
+            },
+            {
+              "arrivedMs": 8.1,
+              "correctionsMs": null,
+              "hostMs": 1.3,
+              "ms": 10.4
+            },
+            {
+              "arrivedMs": 5.9,
+              "correctionsMs": null,
+              "hostMs": 2,
+              "ms": 7.5
+            },
+            {
+              "arrivedMs": 7.1,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 11.1
+            },
+            {
+              "arrivedMs": 10.6,
+              "correctionsMs": null,
+              "hostMs": 2.8,
+              "ms": 15
+            },
+            {
+              "arrivedMs": 4.7,
+              "correctionsMs": null,
+              "hostMs": 1,
+              "ms": 11.3
+            },
+            {
+              "arrivedMs": 13,
+              "correctionsMs": null,
+              "hostMs": 2.8,
+              "ms": 21.2
+            },
+            {
+              "arrivedMs": 10.7,
+              "correctionsMs": null,
+              "hostMs": 1.5,
+              "ms": 17.5
+            },
+            {
+              "arrivedMs": 4,
+              "correctionsMs": null,
+              "hostMs": 0.9,
+              "ms": 7
+            },
+            {
+              "arrivedMs": 6.8,
+              "correctionsMs": null,
+              "hostMs": 1.8,
+              "ms": 13.2
+            },
+            {
+              "arrivedMs": 13.3,
+              "correctionsMs": null,
+              "hostMs": 2.5,
+              "ms": 314.8
+            },
+            {
+              "arrivedMs": 5.7,
+              "correctionsMs": null,
+              "hostMs": 2,
+              "ms": 8.2
+            },
+            {
+              "arrivedMs": 11.4,
+              "correctionsMs": null,
+              "hostMs": 1.7,
+              "ms": 17.4
+            },
+            {
+              "arrivedMs": 11.7,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 13.1
+            },
+            {
+              "arrivedMs": 11.2,
+              "correctionsMs": null,
+              "hostMs": 2.6,
+              "ms": 15.1
+            },
+            {
+              "arrivedMs": 3.8,
+              "correctionsMs": null,
+              "hostMs": 1.1,
+              "ms": 6.4
+            },
+            {
+              "arrivedMs": 15.7,
+              "correctionsMs": null,
+              "hostMs": 3.4,
+              "ms": 169.4
+            }
+          ]
+        },
+        "middle": {
+          "arrivedMs": {
+            "max": 12.2,
+            "mean": 6.31,
+            "n": 20,
+            "p50": 5.1,
+            "p95": 12,
+            "p99": 12.2
+          },
+          "correctionsMs": null,
+          "ms": {
+            "max": 368.6,
+            "mean": 28.63,
+            "n": 20,
+            "p50": 8.8,
+            "p95": 20.1,
+            "p99": 368.6
+          },
+          "runs": [
+            {
+              "arrivedMs": 5.1,
+              "correctionsMs": null,
+              "hostMs": 1.8,
+              "ms": 6.7
+            },
+            {
+              "arrivedMs": 7.5,
+              "correctionsMs": null,
+              "hostMs": 1.6,
+              "ms": 14.1
+            },
+            {
+              "arrivedMs": 6.9,
+              "correctionsMs": null,
+              "hostMs": 3.3,
+              "ms": 8.8
+            },
+            {
+              "arrivedMs": 5.2,
+              "correctionsMs": null,
+              "hostMs": 1.4,
+              "ms": 7.1
+            },
+            {
+              "arrivedMs": 12,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 19.6
+            },
+            {
+              "arrivedMs": 4.9,
+              "correctionsMs": null,
+              "hostMs": 0.5,
+              "ms": 12.3
+            },
+            {
+              "arrivedMs": 3.1,
+              "correctionsMs": null,
+              "hostMs": 0.7,
+              "ms": 5.2
+            },
+            {
+              "arrivedMs": 2.9,
+              "correctionsMs": null,
+              "hostMs": 0.6,
+              "ms": 5.9
+            },
+            {
+              "arrivedMs": 8.6,
+              "correctionsMs": null,
+              "hostMs": 1.7,
+              "ms": 14.2
+            },
+            {
+              "arrivedMs": 6.9,
+              "correctionsMs": null,
+              "hostMs": 3.6,
+              "ms": 11.3
+            },
+            {
+              "arrivedMs": 11,
+              "correctionsMs": null,
+              "hostMs": 2.4,
+              "ms": 20.1
+            },
+            {
+              "arrivedMs": 4.8,
+              "correctionsMs": null,
+              "hostMs": 1.3,
+              "ms": 7.7
+            },
+            {
+              "arrivedMs": 4.5,
+              "correctionsMs": null,
+              "hostMs": 0.9,
+              "ms": 7.4
+            },
+            {
+              "arrivedMs": 5.1,
+              "correctionsMs": null,
+              "hostMs": 1.3,
+              "ms": 8.8
+            },
+            {
+              "arrivedMs": 6,
+              "correctionsMs": null,
+              "hostMs": 3.4,
+              "ms": 7.5
+            },
+            {
+              "arrivedMs": 12.2,
+              "correctionsMs": null,
+              "hostMs": 5.3,
+              "ms": 19.9
+            },
+            {
+              "arrivedMs": 4.5,
+              "correctionsMs": null,
+              "hostMs": 1,
+              "ms": 8.3
+            },
+            {
+              "arrivedMs": 4.6,
+              "correctionsMs": null,
+              "hostMs": 1.5,
+              "ms": 8.5
+            },
+            {
+              "arrivedMs": 4.1,
+              "correctionsMs": null,
+              "hostMs": 1.2,
+              "ms": 368.6
+            },
+            {
+              "arrivedMs": 6.2,
+              "correctionsMs": null,
+              "hostMs": 0.8,
+              "ms": 10.6
+            }
+          ]
+        },
+        "referenceDefinition": {
+          "arrivedMs": {
+            "max": 35.7,
+            "mean": 10.22,
+            "n": 20,
+            "p50": 6.4,
+            "p95": 25,
+            "p99": 35.7
+          },
+          "correctionsMs": {
+            "max": 37.4,
+            "mean": 29.26,
+            "n": 17,
+            "p50": 29.2,
+            "p95": 37.4,
+            "p99": 37.4
+          },
+          "ms": {
+            "max": 332,
+            "mean": 59.21,
+            "n": 20,
+            "p50": 12.5,
+            "p95": 329.5,
+            "p99": 332
+          },
+          "runs": [
+            {
+              "arrivedMs": 15.5,
+              "correctionsMs": 35.1,
+              "hostMs": 1.1,
+              "ms": 20
+            },
+            {
+              "arrivedMs": 9.6,
+              "correctionsMs": 27.5,
+              "hostMs": 0.9,
+              "ms": 11.9
+            },
+            {
+              "arrivedMs": 4.9,
+              "correctionsMs": 29.4,
+              "hostMs": 0.7,
+              "ms": 6.1
+            },
+            {
+              "arrivedMs": 6,
+              "correctionsMs": 29.2,
+              "hostMs": 0.8,
+              "ms": 12.7
+            },
+            {
+              "arrivedMs": 7.2,
+              "correctionsMs": 30.1,
+              "hostMs": 0.9,
+              "ms": 15
+            },
+            {
+              "arrivedMs": 35.7,
+              "correctionsMs": null,
+              "hostMs": 2.4,
+              "ms": 329.5
+            },
+            {
+              "arrivedMs": 2.9,
+              "correctionsMs": 22.3,
+              "hostMs": 0.6,
+              "ms": 7
+            },
+            {
+              "arrivedMs": 6.1,
+              "correctionsMs": 27.7,
+              "hostMs": 0.9,
+              "ms": 12.5
+            },
+            {
+              "arrivedMs": 3.8,
+              "correctionsMs": 28.6,
+              "hostMs": 0.5,
+              "ms": 5.3
+            },
+            {
+              "arrivedMs": 4.6,
+              "correctionsMs": 27,
+              "hostMs": 0.3,
+              "ms": 11.2
+            },
+            {
+              "arrivedMs": 19.5,
+              "correctionsMs": null,
+              "hostMs": 0.7,
+              "ms": 332
+            },
+            {
+              "arrivedMs": 6.4,
+              "correctionsMs": 30.7,
+              "hostMs": 3.6,
+              "ms": 8.4
+            },
+            {
+              "arrivedMs": 5.4,
+              "correctionsMs": 27.1,
+              "hostMs": 0.5,
+              "ms": 11
+            },
+            {
+              "arrivedMs": 6.2,
+              "correctionsMs": 26.1,
+              "hostMs": 0.7,
+              "ms": 11.4
+            },
+            {
+              "arrivedMs": 10.5,
+              "correctionsMs": 33.2,
+              "hostMs": 1.6,
+              "ms": 18
+            },
+            {
+              "arrivedMs": 25,
+              "correctionsMs": null,
+              "hostMs": 0.9,
+              "ms": 319.7
+            },
+            {
+              "arrivedMs": 5,
+              "correctionsMs": 25.3,
+              "hostMs": 1,
+              "ms": 9.9
+            },
+            {
+              "arrivedMs": 10.1,
+              "correctionsMs": 30.4,
+              "hostMs": 0.9,
+              "ms": 14
+            },
+            {
+              "arrivedMs": 12.7,
+              "correctionsMs": 37.4,
+              "hostMs": 2.4,
+              "ms": 13.6
+            },
+            {
+              "arrivedMs": 7.3,
+              "correctionsMs": 30.4,
+              "hostMs": 1.8,
+              "ms": 15
+            }
+          ]
+        },
+        "start": {
+          "arrivedMs": {
+            "max": 15.7,
+            "mean": 7.55,
+            "n": 20,
+            "p50": 5.9,
+            "p95": 13.7,
+            "p99": 15.7
+          },
+          "correctionsMs": null,
+          "ms": {
+            "max": 197.3,
+            "mean": 27.66,
+            "n": 20,
+            "p50": 10.4,
+            "p95": 157,
+            "p99": 197.3
+          },
+          "runs": [
+            {
+              "arrivedMs": 13.7,
+              "correctionsMs": null,
+              "hostMs": 3.8,
+              "ms": 19.5
+            },
+            {
+              "arrivedMs": 5.4,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 8
+            },
+            {
+              "arrivedMs": 5.2,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 8.2
+            },
+            {
+              "arrivedMs": 5.9,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 8.4
+            },
+            {
+              "arrivedMs": 5.8,
+              "correctionsMs": null,
+              "hostMs": 2.1,
+              "ms": 8.8
+            },
+            {
+              "arrivedMs": 6.9,
+              "correctionsMs": null,
+              "hostMs": 1.7,
+              "ms": 12.9
+            },
+            {
+              "arrivedMs": 4.1,
+              "correctionsMs": null,
+              "hostMs": 1.2,
+              "ms": 8.6
+            },
+            {
+              "arrivedMs": 15.7,
+              "correctionsMs": null,
+              "hostMs": 5.4,
+              "ms": 157
+            },
+            {
+              "arrivedMs": 8,
+              "correctionsMs": null,
+              "hostMs": 1.6,
+              "ms": 10.6
+            },
+            {
+              "arrivedMs": 7.1,
+              "correctionsMs": null,
+              "hostMs": 2.6,
+              "ms": 10.4
+            },
+            {
+              "arrivedMs": 5.7,
+              "correctionsMs": null,
+              "hostMs": 1.6,
+              "ms": 7.4
+            },
+            {
+              "arrivedMs": 4.2,
+              "correctionsMs": null,
+              "hostMs": 1.4,
+              "ms": 6.7
+            },
+            {
+              "arrivedMs": 3.5,
+              "correctionsMs": null,
+              "hostMs": 1.1,
+              "ms": 5.7
+            },
+            {
+              "arrivedMs": 4.1,
+              "correctionsMs": null,
+              "hostMs": 1.5,
+              "ms": 197.3
+            },
+            {
+              "arrivedMs": 13,
+              "correctionsMs": null,
+              "hostMs": 4.2,
+              "ms": 21.2
+            },
+            {
+              "arrivedMs": 7.4,
+              "correctionsMs": null,
+              "hostMs": 2.2,
+              "ms": 14
+            },
+            {
+              "arrivedMs": 11.9,
+              "correctionsMs": null,
+              "hostMs": 3.2,
+              "ms": 14.3
+            },
+            {
+              "arrivedMs": 8.5,
+              "correctionsMs": null,
+              "hostMs": 1.9,
+              "ms": 13.3
+            },
+            {
+              "arrivedMs": 4.4,
+              "correctionsMs": null,
+              "hostMs": 1.1,
+              "ms": 9.5
+            },
+            {
+              "arrivedMs": 10.5,
+              "correctionsMs": null,
+              "hostMs": 6.2,
+              "ms": 11.3
+            }
+          ]
+        }
+      }
+    },
+    "longTasks": 0,
+    "previewFling": {
+      "frameIntervalMs": {
+        "max": 16,
+        "mean": 7.72,
+        "n": 389,
+        "p50": 7.6,
+        "p95": 8.4,
+        "p99": 8.8
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 16,
+        "mean": 7.72,
+        "n": 389,
+        "p50": 7.6,
+        "p95": 8.4,
+        "p99": 8.8
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 464,
+        "gapMs": 16
+      }
+    },
+    "previewSteady": {
+      "frameIntervalMs": {
+        "max": 9.7,
+        "mean": 7.76,
+        "n": 644,
+        "p50": 7.7,
+        "p95": 8.5,
+        "p99": 8.9
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 9.7,
+        "mean": 7.76,
+        "n": 644,
+        "p50": 7.7,
+        "p95": 8.5,
+        "p99": 8.9
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 3703,
+        "gapMs": 9.69999999999709
+      }
+    },
+    "processCreatedEpochMs": 1791988649803.7852,
+    "scenario": "md-20m-edit",
+    "typing": {
+      "adoptMs": {
+        "max": 0.3,
+        "mean": 0.1,
+        "n": 300,
+        "p50": 0.1,
+        "p95": 0.2,
+        "p99": 0.2
+      },
+      "confirmMs": {
+        "max": 300.8,
+        "mean": 12.59,
+        "n": 300,
+        "p50": 8.3,
+        "p95": 10.8,
+        "p99": 207.1
+      },
+      "coreMs": {
+        "max": 1.08,
+        "mean": 0.24,
+        "n": 300,
+        "p50": 0.21,
+        "p95": 0.33,
+        "p99": 0.7
+      },
+      "echoChecks": 300,
+      "echoMismatches": 1,
+      "echoed": 300,
+      "latencyMs": {
+        "max": 300.8,
+        "mean": 9.05,
+        "n": 300,
+        "p50": 3.5,
+        "p95": 8.6,
+        "p99": 207.1
+      },
+      "longTasks": 0,
+      "requests": 300,
+      "roundTripMs": {
+        "max": 7.2,
+        "mean": 2.95,
+        "n": 300,
+        "p50": 2.9,
+        "p95": 4.2,
+        "p99": 4.8
+      },
+      "samples": 300,
+      "waitMs": {
+        "max": 0.2,
+        "mean": 0.05,
+        "n": 300,
+        "p50": 0,
+        "p95": 0.1,
+        "p99": 0.2
+      }
+    }
+  },
+  "md20mEditAll": [
+    {
+      "keystrokeP95": 314.8,
+      "keystrokeMax": 368.6,
+      "positions": {
+        "bigTable": {
+          "p50": 14,
+          "p95": 20.6,
+          "max": 329,
+          "arrivedP50": 9.4,
+          "correctionsP50": 34.6,
+          "correctionsMax": 377.2
+        },
+        "list": {
+          "p50": 13.3,
+          "p95": 169.4,
+          "max": 314.8,
+          "arrivedP50": 8.7,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "middle": {
+          "p50": 8.8,
+          "p95": 20.1,
+          "max": 368.6,
+          "arrivedP50": 5.1,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "referenceDefinition": {
+          "p50": 12.5,
+          "p95": 329.5,
+          "max": 332,
+          "arrivedP50": 6.4,
+          "correctionsP50": 29.2,
+          "correctionsMax": 37.4
+        },
+        "start": {
+          "p50": 10.4,
+          "p95": 157,
+          "max": 197.3,
+          "arrivedP50": 5.9,
+          "correctionsP50": null,
+          "correctionsMax": null
+        }
+      },
+      "typingP95": 8.6,
+      "typingP99": 207.1,
+      "steadyOwnMax": 9.7,
+      "flingOwnMax": 16,
+      "longTasks": 0
+    },
+    {
+      "keystrokeP95": 241.9,
+      "keystrokeMax": 377.1,
+      "positions": {
+        "bigTable": {
+          "p50": 18.6,
+          "p95": 340.6,
+          "max": 377.1,
+          "arrivedP50": 11.3,
+          "correctionsP50": 32.7,
+          "correctionsMax": 33.9
+        },
+        "list": {
+          "p50": 13.7,
+          "p95": 207.1,
+          "max": 215,
+          "arrivedP50": 10.6,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "middle": {
+          "p50": 11.5,
+          "p95": 197,
+          "max": 287.1,
+          "arrivedP50": 7.1,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "referenceDefinition": {
+          "p50": 10,
+          "p95": 146.8,
+          "max": 298.7,
+          "arrivedP50": 6,
+          "correctionsP50": 27.8,
+          "correctionsMax": 335.6
+        },
+        "start": {
+          "p50": 12.1,
+          "p95": 188.3,
+          "max": 241.9,
+          "arrivedP50": 5.8,
+          "correctionsP50": null,
+          "correctionsMax": null
+        }
+      },
+      "typingP95": 7.7,
+      "typingP99": 8.5,
+      "steadyOwnMax": 9.1,
+      "flingOwnMax": 9.1,
+      "longTasks": 0
+    },
+    {
+      "keystrokeP95": 316.6,
+      "keystrokeMax": 378.6,
+      "positions": {
+        "bigTable": {
+          "p50": 14.6,
+          "p95": 359.1,
+          "max": 378.6,
+          "arrivedP50": 9.9,
+          "correctionsP50": 34.6,
+          "correctionsMax": 38.4
+        },
+        "list": {
+          "p50": 12.7,
+          "p95": 188.7,
+          "max": 317.8,
+          "arrivedP50": 7.7,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "middle": {
+          "p50": 11.9,
+          "p95": 316.6,
+          "max": 318.3,
+          "arrivedP50": 7.1,
+          "correctionsP50": null,
+          "correctionsMax": null
+        },
+        "referenceDefinition": {
+          "p50": 11.5,
+          "p95": 299.5,
+          "max": 312.9,
+          "arrivedP50": 7.4,
+          "correctionsP50": 30.3,
+          "correctionsMax": 323
+        },
+        "start": {
+          "p50": 13.1,
+          "p95": 188.9,
+          "max": 302.9,
+          "arrivedP50": 7.4,
+          "correctionsP50": null,
+          "correctionsMax": null
+        }
+      },
+      "typingP95": 8.2,
+      "typingP99": 8.6,
+      "steadyOwnMax": 9.6,
+      "flingOwnMax": 9.4,
+      "longTasks": 0
+    }
+  ],
+  "platformStalls": {
+    "firstPaint": [
+      {
+        "rawMs": 93.2,
+        "ownMs": 93.2,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 86.5,
+        "ownMs": 86.5,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 88.3,
+        "ownMs": 88.3,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      }
+    ],
+    "steady": [
+      {
+        "rawMax": 9.7,
+        "ownMax": 9.7,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9.1,
+        "ownMax": 9.1,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9.6,
+        "ownMax": 9.6,
+        "stalls": 0,
+        "worstStallMs": 0
+      }
+    ],
+    "fling": [
+      {
+        "rawMax": 16,
+        "ownMax": 16,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9.1,
+        "ownMax": 9.1,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9.4,
+        "ownMax": 9.4,
+        "stalls": 0,
+        "worstStallMs": 0
+      }
+    ]
+  },
+  "longTasks": 0.0,
+  "budgets": [
+    {
+      "id": "md.firstPaint",
+      "value": 88.3,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.5,
+      "effectiveBudget": 333.33,
+      "budget": 500,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.keystroke.p95",
+      "value": 314.8,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 33.33,
+      "budget": 50,
+      "pass": false,
+      "measured": true
+    },
+    {
+      "id": "md.keystroke.max",
+      "value": 368.6,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 33.33,
+      "budget": 50,
+      "pass": false,
+      "measured": true
+    },
+    {
+      "id": "md.typing.p95",
+      "value": 8.6,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 10.67,
+      "budget": 16,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.typing.p99",
+      "value": 207.1,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 22.0,
+      "budget": 33,
+      "pass": false,
+      "measured": true
+    },
+    {
+      "id": "md.preview.steady.p99",
+      "value": 8.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.preview.steady.max",
+      "value": 9.7,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.preview.fling.p99",
+      "value": 8.8,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.preview.fling.max",
+      "value": 16.0,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.longTasks",
+      "value": 0.0,
+      "unit": "tasks",
+      "kind": "zero",
+      "factor": 1.0,
+      "effectiveBudget": 0,
+      "budget": 0,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "md.memory",
+      "value": 55.0,
+      "unit": "MiB",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 1536.0,
+      "budget": 1536,
+      "pass": true,
+      "measured": true
+    }
+  ]
+}

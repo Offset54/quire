@@ -329,6 +329,8 @@ export async function typing(view: TxtView, count: number, intervalMs: number) {
   return {
     // Keystroke to the first frame showing it (a local echo when possible).
     latencyMs: summarize(samples.map((s) => s.latencyMs)),
+    // Less the platform's part of the wait for that frame (ADR-0024).
+    ownLatencyMs: summarize(samples.map((s) => s.latencyMs - frameWaitStall(s.requested, s.drawn))),
     echoed: samples.filter((s) => s.echo).length,
     // Per request to the core: to the frame with its result, and the parts.
     confirmMs: summarize(edits.map((s) => s.confirmMs)),
