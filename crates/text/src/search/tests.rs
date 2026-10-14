@@ -95,3 +95,43 @@ fn expansion_uses_captures() {
     let lit = Matcher::new(&q("k2", false)).unwrap();
     assert_eq!(expand(&s, &lit, (11, 13), "$1").unwrap(), b"$1");
 }
+
+#[test]
+fn find_prev_returns_the_forward_searchs_match_when_matches_overlap() {
+    // Fuzz regression (search): a run of quotes and a 3-quote pattern; a
+    // scan starting mid-run sees matches the forward search skips.
+    let mut doc = vec![b'"'; 42];
+    doc.extend_from_slice(b"KKK?:KKK\x1aRK\0\0/\0KKKKK\xcab\n\n");
+    let m = Matcher::new(&q("\"\"\"", true)).unwrap();
+    assert!(!m.spans_lines);
+    let s = snap(&doc);
+    let all = naive(&doc, &m);
+    assert_eq!(
+        find_prev(&s, &m, doc.len() as u64).unwrap(),
+        all.last().copied()
+    );
+    // Long runs over many chunks, and a line before them.
+    let mut long = b"x\n".to_vec();
+    long.extend(std::iter::repeat_n(b'a', 3 * CHUNK as usize + 7));
+    let m = Matcher::new(&q("aa", false)).unwrap();
+    let s = snap(&long);
+    let all = naive(&long, &m);
+    for before in [long.len() as u64, long.len() as u64 - 1, CHUNK + 5, 3] {
+        // Nothing before: it wraps to the last match.
+        let want = all
+            .iter()
+            .rev()
+            .find(|h| h.1 <= before)
+            .or(all.last())
+            .copied();
+        assert_eq!(find_prev(&s, &m, before).unwrap(), want, "before {before}");
+    }
+    // A pattern that can match a line break scans from the document's start.
+    let m = Matcher::new(&q(r"a\s?a", true)).unwrap();
+    assert!(m.spans_lines);
+    let all = naive(&long, &m);
+    assert_eq!(
+        find_prev(&s, &m, long.len() as u64).unwrap(),
+        all.last().copied()
+    );
+}

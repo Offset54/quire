@@ -22,6 +22,7 @@ use quire_core::scheduler::{CancelToken, JobSpec, Priority, Scheduler};
 use regex_automata::meta::Regex;
 use regex_automata::util::syntax;
 use regex_automata::{Anchored, Input};
+use regex_syntax::hir::{Class, Hir, HirKind};
 use serde::{Deserialize, Serialize};
 
 use crate::buffer::Snapshot;
@@ -64,6 +65,8 @@ pub struct Query {
 pub struct Matcher {
     pub query: Query,
     re: Arc<Regex>,
+    /// A match can contain a line break (`find_prev`).
+    spans_lines: bool,
 }
 
 impl Matcher {
@@ -88,9 +91,17 @@ impl Matcher {
             )
             .build(&pat)
             .map_err(|e| e.to_string())?;
+        let spans_lines = regex_syntax::ParserBuilder::new()
+            .case_insensitive(!query.case_sensitive)
+            .multi_line(true)
+            .crlf(true)
+            .build()
+            .parse(&pat)
+            .map_or(true, |h| can_match_newline(&h));
         Ok(Self {
             query: query.clone(),
             re: Arc::new(re),
+            spans_lines,
         })
     }
 
@@ -130,6 +141,25 @@ impl Matcher {
             at = m.end();
         }
         (out, None)
+    }
+}
+
+/// Whether some match of `h` contains a line feed.
+fn can_match_newline(h: &Hir) -> bool {
+    match h.kind() {
+        HirKind::Empty | HirKind::Look(_) => false,
+        HirKind::Literal(l) => l.0.contains(&b'\n'),
+        HirKind::Class(Class::Unicode(c)) => c
+            .ranges()
+            .iter()
+            .any(|r| r.start() <= '\n' && '\n' <= r.end()),
+        HirKind::Class(Class::Bytes(c)) => c
+            .ranges()
+            .iter()
+            .any(|r| r.start() <= b'\n' && b'\n' <= r.end()),
+        HirKind::Repetition(r) => can_match_newline(&r.sub),
+        HirKind::Capture(c) => can_match_newline(&c.sub),
+        HirKind::Concat(v) | HirKind::Alternation(v) => v.iter().any(can_match_newline),
     }
 }
 
@@ -295,15 +325,30 @@ pub fn find_next(snap: &Snapshot, m: &Matcher, from: u64) -> io::Result<Option<(
     Ok(search_range(snap, m, 0, from, 1)?.first().copied())
 }
 
-/// Last match ending at or before `before`, wrapping to the end.
+/// Last match ending at or before `before`, wrapping to the end: the one
+/// the forward search shows there (`search_all`'s matches).
+///
+/// Matches that can overlap (`aa` in `aaaa`) make that depend on where a
+/// scan starts, so each backward window starts at a place no match of the
+/// whole-document sequence spans: the start of a line when no match can
+/// contain a line break, else the document's start. A pattern that can
+/// match a line break and a scan more than [`EXACT_BACK`] bytes long fall
+/// back to windows starting anywhere (then an overlapping match may be one
+/// the forward search skips).
 pub fn find_prev(snap: &Snapshot, m: &Matcher, before: u64) -> io::Result<Option<(u64, u64)>> {
     let back = |lo: u64, hi: u64| -> io::Result<Option<(u64, u64)>> {
         let mut end = hi;
         while end > lo {
-            let start = end.saturating_sub(CHUNK).max(lo);
-            let hits = search_range(snap, m, start, end, usize::MAX)?;
-            if let Some(&h) = hits.iter().rev().find(|h| h.1 <= hi) {
+            let want = end.saturating_sub(CHUNK);
+            let start = match sync_before(snap, m, want)? {
+                Some(s) if end - s <= EXACT_BACK => s,
+                _ => want.max(lo),
+            };
+            if let Some(h) = last_match(snap, m, start, end, lo, hi)? {
                 return Ok(Some(h));
+            }
+            if start <= lo {
+                break;
             }
             end = start;
         }
@@ -313,6 +358,63 @@ pub fn find_prev(snap: &Snapshot, m: &Matcher, before: u64) -> io::Result<Option
         return Ok(Some(h));
     }
     back(before, snap.len())
+}
+
+/// Longest backward scan `find_prev` keeps exact.
+#[cfg(not(any(test, fuzzing)))]
+const EXACT_BACK: u64 = 64 << 20;
+#[cfg(any(test, fuzzing))]
+const EXACT_BACK: u64 = 1 << 20;
+
+/// A place at or before `at` that no match spans (see `find_prev`), if
+/// one is known: the start of `at`'s line, or 0.
+fn sync_before(snap: &Snapshot, m: &Matcher, at: u64) -> io::Result<Option<u64>> {
+    if at == 0 {
+        return Ok(Some(0));
+    }
+    if m.spans_lines {
+        return Ok(Some(0));
+    }
+    let mut end = at;
+    while end > 0 {
+        let start = end.saturating_sub(64 * 1024);
+        let bytes = snap.read(start..end)?;
+        if let Some(i) = bytes.iter().rposition(|&b| b == b'\n') {
+            return Ok(Some(start + i as u64 + 1));
+        }
+        if at - start > EXACT_BACK {
+            return Ok(None);
+        }
+        end = start;
+    }
+    Ok(Some(0))
+}
+
+/// The last match of a forward scan from `from` that starts before `to`,
+/// starts at or after `lo` and ends at or before `hi`.
+fn last_match(
+    snap: &Snapshot,
+    m: &Matcher,
+    from: u64,
+    to: u64,
+    lo: u64,
+    hi: u64,
+) -> io::Result<Option<(u64, u64)>> {
+    let mut best = None;
+    let mut at = from;
+    while at < to {
+        let step = (at + CHUNK).min(to);
+        let hits = search_range(snap, m, at, step, usize::MAX)?;
+        let mut next = step;
+        for &(s, e) in &hits {
+            if s >= lo && e <= hi {
+                best = Some((s, e));
+            }
+            next = next.max(e);
+        }
+        at = next;
+    }
+    Ok(best)
 }
 
 /// The replacement text for the match `at` (regex: `$1`, `${name}`
