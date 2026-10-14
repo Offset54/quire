@@ -329,6 +329,85 @@ impl ChunkIndex {
         (st.counts.get(i).copied()? != UNKNOWN).then(|| st.fingerprints[i])
     }
 
+    /// How far from `at` the buffer is known to hold no line break, going
+    /// forward (to at most `to`) or, with `back`, backward (to at least
+    /// `to`): whole chunks indexed with no breaks. Such a chunk can still
+    /// end on the CR of a CRLF whose LF starts the next chunk (that break is
+    /// counted there): that can only be the highest byte of the run (the
+    /// next chunk would hold a break otherwise), so the caller checks the
+    /// byte before the run's upper end. Returns `at` when nothing is known.
+    pub fn clear_run(&self, at: u64, to: u64, back: bool) -> u64 {
+        let st = self.state.read();
+        let zero = |c: u64| st.counts.get(c as usize) == Some(&0);
+        let mut p = at;
+        if back {
+            while p > to && zero((p - 1) / CHUNK) {
+                p = ((p - 1) / CHUNK * CHUNK).max(to);
+            }
+        } else {
+            while p < to && zero(p / CHUNK) {
+                p = ((p / CHUNK + 1) * CHUNK).min(to);
+            }
+        }
+        p
+    }
+
+    /// Indexes the chunks overlapping `a..b` that aren't known yet, split
+    /// across up to `parts` threads (a foreground read that needs them now,
+    /// such as finding the end of a long line before the background index
+    /// gets there; the background jobs then skip them).
+    pub fn fill(&self, source: &dyn Source, a: u64, b: u64, parts: usize) -> io::Result<()> {
+        if a >= b {
+            return Ok(());
+        }
+        let (lo, hi) = ((a / CHUNK) as usize, b.div_ceil(CHUNK) as usize);
+        let hi = hi.min(self.chunk_count());
+        let unknown = {
+            let st = self.state.read();
+            (lo..hi).filter(|&c| st.counts[c] == UNKNOWN).count()
+        };
+        if unknown == 0 {
+            return Ok(());
+        }
+        let run = |from: usize, to: usize| -> io::Result<()> {
+            // Runs of unknown chunks in from..to.
+            let mut c = from;
+            while c < to {
+                let known = |c: usize| self.state.read().counts[c] != UNKNOWN;
+                if known(c) {
+                    c += 1;
+                    continue;
+                }
+                let mut e = c + 1;
+                while e < to && !known(e) {
+                    e += 1;
+                }
+                self.scan_range(source, c, e, None)?;
+                c = e;
+            }
+            Ok(())
+        };
+        let parts = parts.clamp(1, 16).min(hi - lo);
+        if parts <= 1 || unknown < 32 {
+            return run(lo, hi);
+        }
+        let step = (hi - lo).div_ceil(parts);
+        std::thread::scope(|s| {
+            let handles: Vec<_> = (0..parts)
+                .map(|i| {
+                    let (f, t) = ((lo + i * step).min(hi), (lo + (i + 1) * step).min(hi));
+                    let run = &run;
+                    s.spawn(move || run(f, t))
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|h| h.join().expect("index fill thread panicked"))
+                .collect::<io::Result<Vec<()>>>()
+        })?;
+        Ok(())
+    }
+
     /// Breaks per byte over the indexed part, for estimates.
     pub fn density(&self) -> Option<f64> {
         let p = self.progress();
@@ -344,12 +423,13 @@ impl ChunkIndex {
         hi: usize,
         cancel: Option<&dyn Fn() -> bool>,
     ) -> io::Result<()> {
-        self.scan_range_ahead(source, lo, hi, cancel, 0)
+        self.scan_chunks(source, lo, hi, cancel, 0, false)
     }
 
     /// [`scan_range`](Self::scan_range), prefetching up to `ahead` bytes
     /// past the block being read (0: no prefetch). A short window keeps the
-    /// device queue short, so foreground reads don't wait behind it.
+    /// device queue short, so foreground reads don't wait behind it. Chunks
+    /// a foreground read already indexed (`fill`) are skipped.
     pub fn scan_range_ahead(
         &self,
         source: &dyn Source,
@@ -357,6 +437,18 @@ impl ChunkIndex {
         hi: usize,
         cancel: Option<&dyn Fn() -> bool>,
         ahead: u64,
+    ) -> io::Result<()> {
+        self.scan_chunks(source, lo, hi, cancel, ahead, true)
+    }
+
+    fn scan_chunks(
+        &self,
+        source: &dyn Source,
+        lo: usize,
+        hi: usize,
+        cancel: Option<&dyn Fn() -> bool>,
+        ahead: u64,
+        skip_known: bool,
     ) -> io::Result<()> {
         const BLOCK_CHUNKS: usize = 16; // 1 MiB reads
         let len = source.len();
@@ -369,6 +461,14 @@ impl ChunkIndex {
                 return Ok(());
             }
             let n = BLOCK_CHUNKS.min(hi - i);
+            if skip_known
+                && self.state.read().counts[i..i + n]
+                    .iter()
+                    .all(|&c| c != UNKNOWN)
+            {
+                i += n;
+                continue;
+            }
             let start = i as u64 * CHUNK;
             let end = ((i + n) as u64 * CHUNK).min(len);
             // Top the window up once it's half used.

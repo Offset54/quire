@@ -236,15 +236,90 @@ impl Snapshot {
         });
     }
 
+    /// Where a search for a CR or LF in `range` can start: going forward
+    /// (or, with `last`, backward), past the part the line indexes already
+    /// know holds none (`ChunkIndex::clear_run`). Returns the new start
+    /// (forward) or end (backward).
+    fn known_clear(&self, range: Range<u64>, last: bool) -> io::Result<u64> {
+        let mut segs = Vec::new();
+        let _ = self.tree.visit(range.start, range.end, &mut |ps, p| {
+            let a = range.start.max(ps);
+            let b = range.end.min(ps + p.len);
+            segs.push((a, b, ps, *p));
+            ControlFlow::Continue(())
+        });
+        let byte = |p: &Piece, ps: u64, at: u64| -> io::Result<u8> {
+            let mut one = [0u8];
+            self.buffers.read_piece(p, at - ps, &mut one)?;
+            Ok(one[0])
+        };
+        if last {
+            let mut pos = range.end;
+            for (a, b, ps, p) in segs.iter().rev() {
+                let s0 = p.start + (a - ps);
+                let s1 = s0 + (b - a);
+                let e = self.buffers.get(p.buf).index.clear_run(s1, s0, true);
+                if e == s1 || byte(p, *ps, b - 1)? == b'\r' {
+                    return Ok(pos);
+                }
+                pos = a + (e - s0);
+                if e > s0 {
+                    return Ok(pos);
+                }
+            }
+            Ok(pos)
+        } else {
+            let mut pos = range.start;
+            for (a, b, ps, p) in &segs {
+                let s0 = p.start + (a - ps);
+                let s1 = s0 + (b - a);
+                let e = self.buffers.get(p.buf).index.clear_run(s0, s1, false);
+                if e == s0 {
+                    return Ok(pos);
+                }
+                let end = a + (e - s0);
+                if byte(p, *ps, end - 1)? == b'\r' {
+                    return Ok(end - 1);
+                }
+                pos = end;
+                if e < s1 {
+                    return Ok(pos);
+                }
+            }
+            Ok(pos)
+        }
+    }
+
+    /// Indexes the chunks under `range` the line indexes don't know yet,
+    /// across threads (`ChunkIndex::fill`).
+    fn fill_index(&self, range: Range<u64>) -> io::Result<()> {
+        const PARTS: usize = 4;
+        let mut result = Ok(());
+        let _ = self.tree.visit(range.start, range.end, &mut |ps, p| {
+            let a = range.start.max(ps);
+            let b = range.end.min(ps + p.len);
+            let s0 = p.start + (a - ps);
+            let entry = self.buffers.get(p.buf);
+            match entry.index.fill(&*entry.source, s0, s0 + (b - a), PARTS) {
+                Ok(()) => ControlFlow::Continue(()),
+                Err(e) => {
+                    result = Err(e);
+                    ControlFlow::Break(())
+                }
+            }
+        });
+        result
+    }
+
     /// Position of the first (or, with `last`, the last) CR or LF in
     /// `range`. Before the line index reaches a long line, finding its end
     /// or start is a cold scan of up to the whole file, so large ranges are
-    /// read ahead and split across threads, a stage at a time from the near
-    /// end.
+    /// read ahead, indexed across threads a stage at a time from the near
+    /// end (the background index skips what this indexed), and read only
+    /// where a break is.
     fn find_cr_lf(&self, range: Range<u64>, last: bool) -> io::Result<Option<u64>> {
         const BLOCK: u64 = 1 << 20;
         const STAGE: u64 = 32 << 20;
-        const PARTS: u64 = 4;
         let scan = |r: Range<u64>| -> io::Result<Option<u64>> {
             let mut buf = vec![0u8; BLOCK.min(r.end - r.start) as usize];
             let (mut lo, mut hi) = (r.start, r.end);
@@ -271,6 +346,16 @@ impl Snapshot {
         };
         let (mut lo, mut hi) = (range.start, range.end.min(self.len()));
         while lo < hi {
+            // Past what the line index already knows (it may have caught up
+            // since the last stage).
+            if last {
+                hi = self.known_clear(lo..hi, true)?;
+            } else {
+                lo = self.known_clear(lo..hi, false)?;
+            }
+            if lo >= hi {
+                break;
+            }
             let (a, b) = if last {
                 (hi.saturating_sub(STAGE).max(lo), hi)
             } else {
@@ -279,30 +364,17 @@ impl Snapshot {
             let found = if b - a <= 2 * BLOCK {
                 scan(a..b)?
             } else {
+                // Index the stage across threads (work the background index
+                // then skips), then read only from the chunk that holds the
+                // nearest break.
                 self.prefetch(a..b);
-                let part = (b - a).div_ceil(PARTS);
-                let results: Vec<io::Result<Option<u64>>> = std::thread::scope(|s| {
-                    let handles: Vec<_> = (0..PARTS)
-                        .map(|i| {
-                            let pa = (a + i * part).min(b);
-                            let pb = (pa + part).min(b);
-                            let scan = &scan;
-                            s.spawn(move || if pa < pb { scan(pa..pb) } else { Ok(None) })
-                        })
-                        .collect();
-                    handles
-                        .into_iter()
-                        .map(|h| h.join().expect("scan thread panicked"))
-                        .collect()
-                });
-                let mut hits = Vec::new();
-                for r in results {
-                    hits.extend(r?);
-                }
+                self.fill_index(a..b)?;
                 if last {
-                    hits.into_iter().max()
+                    let q = self.known_clear(a..b, true)?;
+                    if q > a { scan(a..q)? } else { None }
                 } else {
-                    hits.into_iter().min()
+                    let p = self.known_clear(a..b, false)?;
+                    if p < b { scan(p..b)? } else { None }
                 }
             };
             if found.is_some() {

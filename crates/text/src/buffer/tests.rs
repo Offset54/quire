@@ -195,3 +195,59 @@ fn long_line_scans_match_the_sequential_scan() {
         }
     }
 }
+
+#[test]
+fn line_end_scans_skip_what_the_index_knows() {
+    // A 4 MiB line with breaks near chunk seams; the index knows some
+    // chunks (a prefix, and every third one), the scan must still find
+    // exactly what a plain scan finds, both ways.
+    const C: usize = crate::index::CHUNK as usize;
+    let len = 64 * C;
+    let cases: &[(usize, &[u8])] = &[
+        (10 * C - 1, b"\r\n"),
+        (20 * C - 1, b"\r"),
+        (30 * C, b"\n"),
+        (len - 1, b"\n"),
+        (3, b"\r\n"),
+    ];
+    for &(at, brk) in cases {
+        let mut bytes = vec![b'a'; len];
+        bytes[at..at + brk.len()].copy_from_slice(brk);
+        let src: Arc<dyn Source> = Arc::new(MemorySource::new(bytes.clone()));
+        let index = Arc::new(ChunkIndex::unindexed(src.len()));
+        let n = index.chunk_count();
+        index.scan_range(&*src, 0, n / 2, None).unwrap();
+        for k in (n / 2..n).step_by(3) {
+            index.scan_range(&*src, k, k + 1, None).unwrap();
+        }
+        let s = TextBuffer::new(Arc::clone(&src), Arc::clone(&index)).snapshot();
+        let plain = |from: usize, back: bool| -> Option<usize> {
+            if back {
+                bytes[..from]
+                    .iter()
+                    .rposition(|&b| b == b'\n' || b == b'\r')
+            } else {
+                bytes[from..]
+                    .iter()
+                    .position(|&b| b == b'\n' || b == b'\r')
+                    .map(|p| p + from)
+            }
+        };
+        for from in [0, C / 2, 9 * C, 10 * C - 1, 10 * C + 1, 40 * C, len - 2] {
+            let got = s.find_cr_lf(from as u64..len as u64, false).unwrap();
+            assert_eq!(
+                got,
+                plain(from, false).map(|p| p as u64),
+                "forward from {from}, {brk:?} at {at}"
+            );
+        }
+        for to in [len, 33 * C, 20 * C, 10 * C + 1, 10 * C, 5] {
+            let got = s.find_cr_lf(0..to as u64, true).unwrap();
+            assert_eq!(
+                got,
+                plain(to, true).map(|p| p as u64),
+                "backward to {to}, {brk:?} at {at}"
+            );
+        }
+    }
+}
