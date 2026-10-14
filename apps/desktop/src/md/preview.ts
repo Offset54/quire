@@ -25,6 +25,13 @@ const EDGE = 12;
 /** Rendered blocks kept beyond the window (scrolling back is instant). */
 const KEEP_HTML = 3000;
 const LINE_ESTIMATE = 22;
+/** Placing a block costs its innerHTML and its layout. A frame places what
+ *  covers the viewport (plus this many viewports above and below), then
+ *  grows the placed range toward the window's ends within GROW_MS, so no
+ *  frame lays out a whole window (§4: no UI-thread task over 50 ms). */
+const MARGIN_VIEWPORTS = 0.5;
+const GROW_MS = 6;
+const GROW_BATCH = 4;
 
 export interface PreviewCallbacks {
   /** The viewport's top moved (scroll sync): byte offset at the top. */
@@ -70,7 +77,15 @@ export class MdPreview {
   private anchorId = -1;
   private anchorStart = 0;
   private anchorPx = 0;
-  private heights: number[] = [];
+  /** Measured heights by window index, for the placed range only. */
+  private heights: (number | undefined)[] = [];
+  /** The placed range of window indices [lo, hi): those blocks are in the
+   *  layer, in order; the layer's top is block `lo`'s top. */
+  private lo = 0;
+  private hi = 0;
+  /** Last measured height by block id and revision (estimates for blocks
+   *  not placed; cleared on a width change). */
+  private measured = new Map<number, { rev: number; h: number }>();
   private viewH = 0;
   private viewW = 0;
   private seq = 1;
@@ -177,7 +192,7 @@ export class MdPreview {
     const out: { start: number; end: number; text: string }[] = [];
     const top = this.layerTop();
     let y = 0;
-    for (let i = 0; i < this.win.length; i++) {
+    for (let i = this.lo; i < this.hi; i++) {
       const h = this.heights[i] ?? 0;
       const b = this.win[i]!;
       if (y + h > top && y < top + this.viewH) {
@@ -282,6 +297,25 @@ export class MdPreview {
     const prevAnchor = this.anchorId;
     this.win = m.blocks;
     this.first = m.first;
+    // The placed range in the new window: the span of blocks already placed
+    // (an edited block inside it, with a new id, is placed by draw()).
+    let lo = -1;
+    let hi = -1;
+    m.blocks.forEach((b, i) => {
+      if (this.placed.has(b.id)) {
+        if (lo < 0) lo = i;
+        hi = i + 1;
+      }
+    });
+    this.lo = Math.max(0, lo);
+    this.hi = Math.max(0, hi);
+    this.heights = m.blocks.map((b) =>
+      this.placed.has(b.id) ? this.measured.get(b.id)?.h : undefined,
+    );
+    if (this.measured.size > 4 * m.blocks.length) {
+      const keep = new Set(m.blocks.map((b) => b.id));
+      for (const id of this.measured.keys()) if (!keep.has(id)) this.measured.delete(id);
+    }
     const anchor = m.blocks[m.anchor];
     if (jump && anchor) {
       this.anchorId = anchor.id;
@@ -353,6 +387,7 @@ export class MdPreview {
     else if (widthChanged) {
       const h = this.heights[this.anchorIndex()];
       if (h && h > 0 && this.anchorFrac === undefined) this.anchorFrac = this.anchorPx / h;
+      this.measured.clear();
       // Images are scaled to the width: let new ones load at the new size.
       for (const p of this.placed.values()) p.el.dataset.images = "";
       this.invalidate();
@@ -369,11 +404,50 @@ export class MdPreview {
     }
   }
 
+  /** The viewport's top in the layer (whose top is block `lo`'s top). */
   private layerTop(): number {
     const i = this.anchorIndex();
     let y = 0;
-    for (let k = 0; k < i; k++) y += this.heights[k] ?? 0;
+    for (let k = this.lo; k < i; k++) y += this.heights[k] ?? 0;
     return y + this.anchorPx;
+  }
+
+  /** A block's height: measured (same rendering) or from its line count. */
+  private estimate(i: number): number {
+    const b = this.win[i]!;
+    const m = this.measured.get(b.id);
+    if (m && m.rev === (this.html.get(b.id)?.rev ?? -1)) return m.h;
+    return Math.max(1, b.lines) * LINE_ESTIMATE;
+  }
+
+  /** Makes the layer hold exactly the window's blocks [lo, hi), in order,
+   *  and measures them (one layout). */
+  private place(lo: number, hi: number): void {
+    const want = new Set<number>();
+    for (let i = lo; i < hi; i++) want.add(this.win[i]!.id);
+    for (const [id, p] of this.placed) {
+      if (!want.has(id)) {
+        p.el.remove();
+        this.placed.delete(id);
+      }
+    }
+    let prev: HTMLElement | null = null;
+    for (let i = lo; i < hi; i++) {
+      const el = this.blockEl(this.win[i]!);
+      const next: ChildNode | null = prev ? prev.nextSibling : this.layer.firstChild;
+      if (next !== el) this.layer.insertBefore(el, next);
+      prev = el;
+    }
+    this.lo = lo;
+    this.hi = hi;
+    this.heights = new Array<number | undefined>(this.win.length);
+    for (let i = lo; i < hi; i++) {
+      const b = this.win[i]!;
+      const p = this.placed.get(b.id)!;
+      const h = p.el.offsetHeight;
+      this.heights[i] = h;
+      this.measured.set(b.id, { rev: p.rev, h });
+    }
   }
 
   private blockEl(b: BlockMeta): HTMLDivElement {
@@ -463,46 +537,72 @@ export class MdPreview {
     // observer draws again then).
     if (this.viewH === 0 || this.viewport.offsetParent === null) return;
     this.dirty = false;
-    // 1. The window's blocks, in order, in the DOM.
-    const want = new Set(this.win.map((b) => b.id));
-    for (const [id, p] of this.placed) {
-      if (!want.has(id)) {
-        p.el.remove();
-        this.placed.delete(id);
-      }
+    const t0 = performance.now();
+    const n = this.win.length;
+    const ai = this.anchorIndex();
+    // 1. Place what covers the viewport and a margin (from estimates),
+    //    keeping the placed range when it touches that.
+    const margin = this.viewH * MARGIN_VIEWPORTS;
+    let lo = ai;
+    for (let need = margin - this.anchorPx; need > 0 && lo > 0;) need -= this.estimate(--lo);
+    let hi = ai;
+    for (let y = -this.anchorPx; hi < n && (hi === ai || y < this.viewH + margin); hi++) {
+      y += this.estimate(hi);
     }
-    let prev: HTMLElement | null = null;
-    for (const b of this.win) {
-      const el = this.blockEl(b);
-      const next: ChildNode | null = prev ? prev.nextSibling : this.layer.firstChild;
-      if (next !== el) this.layer.insertBefore(el, next);
-      prev = el;
+    if (this.hi > this.lo && lo <= this.hi && hi >= this.lo) {
+      lo = Math.min(lo, this.lo);
+      hi = Math.max(hi, this.hi);
     }
-    // 2. Heights (one layout).
-    this.heights = this.win.map((b) => this.placed.get(b.id)?.el.offsetHeight ?? 0);
+    this.place(lo, hi);
     if (this.anchorFrac !== undefined) {
-      this.anchorPx = this.anchorFrac * (this.heights[this.anchorIndex()] ?? 0);
+      this.anchorPx = this.anchorFrac * (this.heights[ai] ?? 0);
       this.anchorFrac = undefined;
     }
-    // 3. The anchor onto the block at the viewport's top.
-    const a = normalize(
-      { index: this.anchorIndex(), px: this.anchorPx },
-      this.heights,
-      this.atDocStart(),
-      this.atDocEnd(),
-      this.viewH,
-    );
+    // 2. The anchor onto the block at the viewport's top; if the estimates
+    //    fell short, place more and again.
+    let a: { index: number; px: number };
+    for (let pass = 0; ; pass++) {
+      const r = normalize(
+        { index: ai - this.lo, px: this.anchorPx },
+        this.heights.slice(this.lo, this.hi) as number[],
+        this.atDocStart() && this.lo === 0,
+        this.atDocEnd() && this.hi === n,
+        this.viewH,
+      );
+      a = { index: r.index + this.lo, px: r.px };
+      let below = -a.px;
+      for (let i = a.index; i < this.hi; i++) below += this.heights[i] ?? 0;
+      const shortAbove = a.px < 0 && this.lo > 0;
+      const shortBelow = below < this.viewH && this.hi < n;
+      if ((!shortAbove && !shortBelow) || pass >= 8) break;
+      this.place(
+        shortAbove ? Math.max(0, this.lo - GROW_BATCH) : this.lo,
+        shortBelow ? Math.min(n, this.hi + GROW_BATCH) : this.hi,
+      );
+    }
     const ab = this.win[a.index];
     if (ab) {
       this.anchorId = ab.id;
       this.anchorStart = ab.start;
     }
     this.anchorPx = a.px;
+    // 3. Grow the placed range toward the window's ends, a few blocks at a
+    //    time within the frame's budget; the rest on later frames.
+    let below = true;
+    while ((this.lo > 0 || this.hi < n) && performance.now() - t0 < GROW_MS) {
+      if ((below && this.hi < n) || this.lo === 0) {
+        this.place(this.lo, Math.min(n, this.hi + GROW_BATCH));
+      } else {
+        this.place(Math.max(0, this.lo - GROW_BATCH), this.hi);
+      }
+      below = !below;
+    }
+    if (this.lo > 0 || this.hi < n) this.invalidate();
     this.layer.style.transform = `translateY(${-this.layerTop()}px)`;
     // 4. Images near the viewport.
     const top = this.layerTop();
     let y = 0;
-    for (let i = 0; i < this.win.length; i++) {
+    for (let i = this.lo; i < this.hi; i++) {
       const h = this.heights[i] ?? 0;
       if (y + h > top - this.viewH && y < top + 2 * this.viewH) {
         const el = this.placed.get(this.win[i]!.id)?.el;
@@ -538,7 +638,7 @@ export class MdPreview {
     }
     let shown = 0;
     let y = -this.anchorPx;
-    for (let i = this.anchorIndex(); i < this.win.length && y < this.viewH; i++) {
+    for (let i = this.anchorIndex(); i < this.hi && y < this.viewH; i++) {
       const b = this.win[i]!;
       shown += b.end - b.start;
       y += this.heights[i] ?? 0;

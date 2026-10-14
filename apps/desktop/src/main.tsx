@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { warmFonts } from "./fonts";
 import { setLocale } from "./i18n";
 import { installHud } from "./perf/hud";
 import { startTracing } from "./perf/trace";
@@ -22,6 +23,7 @@ createRoot(root).render(
 requestAnimationFrame(() => {
   setTimeout(() => {
     performance.measure("first-frame", { start: 0, end: performance.now() });
+    warmFonts();
     // Dead code in normal builds: Vite replaces the condition with `false`.
     if (import.meta.env.VITE_QUIRE_BENCH === "1") {
       void import("./bench").then((b) => b.runBenchIfRequested());
