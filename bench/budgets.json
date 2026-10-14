@@ -315,20 +315,20 @@
     {
       "id": "md.keystroke.p95",
       "suite": "md",
-      "metric": "md20mEdit.keystrokeToPreview.ms.p95",
+      "metric": "md20mEdit.keystrokeToPreview.unstalledMs.p95",
       "budget": 50,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms (the frame showing the edited block re-rendered; start, middle, 1,500-row table, list, reference definition; M2_PLAN)"
+      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms (the frame showing the edited block re-rendered; start, middle, 1,500-row table, list, reference definition; M2_PLAN). Judged on the keystrokes the platform did not stall; stalled ones are reported with their count and raw times (user decision 2026-10-15, ADR-0024 addendum)"
     },
     {
       "id": "md.keystroke.max",
       "suite": "md",
-      "metric": "md20mEdit.keystrokeToPreview.ms.max",
+      "metric": "md20mEdit.keystrokeToPreview.unstalledMs.max",
       "budget": 50,
       "unit": "ms",
       "kind": "cpu",
-      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms"
+      "ref": "§4 MD 20 MB: keystroke → preview update ≤ 50 ms (keystrokes the platform did not stall; ADR-0024 addendum)"
     },
     {
       "id": "md.typing.p95",

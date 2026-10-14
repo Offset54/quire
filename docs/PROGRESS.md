@@ -30,7 +30,7 @@
 | 5 | Code highlighting | Not started |
 | 6 | Preview surface | Done ([ADR-0030](adr/0030-markdown-preview-surface.md)): byte-anchored DOM blocks in host windows, render cache with dependency signatures, provisional windows then corrections, progressive placement, large tables and code as pieces, font warm-up. Ref-sim: first paint 76–136 ms raw (333 ms effective), preview scrolling max frame ≤ 16 ms, no long tasks |
 | 7 | KaTeX and Mermaid | Not started |
-| 8 | Source view and incremental preview | Mostly done: `.md` in the TXT view with decoration, view modes (Ctrl+E, Ctrl+\\, remembered), keystroke → provisional window → corrections, word count. Keystroke → preview in ref-sim: p50 12–15 ms; 14 % of keystrokes (after a pause) hit platform stalls of 150–370 ms (open decision below) |
+| 8 | Source view and incremental preview | Mostly done: `.md` in the TXT view with decoration, view modes (Ctrl+E, Ctrl+\\, remembered), keystroke → provisional window → corrections, word count. Keystroke → preview in ref-sim: p50 12–15 ms; 14 % of keystrokes (after a pause) hit platform stalls of 150–370 ms (reported, not judged: ADR-0024 addendum) |
 | 9 | Scroll sync, outline, click-to-source | In progress: two-way scroll sync and click-to-source done (UI flows); outline rail to do |
 | 10 | Editing helpers | Not started |
 | 11 | Exports | Not started |
@@ -40,7 +40,7 @@
 | 15 | Carried from M1 | Done: webview tile-bitmap cache reported to the governor (`frontend_cache.rs`; bench: 160 MiB counted on both sides after scrolling); command-line open failure shown on the welcome screen; reopen with another encoding shows progress with Cancel (UI flows 10 and 11) |
 | 16 | M2 report | Not started |
 
-Open decision (2026-10-14): the Markdown keystroke → preview row in ref-sim. 86 % of keystrokes meet it (p95 22–24 ms, max 29–31 ms, 33.3 ms effective); the 14 % that follow a pause wait 150–370 ms for a frame the platform doesn't deliver (RISKS #12). ADR-0024 judges typing and host-waiting rows raw, so the row fails.
+Decided 2026-10-15 (ADR-0024 addendum): the Markdown keystroke → preview row is judged on keystrokes the platform didn't stall (86 % in ref-sim: p95 22–24 ms, max 29–31 ms, 33.3 ms effective); the 14 % that follow a pause and wait 150–370 ms for a frame (RISKS #12) are reported with every run.
 
 ## M1 tasks
 

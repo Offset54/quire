@@ -91,7 +91,7 @@ function Pick([object[]] $runs, [scriptblock] $key) {
   $sorted[[int][Math]::Floor(($sorted.Count - 1) / 2)]
 }
 $openMid = Pick $open { $_.ownFirstPaintMs }
-$editMid = Pick $edit { $_.keystrokeToPreview.ownMs.p95 }
+$editMid = Pick $edit { $_.keystrokeToPreview.unstalledMs.p95 }
 $long = ($open | ForEach-Object { $_.firstPaintLongTasks } | Measure-Object -Sum).Sum +
   ($edit | ForEach-Object { $_.longTasks } | Measure-Object -Sum).Sum
 
@@ -101,6 +101,7 @@ function Positions($r) {
     $o[$p.Name] = [ordered]@{
       p50 = $p.Value.ms.p50; p95 = $p.Value.ms.p95; max = $p.Value.ms.max
       ownP95 = $p.Value.ownMs.p95; ownMax = $p.Value.ownMs.max
+      unstalledP95 = $p.Value.unstalledMs.p95; unstalledMax = $p.Value.unstalledMs.max; stalled = $p.Value.stalled
       arrivedP50 = $p.Value.arrivedMs.p50
       correctionsP50 = $p.Value.correctionsMs.p50; correctionsMax = $p.Value.correctionsMs.max
     }
@@ -132,6 +133,8 @@ $results = [ordered]@{
       [ordered]@{
         keystrokeP95 = $_.keystrokeToPreview.ms.p95; keystrokeMax = $_.keystrokeToPreview.ms.max
         keystrokeOwnP95 = $_.keystrokeToPreview.ownMs.p95; keystrokeOwnMax = $_.keystrokeToPreview.ownMs.max
+        keystrokeUnstalledP95 = $_.keystrokeToPreview.unstalledMs.p95; keystrokeUnstalledMax = $_.keystrokeToPreview.unstalledMs.max
+        stalledKeystrokes = $_.keystrokeToPreview.stalled.count
         positions = (Positions $_)
         typingP95 = $_.typing.latencyMs.p95; typingP99 = $_.typing.latencyMs.p99
         typingOwnP95 = $_.typing.ownLatencyMs.p95; typingOwnP99 = $_.typing.ownLatencyMs.p99
@@ -143,7 +146,7 @@ $results = [ordered]@{
   platformStalls = [ordered]@{
     firstPaint = @($open | ForEach-Object { [ordered]@{ rawMs = $_.firstPaintMs; ownMs = $_.ownFirstPaintMs; firstFrameWaitStallMs = $_.firstFrameWaitStallMs; stalls = $_.firstPaintStalls } })
     steady = @($edit | ForEach-Object { [ordered]@{ rawMax = $_.previewSteady.frameIntervalMs.max; ownMax = $_.previewSteady.ownFrameIntervalMs.max; stalls = $_.previewSteady.platformStalls.count; worstStallMs = $_.previewSteady.platformStalls.worstMs } })
-    keystroke = @($edit | ForEach-Object { [ordered]@{ rawP95 = $_.keystrokeToPreview.ms.p95; rawMax = $_.keystrokeToPreview.ms.max; ownP95 = $_.keystrokeToPreview.ownMs.p95; ownMax = $_.keystrokeToPreview.ownMs.max } })
+    keystroke = @($edit | ForEach-Object { [ordered]@{ rawP95 = $_.keystrokeToPreview.ms.p95; rawMax = $_.keystrokeToPreview.ms.max; ownP95 = $_.keystrokeToPreview.ownMs.p95; ownMax = $_.keystrokeToPreview.ownMs.max; unstalledP95 = $_.keystrokeToPreview.unstalledMs.p95; unstalledMax = $_.keystrokeToPreview.unstalledMs.max; stalled = $_.keystrokeToPreview.stalled.count; of = $_.keystrokeToPreview.stalled.of; stalledRawMs = $_.keystrokeToPreview.stalled.rawMs } })
     typing = @($edit | ForEach-Object { [ordered]@{ rawP99 = $_.typing.latencyMs.p99; rawMax = $_.typing.latencyMs.max; ownP99 = $_.typing.ownLatencyMs.p99; ownMax = $_.typing.ownLatencyMs.max } })
     fling = @($edit | ForEach-Object { [ordered]@{ rawMax = $_.previewFling.frameIntervalMs.max; ownMax = $_.previewFling.ownFrameIntervalMs.max; stalls = $_.previewFling.platformStalls.count; worstStallMs = $_.previewFling.platformStalls.worstMs } })
   }
@@ -176,15 +179,15 @@ if (-not $Out) {
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 $results | ConvertTo-Json -Depth 14 | Set-Content $Out
 $rows | ForEach-Object { [pscustomobject]$_ } | Format-Table id, value, unit, kind, factor, effectiveBudget, budget, pass -AutoSize | Out-String -Width 200 | Write-Host
-Write-Host "Keystroke → preview by position (median run; raw p50/p95/max, own p95/max, corrections p50/max):"
+Write-Host "Keystroke → preview by position (median run; raw p50/p95/max, unstalled p95/max (stalled count), corrections p50/max):"
 foreach ($p in (Positions $editMid).GetEnumerator()) {
   $v = $p.Value
-  Write-Host ("  {0}: {1}/{2}/{3} ms, own {4}/{5}; corrections {6}/{7}" -f $p.Key, $v.p50, $v.p95, $v.max, $v.ownP95, $v.ownMax, $v.correctionsP50, $v.correctionsMax)
+  Write-Host ("  {0}: {1}/{2}/{3} ms, unstalled {4}/{5} ({6} stalled); corrections {7}/{8}" -f $p.Key, $v.p50, $v.p95, $v.max, $v.unstalledP95, $v.unstalledMax, $v.stalled, $v.correctionsP50, $v.correctionsMax)
 }
 Write-Host "Platform frame stalls (ADR-0024; reported, not judged):"
 $ps = $results.platformStalls
 Write-Host ("  first paint raw/own: " + (($ps.firstPaint | ForEach-Object { "$($_.rawMs)/$($_.ownMs)" }) -join ", ") + " ms")
-Write-Host ("  keystroke p95/max raw → own: " + (($ps.keystroke | ForEach-Object { "$($_.rawP95)/$($_.rawMax) → $($_.ownP95)/$($_.ownMax)" }) -join ", ") + " ms")
+Write-Host ("  keystroke p95/max raw → unstalled (stalled of all): " + (($ps.keystroke | ForEach-Object { "$($_.rawP95)/$($_.rawMax) → $($_.unstalledP95)/$($_.unstalledMax) ($($_.stalled) of $($_.of))" }) -join ", ") + " ms")
 Write-Host ("  typing p99/max raw → own: " + (($ps.typing | ForEach-Object { "$($_.rawP99)/$($_.rawMax) → $($_.ownP99)/$($_.ownMax)" }) -join ", ") + " ms")
 foreach ($k in "steady", "fling") {
   Write-Host ("  $k max frame raw/own (stalls): " + (($ps.$k | ForEach-Object { "$($_.rawMax)/$($_.ownMax) ($($_.stalls))" }) -join ", ") + " ms")

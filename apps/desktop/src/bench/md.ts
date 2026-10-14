@@ -135,6 +135,9 @@ interface EditTiming {
   /** Less the platform's part of the wait from the window's arrival to
    *  that frame (ADR-0024; the host is done by then). */
   ownMs: number;
+  /** The platform's part of that wait (ADR-0024's frame-wait rule); a
+   *  keystroke with any is a stalled sample (user decision, 2026-10-15). */
+  stallMs: number;
   /** Keystroke to the pushed window's arrival (the host's part). */
   arrivedMs: number;
   /** The host's part: text change to window pushed (md_status). */
@@ -177,9 +180,11 @@ async function keystrokeToPreview(
       doc: md.doc,
     });
     const later = patches.filter((p) => p !== first && p.revision === first.revision);
+    const stallMs = frameWaitStall(first.arrived, first.painted);
     out.push({
       ms: round1(first.painted - t0),
-      ownMs: round1(first.painted - t0 - frameWaitStall(first.arrived, first.painted)),
+      ownMs: round1(first.painted - t0 - stallMs),
+      stallMs,
       arrivedMs: round1(first.arrived - t0),
       hostMs: st.lastEdit ? round1(st.lastEdit.ms) : null,
       correctionsMs: later.length > 0 ? round1(later[later.length - 1]!.painted - t0) : null,
@@ -245,6 +250,8 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
     {
       ms: ReturnType<typeof summarize>;
       ownMs: ReturnType<typeof summarize>;
+      unstalledMs: ReturnType<typeof summarize>;
+      stalled: number;
       arrivedMs: ReturnType<typeof summarize>;
       correctionsMs: ReturnType<typeof summarize> | null;
       runs: EditTiming[];
@@ -252,6 +259,7 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
   > = {};
   const all: number[] = [];
   const allOwn: number[] = [];
+  const allRuns: EditTiming[] = [];
   for (const [name, offset] of positions) {
     log(`keystroke → preview at ${name} (${offset})`);
     const runs = await keystrokeToPreview(view, md, offset, 20);
@@ -259,12 +267,15 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
     edits[name] = {
       ms: summarize(runs.map((r) => r.ms)),
       ownMs: summarize(runs.map((r) => r.ownMs)),
+      unstalledMs: summarize(runs.filter((r) => r.stallMs === 0).map((r) => r.ms)),
+      stalled: runs.filter((r) => r.stallMs > 0).length,
       arrivedMs: summarize(runs.map((r) => r.arrivedMs)),
       correctionsMs: corr.length > 0 ? summarize(corr) : null,
       runs,
     };
     all.push(...runs.map((r) => r.ms));
     allOwn.push(...runs.map((r) => r.ownMs));
+    allRuns.push(...runs);
   }
 
   // Typing in the source view (split, the preview following).
@@ -289,7 +300,20 @@ export async function md20mEdit(host: HTMLElement): Promise<unknown> {
   return {
     scenario: "md-20m-edit",
     file: e.file,
-    keystrokeToPreview: { ms: summarize(all), ownMs: summarize(allOwn), positions: edits },
+    keystrokeToPreview: {
+      ms: summarize(all),
+      ownMs: summarize(allOwn),
+      // Judged on the keystrokes the platform didn't stall; the stalled ones
+      // are reported (user decision 2026-10-15, ADR-0024 addendum).
+      unstalledMs: summarize(allRuns.filter((r) => r.stallMs === 0).map((r) => r.ms)),
+      stalled: {
+        count: allRuns.filter((r) => r.stallMs > 0).length,
+        of: allRuns.length,
+        rawMs: allRuns.filter((r) => r.stallMs > 0).map((r) => r.ms),
+        stallMs: allRuns.filter((r) => r.stallMs > 0).map((r) => r.stallMs),
+      },
+      positions: edits,
+    },
     typing: type,
     previewSteady: steady,
     previewFling: fling,
