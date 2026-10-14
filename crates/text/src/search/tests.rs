@@ -135,3 +135,18 @@ fn find_prev_returns_the_forward_searchs_match_when_matches_overlap() {
         all.last().copied()
     );
 }
+
+#[test]
+fn a_match_cut_at_a_chunk_end_is_never_invented() {
+    // Fuzz regression (search): `.*` up to the end of a chunk's haystack;
+    // with the invalid UTF-8 byte after it the engine reports no match at
+    // the start, and the search must not report one either.
+    let mut doc = vec![b'a'; (CHUNK + OVERLAP) as usize];
+    doc.push(0x98);
+    let m = Matcher::new(&q(".*", true)).unwrap();
+    let s = snap(&doc);
+    assert_eq!(
+        search_range(&s, &m, 0, doc.len() as u64, usize::MAX).unwrap(),
+        naive(&doc, &m)
+    );
+}

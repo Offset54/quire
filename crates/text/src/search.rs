@@ -193,9 +193,9 @@ pub fn search_range(
                 return Ok(out);
             }
         }
-        if let Some(s) = cut {
-            let start = base + s as u64;
-            let end = long_match(snap, m, start)?;
+        if let Some(s) = cut
+            && let Some((start, end)) = long_match(snap, m, base + s as u64)?
+        {
             out.push((start, end));
             next = next.max(end);
         }
@@ -204,18 +204,29 @@ pub fn search_range(
     Ok(out)
 }
 
-/// The full match starting at `start`, read with up to [`MAX_MATCH`] bytes.
-fn long_match(snap: &Snapshot, m: &Matcher, start: u64) -> io::Result<u64> {
+/// A match that ran into the end of a chunk's haystack at `start`, read
+/// again with up to [`MAX_MATCH`] bytes: the full match from there, or, if
+/// the longer text has none at `start` (the engine can answer differently
+/// with more text after it, e.g. before invalid UTF-8), the first non-empty
+/// match after it in that text, if any. Never a match the engine doesn't
+/// report.
+fn long_match(snap: &Snapshot, m: &Matcher, start: u64) -> io::Result<Option<(u64, u64)>> {
     let len = snap.len();
     let hay_start = start.saturating_sub(BEHIND);
     let hay_end = (start + MAX_MATCH).min(len);
     let hay = snap.read(hay_start..hay_end)?;
-    let input = Input::new(&hay[..])
-        .span((start - hay_start) as usize..hay.len())
+    let span = (start - hay_start) as usize..hay.len();
+    let anchored = Input::new(&hay[..])
+        .span(span.clone())
         .anchored(Anchored::Yes);
-    Ok(m.re
-        .search(&input)
-        .map_or(start + 1, |x| hay_start + x.end() as u64))
+    if let Some(x) = m.re.search(&anchored) {
+        return Ok(Some((start, hay_start + x.end() as u64)));
+    }
+    let found =
+        m.re.find_iter(Input::new(&hay[..]).span(span))
+            .find(|x| !x.is_empty())
+            .map(|x| (hay_start + x.start() as u64, hay_start + x.end() as u64));
+    Ok(found)
 }
 
 /// Receives batches of matches, in order, with progress.
