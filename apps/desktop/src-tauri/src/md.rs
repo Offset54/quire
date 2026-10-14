@@ -15,11 +15,11 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
 use std::time::{Duration, Instant};
 
-use parking_lot::{Condvar, Mutex};
+use parking_lot::{Condvar, Mutex, RwLock};
 use quire_core::memory::{CacheClass, DocId, Evictable, MemoryGovernor, Registration};
 use quire_markdown::document::MarkdownDoc;
 use quire_markdown::images::ImagePolicy;
@@ -94,6 +94,12 @@ pub struct MdDoc {
     /// When the word count is due (after the index completes, and a moment
     /// after the last edit).
     words_due: Mutex<Option<Instant>>,
+    /// The session's readers gate (`txt::Session::readers`): held shared
+    /// while reading the text, so a save never re-points it under a read.
+    readers: Arc<RwLock<()>>,
+    /// Counts snapshot replacements by saves (a reader holding a clone
+    /// of the snapshot starts over when it changes).
+    snap_gen: AtomicU64,
 }
 
 impl Evictable for MdDoc {
@@ -132,7 +138,28 @@ impl MdDoc {
     }
 
     /// Records a change (listener, under the text lock: only cheap work).
+    ///
+    /// An empty change is a save: the text is the same, but the old
+    /// snapshot now reads the saved file through its old pieces. The save
+    /// holds the readers gate exclusively, so no reader is inside the state:
+    /// the snapshot is replaced right here, before anything reads it again.
     fn record(&self, change: TextChange, snap: Snapshot, revision: u64) {
+        if is_empty(change) {
+            // State, then pending (the order apply_pending takes them in).
+            let mut st = self.state.lock();
+            self.snap_gen.fetch_add(1, Ordering::AcqRel);
+            match self.pending.lock().as_mut() {
+                Some(prev) => {
+                    prev.snap = snap;
+                    prev.revision = revision;
+                }
+                None => {
+                    st.snap = snap;
+                    st.revision = revision;
+                }
+            }
+            return;
+        }
         let mut p = self.pending.lock();
         *p = Some(match p.take() {
             Some(prev) => Pending {
@@ -157,6 +184,11 @@ impl MdDoc {
             return Ok(None);
         };
         let c = p.change;
+        if is_empty(c) {
+            st.snap = p.snap;
+            st.revision = p.revision;
+            return Ok(None);
+        }
         let ch = st
             .md
             .edit(&p.snap, c.from, c.removed, c.inserted)
@@ -246,6 +278,7 @@ impl MdDoc {
                 }
                 continue;
             }
+            let _reading = self.readers.read();
             let mut st = self.state.lock();
             let step = if has_pending {
                 self.apply_pending(&mut st).and_then(|at| {
@@ -318,9 +351,13 @@ impl MdDoc {
     /// Counts the words of the current text, off the state lock; gives up
     /// (to count again later) when the text changes meanwhile.
     fn count_words(&self) {
-        let (snap, revision) = {
+        let (snap, revision, generation) = {
             let st = self.state.lock();
-            (st.snap.clone(), st.revision)
+            (
+                st.snap.clone(),
+                st.revision,
+                self.snap_gen.load(Ordering::Acquire),
+            )
         };
         *self.words_due.lock() = None;
         let started = Instant::now();
@@ -333,6 +370,11 @@ impl MdDoc {
                 return;
             }
             let end = (at + WORDS_CHUNK).min(len);
+            let _reading = self.readers.read();
+            if self.snap_gen.load(Ordering::Acquire) != generation {
+                *self.words_due.lock() = Some(Instant::now());
+                return;
+            }
             match snap.read(at..end) {
                 Ok(bytes) => counter.push(&bytes),
                 Err(e) => {
@@ -353,6 +395,11 @@ impl MdDoc {
     }
 }
 
+/// A change that changes no text (a save: only the snapshot is new).
+fn is_empty(c: TextChange) -> bool {
+    c.removed == 0 && c.inserted == 0
+}
+
 /// Wait after an edit before counting words again.
 const WORDS_DELAY: Duration = Duration::from_millis(400);
 const WORDS_CHUNK: u64 = 1 << 20;
@@ -361,6 +408,7 @@ impl MdDoc {
     /// Kinds and ranges of the blocks overlapping `from..to`, for the source
     /// view's decoration: per block u64 start, u64 end, u8 kind, u8 detail.
     fn blocks_in(&self, from: u64, to: u64) -> CmdResult<Vec<u8>> {
+        let _reading = self.readers.read();
         let mut st = self.state.lock();
         self.apply_pending(&mut st)?;
         let MdState {
@@ -475,6 +523,8 @@ impl MdService {
                 index_bytes: self.governor.register_fixed("md-index", Some(DocId(doc))),
                 last_edit: Mutex::new(None),
                 words_due: Mutex::new(None),
+                readers: Arc::clone(&s.readers),
+                snap_gen: AtomicU64::new(0),
             }
         });
         let weak = Arc::downgrade(&md);
@@ -555,6 +605,7 @@ pub async fn md_view(
 ) -> CmdResult<Response> {
     guarded(|| {
         let m = svc.get(doc)?;
+        let _reading = m.readers.read();
         let mut st = m.state.lock();
         // Show the latest text.
         m.apply_pending(&mut st)?;
@@ -583,6 +634,7 @@ pub async fn md_set_remote(svc: State<'_, MdService>, doc: u64, on: bool) -> Cmd
         let m = svc.get(doc)?;
         svc.images.set_remote(doc, on);
         let path = svc.txt.session(doc)?.file.lock().path.clone();
+        let _reading = m.readers.read();
         let mut st = m.state.lock();
         st.preview
             .set_options(MdService::options(path.as_deref(), on.then_some(doc)));

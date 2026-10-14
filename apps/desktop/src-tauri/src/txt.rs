@@ -17,7 +17,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
 use std::time::{Duration, Instant};
 
-use parking_lot::{Condvar, Mutex};
+use parking_lot::{Condvar, Mutex, RwLock};
 use quire_core::memory::{DocId, MemoryGovernor, Registration};
 use quire_core::scheduler::{CancelToken, Scheduler};
 use quire_text::document::{Action, LineEnding, SaveFormat, TextChange};
@@ -90,6 +90,11 @@ pub struct Session {
     pub id: u64,
     pub(crate) file: Mutex<TextFile>,
     listener: Mutex<Option<ChangeListener>>,
+    /// Held shared by readers of snapshots outside the text lock (the
+    /// Markdown worker); a save holds it exclusively while it re-points the
+    /// document at the saved file (§5.8 step 3: readers of the old mapping
+    /// stop first).
+    pub(crate) readers: Arc<RwLock<()>>,
     journal: Mutex<Option<JournalWriter>>,
     events: Mutex<Option<Channel<Value>>>,
     search: Mutex<SearchState>,
@@ -327,6 +332,7 @@ impl TxtService {
             id,
             file: Mutex::new(file),
             listener: Mutex::new(None),
+            readers: Arc::new(RwLock::new(())),
             journal: Mutex::new(None),
             events: Mutex::new(None),
             search: Mutex::new(SearchState::default()),
@@ -1217,6 +1223,7 @@ pub async fn txt_save(
         mark("dropped snapshot");
         let temp = data_dir().join("tmp");
         let mut f = s.file.lock();
+        let readers = s.readers.write();
         mark("locked");
         let old_path = f.path.clone();
         let report = commit_save(
@@ -1230,6 +1237,18 @@ pub async fn txt_save(
         )
         .map_err(|e| e.to_string())?;
         mark("committed");
+        // Same text, but snapshots taken before now read the saved file
+        // through their old pieces: listeners holding one (the Markdown
+        // state) switch to the current snapshot (an empty change).
+        s.changed(
+            TextChange {
+                from: 0,
+                removed: 0,
+                inserted: 0,
+            },
+            &f,
+        );
+        drop(readers);
         // The file now holds everything: start a fresh journal on the next edit.
         if let Some(w) = s.journal.lock().take() {
             w.close(true);
