@@ -31,14 +31,14 @@ The core already renders each top-level block to sanitized HTML (ADR-0026 to ADR
 
 ## Measurements
 
-Ref-sim (ADR-0021: performance cores, 8 logical CPUs, 1280×720 logical), 20 MiB fixture, `tools/bench/refsim-md.ps1`, `bench/results/m2/`:
+Ref-sim (ADR-0021: performance cores, 8 logical CPUs, 1280×720 logical), 20 MiB fixture, `tools/bench/refsim-md.ps1`, clean run `bench/results/m2/refsim-md-2026-10-15-003943.json` (three runs per scenario; the run list and the disturbed runs are in `bench/results/m2/README.md`):
 
-- First paint of both panes, cold file, split view: 86–93 ms (budget 500 ms, 333 ms effective); no long task while opening.
-- Preview scrolling: steady max frame 9.1–9.7 ms, fling 9.1–16 ms (budget 50 ms; the panel runs at 144 Hz).
-- Keystroke → preview update (100 keystrokes per run at five positions, 120 ms apart): p50 12–15 ms per position. 14 of 100 keystrokes per run, those after the pause, hit a platform frame stall (RISKS #12): 150–370 ms raw. The other 86: p95 22–24 ms, max 29–31 ms (33.3 ms effective). Stalled samples also receive their window later (median 13–15 ms against 7–8 ms), so subtracting the frame wait alone (ADR-0024's rule for jumps) leaves p95 38.8 ms and max 47.4 ms. Judged on the keystrokes the platform did not stall (user decision 2026-10-15, ADR-0024 addendum); stalled ones are reported with each run.
-- Corrections after an edit (renumbered footnotes, links to an edited definition): p50 28–34 ms.
-- Typing in the source view: p95 8.6 ms; p99 8.4–18.3 ms, and 187 ms in one run where a stall hit (judged raw, ADR-0024).
-- Memory after the index completes: +55 MiB private bytes.
+- First paint of both panes, cold file, split view: 73–90 ms (budget 500 ms, 333 ms effective); no long task while opening or editing.
+- Preview scrolling: max frame 8.9–9.2 ms steady and fling (budget 50 ms; the panel runs at 144 Hz).
+- Keystroke → preview update (100 keystrokes per run at five positions, 120 ms apart): p50 11–15 ms per position. 9–15 of 100 keystrokes per run, those after the pause, hit a platform frame stall (RISKS #12): 150–375 ms raw. The keystrokes the platform did not stall: p95 20–22 ms, max 24–27 ms (33.3 ms effective). The row is judged on those (user decision 2026-10-15, ADR-0024 addendum); the stalled ones are reported with each run. Before that decision, subtracting the frame wait alone left p95 38.8 ms, because stalled windows also arrive later (median 13–15 ms against 7–8 ms).
+- Corrections after an edit (renumbered footnotes, links to an edited definition): p50 28–35 ms.
+- Typing in the source view: p95 7.8–8.3 ms; p99 8.5–8.6 ms in two runs and 71.1 ms in one where a platform stall hit (own 17.6 ms); judged raw (ADR-0024).
+- Memory after the index completes: +54–55 MiB private bytes.
 
 ## Consequences
 

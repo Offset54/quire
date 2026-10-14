@@ -1,0 +1,1371 @@
+{
+  "profile": "ref-sim-v1",
+  "date": "2026-10-15T00:29:30.3117951+09:00",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 258V",
+    "ramGiB": 31.5,
+    "performanceCores": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "power": {
+      "batteryPercent": 100,
+      "ok": true,
+      "onAc": true
+    },
+    "webview2": "155.0.4283.45",
+    "commit": "7e73047"
+  },
+  "refSim": {
+    "pinning": "job object, performance cores",
+    "logicalCpusReported": 8,
+    "viewport": "1280x720 logical (1920x1080 device px at 150 %)",
+    "dCpu": 1.5,
+    "dIo": 1.742,
+    "coldReadMBps": 3483.8160969440305
+  },
+  "runs": 3,
+  "txt2g": {
+    "cpuLogicalOverride": "8",
+    "expectedLines": 1662532,
+    "file": "C:\\Users\\MSJin\\dev\\quire\\.claude\\worktrees\\loving-sammet-2565a5\\.cache\\fixtures\\mixed-lines-2gib.txt",
+    "firstFrameWaitMs": 12.5,
+    "firstFrameWaitStallMs": 0,
+    "firstPaintMs": 40.5,
+    "firstPaintStalls": [],
+    "fling": {
+      "frameIntervalMs": {
+        "max": 9.1,
+        "mean": 7.69,
+        "n": 391,
+        "p50": 7.6,
+        "p95": 8.3,
+        "p99": 8.9
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 9.1,
+        "mean": 7.69,
+        "n": 391,
+        "p50": 7.6,
+        "p95": 8.3,
+        "p99": 8.9
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 837,
+        "gapMs": 9.099999999998545
+      }
+    },
+    "indexMs": 636.974,
+    "insertMs": {
+      "max": 0.1,
+      "mean": 0.03,
+      "n": 200,
+      "p50": 0.03,
+      "p95": 0.05,
+      "p99": 0.08
+    },
+    "jumpBeforeIndex": {
+      "ms": {
+        "max": 69.8,
+        "mean": 57.46,
+        "n": 5,
+        "p50": 58.3,
+        "p95": 69.8,
+        "p99": 69.8
+      },
+      "ownMs": {
+        "max": 69.8,
+        "mean": 57.46,
+        "n": 5,
+        "p50": 58.3,
+        "p95": 69.8,
+        "p99": 69.8
+      },
+      "runs": [
+        {
+          "coreMs": 1.0738,
+          "exact": false,
+          "invokeMs": 13.199999995529652,
+          "landed": false,
+          "line": 968106,
+          "ms": 53.19999999552965,
+          "ownMs": 53.19999999552965,
+          "revealMs": 34.899999998509884,
+          "top": "   1031470| 한국어 image 성능",
+          "viewCoreMs": 20.976
+        },
+        {
+          "coreMs": 1.9437,
+          "exact": false,
+          "invokeMs": 12.800000004470348,
+          "landed": false,
+          "line": 864216,
+          "ms": 69.80000000447035,
+          "ownMs": 69.80000000447035,
+          "revealMs": 53.79999999701977,
+          "top": "    927995| 🙂 테스트 viewe",
+          "viewCoreMs": 48.588
+        },
+        {
+          "coreMs": 0.3442,
+          "exact": false,
+          "invokeMs": 5.299999997019768,
+          "landed": false,
+          "line": 1521117,
+          "ms": 60.89999999850989,
+          "ownMs": 60.89999999850989,
+          "revealMs": 50,
+          "top": "   1627292| ligature fra",
+          "viewCoreMs": 45.813
+        },
+        {
+          "coreMs": 12.4562,
+          "exact": false,
+          "invokeMs": 20,
+          "landed": false,
+          "line": 1161637,
+          "ms": 58.30000000447035,
+          "ownMs": 58.30000000447035,
+          "revealMs": 32,
+          "top": "   1221779| naïve select",
+          "viewCoreMs": 25.727
+        },
+        {
+          "coreMs": 12.9141,
+          "exact": false,
+          "invokeMs": 15.899999998509884,
+          "landed": false,
+          "line": 1252022,
+          "ms": 45.10000000149011,
+          "ownMs": 45.10000000149011,
+          "revealMs": 19.399999998509884,
+          "top": "   1312391| page 편집기",
+          "viewCoreMs": 16.109
+        }
+      ]
+    },
+    "jumpIndexed": {
+      "allLanded": true,
+      "ms": {
+        "max": 423.9,
+        "mean": 25.04,
+        "n": 30,
+        "p50": 10.8,
+        "p95": 16.4,
+        "p99": 423.9
+      },
+      "ownMs": {
+        "max": 23.6,
+        "mean": 11.69,
+        "n": 30,
+        "p50": 10.8,
+        "p95": 16.4,
+        "p99": 23.6
+      },
+      "runs": [
+        {
+          "coreMs": 0.0139,
+          "exact": true,
+          "invokeMs": 3.1999999955296516,
+          "landed": true,
+          "line": 1146206,
+          "ms": 10.799999997019768,
+          "ownMs": 10.799999997019768,
+          "revealMs": 3.700000002980232,
+          "top": "   1146194| benchmark pa",
+          "viewCoreMs": 0.685
+        },
+        {
+          "coreMs": 0.063,
+          "exact": true,
+          "invokeMs": 1.6999999955296516,
+          "landed": true,
+          "line": 866373,
+          "ms": 14.5,
+          "ownMs": 14.5,
+          "revealMs": 3.399999998509884,
+          "top": "    866361| layout page ",
+          "viewCoreMs": 0.73
+        },
+        {
+          "coreMs": 0.0134,
+          "exact": true,
+          "invokeMs": 2.299999997019768,
+          "landed": true,
+          "line": 252412,
+          "ms": 15.100000001490116,
+          "ownMs": 15.100000001490116,
+          "revealMs": 4.300000004470348,
+          "top": "    252400| for texture ",
+          "viewCoreMs": 1.591
+        },
+        {
+          "coreMs": 0.0748,
+          "exact": true,
+          "invokeMs": 2.100000001490116,
+          "landed": true,
+          "line": 81567,
+          "ms": 10.200000002980232,
+          "ownMs": 10.200000002980232,
+          "revealMs": 3.399999998509884,
+          "top": "     81555| budget the f",
+          "viewCoreMs": 0.734
+        },
+        {
+          "coreMs": 0.4346,
+          "exact": true,
+          "invokeMs": 3.100000001490116,
+          "landed": true,
+          "line": 376257,
+          "ms": 423.8999999985099,
+          "ownMs": 23.599999998509873,
+          "revealMs": 3.799999997019768,
+          "top": "    376245| meanwhile wa",
+          "viewCoreMs": 0.726
+        },
+        {
+          "coreMs": 0.0485,
+          "exact": true,
+          "invokeMs": 2.799999997019768,
+          "landed": true,
+          "line": 477752,
+          "ms": 12.600000001490116,
+          "ownMs": 12.600000001490116,
+          "revealMs": 4,
+          "top": "    477740| naïve naïve ",
+          "viewCoreMs": 0.711
+        },
+        {
+          "coreMs": 0.0176,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1657600,
+          "ms": 8,
+          "ownMs": 8,
+          "revealMs": 3.399999998509884,
+          "top": "   1657588| glyph cursor",
+          "viewCoreMs": 0.705
+        },
+        {
+          "coreMs": 0.0226,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 1181069,
+          "ms": 15.899999998509884,
+          "ownMs": 15.899999998509884,
+          "revealMs": 4.600000001490116,
+          "top": "   1181057| kerning fram",
+          "viewCoreMs": 0.983
+        },
+        {
+          "coreMs": 0.08449999999999999,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 1116194,
+          "ms": 13.399999998509884,
+          "ownMs": 13.399999998509884,
+          "revealMs": 3.5999999940395355,
+          "top": "   1116182| meanwhile as",
+          "viewCoreMs": 0.865
+        },
+        {
+          "coreMs": 0.0276,
+          "exact": true,
+          "invokeMs": 1.6999999955296516,
+          "landed": true,
+          "line": 601649,
+          "ms": 7.5,
+          "ownMs": 7.5,
+          "revealMs": 3.5,
+          "top": "    601637| façade docum",
+          "viewCoreMs": 0.782
+        },
+        {
+          "coreMs": 0.0535,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 426156,
+          "ms": 14.200000002980232,
+          "ownMs": 14.200000002980232,
+          "revealMs": 4.100000001490116,
+          "top": "    426144| 성능 meanwhile",
+          "viewCoreMs": 1.337
+        },
+        {
+          "coreMs": 0.0147,
+          "exact": true,
+          "invokeMs": 1.5999999940395355,
+          "landed": true,
+          "line": 173855,
+          "ms": 8.399999998509884,
+          "ownMs": 8.399999998509884,
+          "revealMs": 3.100000001490116,
+          "top": "    173843| the is",
+          "viewCoreMs": 0.638
+        },
+        {
+          "coreMs": 0.0158,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1495379,
+          "ms": 14.600000001490116,
+          "ownMs": 14.600000001490116,
+          "revealMs": 4.5,
+          "top": "   1495367| was texture ",
+          "viewCoreMs": 0.878
+        },
+        {
+          "coreMs": 0.049,
+          "exact": true,
+          "invokeMs": 2,
+          "landed": true,
+          "line": 1412860,
+          "ms": 16.399999998509884,
+          "ownMs": 16.399999998509884,
+          "revealMs": 3.899999998509884,
+          "top": "   1412848| is",
+          "viewCoreMs": 0.699
+        },
+        {
+          "coreMs": 0.0404,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 1396116,
+          "ms": 14,
+          "ownMs": 14,
+          "revealMs": 3.699999995529651,
+          "top": "   1396104| 데이터 데이터 faça",
+          "viewCoreMs": 0.501
+        },
+        {
+          "coreMs": 0.0172,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 750155,
+          "ms": 7.800000004470348,
+          "ownMs": 7.800000004470348,
+          "revealMs": 4,
+          "top": "    750143| meanwhile qu",
+          "viewCoreMs": 0.728
+        },
+        {
+          "coreMs": 0.0467,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 467470,
+          "ms": 15.699999995529652,
+          "ownMs": 15.699999995529652,
+          "revealMs": 4.600000001490116,
+          "top": "    467458| slide viewer",
+          "viewCoreMs": 1.402
+        },
+        {
+          "coreMs": 0.0463,
+          "exact": true,
+          "invokeMs": 1.7999999970197678,
+          "landed": true,
+          "line": 1399152,
+          "ms": 13.600000001490116,
+          "ownMs": 13.600000001490116,
+          "revealMs": 3.899999998509884,
+          "top": "   1399140| 편집기 layout c",
+          "viewCoreMs": 1.038
+        },
+        {
+          "coreMs": 0.0304,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 75627,
+          "ms": 8.299999997019768,
+          "ownMs": 8.299999997019768,
+          "revealMs": 3.399999998509884,
+          "top": "     75615| editor caref",
+          "viewCoreMs": 0.622
+        },
+        {
+          "coreMs": 0.0533,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1273670,
+          "ms": 8.300000004470348,
+          "ownMs": 8.300000004470348,
+          "revealMs": 3.100000001490116,
+          "top": "   1273658| layout",
+          "viewCoreMs": 0.281
+        },
+        {
+          "coreMs": 0.0216,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 1601311,
+          "ms": 8.200000002980232,
+          "ownMs": 8.200000002980232,
+          "revealMs": 3.399999998509884,
+          "top": "   1601299| as quickly f",
+          "viewCoreMs": 0.788
+        },
+        {
+          "coreMs": 0.041100000000000005,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 1338360,
+          "ms": 7.800000004470348,
+          "ownMs": 7.800000004470348,
+          "revealMs": 3.699999995529651,
+          "top": "   1338348| which and 데이",
+          "viewCoreMs": 0.68
+        },
+        {
+          "coreMs": 0.1079,
+          "exact": true,
+          "invokeMs": 2.299999997019768,
+          "landed": true,
+          "line": 191263,
+          "ms": 14.100000001490116,
+          "ownMs": 14.100000001490116,
+          "revealMs": 3.800000004470349,
+          "top": "    191251| 🙂 index",
+          "viewCoreMs": 0.717
+        },
+        {
+          "coreMs": 0.0148,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 560310,
+          "ms": 7.600000001490116,
+          "ownMs": 7.600000001490116,
+          "revealMs": 2.600000001490116,
+          "top": "    560298| Straße",
+          "viewCoreMs": 0.338
+        },
+        {
+          "coreMs": 0.0166,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1079911,
+          "ms": 8.200000002980232,
+          "ownMs": 8.200000002980232,
+          "revealMs": 3.299999997019768,
+          "top": "   1079899| although fro",
+          "viewCoreMs": 0.64
+        },
+        {
+          "coreMs": 0.0129,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 93072,
+          "ms": 6.800000004470348,
+          "ownMs": 6.800000004470348,
+          "revealMs": 3,
+          "top": "     93060| façade docum",
+          "viewCoreMs": 0.493
+        },
+        {
+          "coreMs": 0.0189,
+          "exact": true,
+          "invokeMs": 2.100000001490116,
+          "landed": true,
+          "line": 447295,
+          "ms": 14.199999995529652,
+          "ownMs": 14.199999995529652,
+          "revealMs": 4.699999995529652,
+          "top": "    447283| page from se",
+          "viewCoreMs": 1.796
+        },
+        {
+          "coreMs": 0.0504,
+          "exact": true,
+          "invokeMs": 1.6999999955296516,
+          "landed": true,
+          "line": 839510,
+          "ms": 7.799999997019768,
+          "ownMs": 7.799999997019768,
+          "revealMs": 2.700000002980232,
+          "top": "    839498| carefully",
+          "viewCoreMs": 0.479
+        },
+        {
+          "coreMs": 0.027100000000000003,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 1277450,
+          "ms": 8.5,
+          "ownMs": 8.5,
+          "revealMs": 3.1999999955296516,
+          "top": "   1277438| 🙂 budget se",
+          "viewCoreMs": 0.484
+        },
+        {
+          "coreMs": 0.0188,
+          "exact": true,
+          "invokeMs": 2,
+          "landed": true,
+          "line": 451183,
+          "ms": 14.699999995529652,
+          "ownMs": 14.699999995529652,
+          "revealMs": 3.899999998509884,
+          "top": "    451171| therefore at",
+          "viewCoreMs": 0.826
+        }
+      ]
+    },
+    "lineCount": {
+      "exact": true,
+      "line": 1662533
+    },
+    "memory": {
+      "after": {
+        "peakWorkingSet": 2179293184,
+        "privateBytes": 13914112,
+        "workingSet": 2178605056
+      },
+      "before": {
+        "peakWorkingSet": 29929472,
+        "privateBytes": 5672960,
+        "workingSet": 27561984
+      },
+      "privateGrowthMiB": 8
+    },
+    "openMs": 5.8,
+    "ownFirstPaintMs": 40.5,
+    "processCreatedEpochMs": 1791991622225.334,
+    "scenario": "txt-2g",
+    "scrollAfterIdle": [
+      {
+        "idleMs": 100,
+        "ownWorstMs": 9.4,
+        "worstMs": 9.4
+      },
+      {
+        "idleMs": 300,
+        "ownWorstMs": 8.4,
+        "worstMs": 8.4
+      },
+      {
+        "idleMs": 500,
+        "ownWorstMs": 16.7,
+        "worstMs": 242.1
+      },
+      {
+        "idleMs": 700,
+        "ownWorstMs": 23.8,
+        "worstMs": 132.6
+      },
+      {
+        "idleMs": 1000,
+        "ownWorstMs": 19,
+        "worstMs": 137.3
+      },
+      {
+        "idleMs": 2000,
+        "ownWorstMs": 20.7,
+        "worstMs": 64
+      },
+      {
+        "idleMs": 300,
+        "ownWorstMs": 11.7,
+        "worstMs": 11.7
+      }
+    ],
+    "steady": {
+      "frameIntervalMs": {
+        "max": 9.2,
+        "mean": 7.71,
+        "n": 649,
+        "p50": 7.7,
+        "p95": 8.3,
+        "p99": 8.7
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 9.2,
+        "mean": 7.71,
+        "n": 649,
+        "p50": 7.7,
+        "p95": 8.3,
+        "p99": 8.7
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 2227,
+        "gapMs": 9.199999999998909
+      }
+    },
+    "typing": {
+      "adoptMs": {
+        "max": 0.7,
+        "mean": 0.3,
+        "n": 300,
+        "p50": 0.3,
+        "p95": 0.5,
+        "p99": 0.7
+      },
+      "confirmMs": {
+        "max": 16.3,
+        "mean": 10.1,
+        "n": 300,
+        "p50": 9.9,
+        "p95": 14.6,
+        "p99": 15.7
+      },
+      "coreMs": {
+        "max": 3.48,
+        "mean": 1.53,
+        "n": 300,
+        "p50": 1.51,
+        "p95": 2.44,
+        "p99": 2.92
+      },
+      "echoChecks": 300,
+      "echoMismatches": 0,
+      "echoed": 300,
+      "latencyMs": {
+        "max": 9.9,
+        "mean": 5.29,
+        "n": 300,
+        "p50": 5.3,
+        "p95": 8.6,
+        "p99": 9.1
+      },
+      "longTasks": 0,
+      "ownLatencyMs": {
+        "max": 9.9,
+        "mean": 5.29,
+        "n": 300,
+        "p50": 5.3,
+        "p95": 8.6,
+        "p99": 9.1
+      },
+      "requests": 300,
+      "roundTripMs": {
+        "max": 10.7,
+        "mean": 6.26,
+        "n": 300,
+        "p50": 6.6,
+        "p95": 9,
+        "p99": 9.8
+      },
+      "samples": 300,
+      "waitMs": {
+        "max": 0.5,
+        "mean": 0.13,
+        "n": 300,
+        "p50": 0.1,
+        "p95": 0.2,
+        "p99": 0.3
+      }
+    }
+  },
+  "txt2gAll": {
+    "firstPaintMs": [
+      40.5,
+      41.2,
+      27.9
+    ],
+    "ownFirstPaintMs": [
+      40.5,
+      41.2,
+      27.9
+    ],
+    "indexMs": [
+      636.974,
+      627.9626000000001,
+      626.7700000000001
+    ],
+    "typingP95": [
+      8.6,
+      8.7,
+      8.5
+    ],
+    "insertP95": [
+      0.05,
+      0.04,
+      0.05
+    ]
+  },
+  "search": {
+    "coreFirstHitMs": 31.5606,
+    "coreMs": 1315.6761,
+    "cpuLogicalOverride": "8",
+    "firstHitMs": 45.7,
+    "indexCompleteAtEnd": false,
+    "matches": 59805,
+    "pattern": "kerning budget",
+    "processCreatedEpochMs": 1791991705889.2812,
+    "scenario": "txt-2g-search",
+    "totalMs": 1332,
+    "truncated": false
+  },
+  "searchAll": [
+    {
+      "totalMs": 1332,
+      "firstHitMs": 45.7,
+      "matches": 59805
+    },
+    {
+      "totalMs": 1577.1,
+      "firstHitMs": 63,
+      "matches": 59805
+    },
+    {
+      "totalMs": 1287.4,
+      "firstHitMs": 54.6,
+      "matches": 59805
+    }
+  ],
+  "txt300m": {
+    "caretMs": {
+      "coreMs": {
+        "0:move": 0.387,
+        "1:move": 0.418,
+        "2:move": 0.278,
+        "3:move": 1.649,
+        "4:move": 0.56,
+        "5:move": 1.024,
+        "6:collapse": 0.578,
+        "7:type": 6.685
+      },
+      "each": {
+        "collapse": 7.899999998509884,
+        "docEnd": 7.800000004470348,
+        "end": 7.699999995529652,
+        "home": 7.899999998509884,
+        "left": 8.5,
+        "selectToStart": 9.399999998509884,
+        "typeAtEnd": 16.299999997019768,
+        "wordLeft": 7.399999998509884
+      },
+      "max": 16.299999997019768
+    },
+    "cpuLogicalOverride": "8",
+    "firstFrameWaitMs": 4.9,
+    "firstFrameWaitStallMs": 0,
+    "firstPaintMs": 121.5,
+    "firstPaintStalls": [],
+    "firstViewCoreMs": 0.234,
+    "longTasks": 0,
+    "openedMs": 6.8,
+    "ownFirstPaintMs": 121.5,
+    "processCreatedEpochMs": 1791991719399.8535,
+    "scenario": "txt-300m",
+    "wrapToggleMs": {
+      "max": 30,
+      "off": 28.299999997019768,
+      "on": 30
+    },
+    "wrappedScroll": {
+      "frameIntervalMs": {
+        "max": 15.3,
+        "mean": 7.94,
+        "n": 253,
+        "p50": 7.9,
+        "p95": 8.6,
+        "p99": 9
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 15.3,
+        "mean": 7.94,
+        "n": 253,
+        "p50": 7.9,
+        "p95": 8.6,
+        "p99": 9
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 1643,
+        "gapMs": 15.300000000000182
+      }
+    }
+  },
+  "txt300mAll": [
+    {
+      "firstPaintMs": 128.2,
+      "caretMax": 8.700000002980232,
+      "wrapMax": 31.600000001490116
+    },
+    {
+      "firstPaintMs": 120.1,
+      "caretMax": 17.200000002980232,
+      "wrapMax": 31.100000001490116
+    },
+    {
+      "firstPaintMs": 121.5,
+      "caretMax": 16.299999997019768,
+      "wrapMax": 30
+    }
+  ],
+  "save": {
+    "saveMs": 1664,
+    "seqwriteBeforeMs": 1705.0,
+    "seqwriteAfterMs": 1483.0,
+    "ratio": 1.044,
+    "bytes": 2147483659,
+    "ok": true
+  },
+  "saveAll": [
+    {
+      "saveMs": 1829,
+      "seqwriteBeforeMs": 1288.0,
+      "seqwriteAfterMs": 1433.0,
+      "ratio": 1.344,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1664,
+      "seqwriteBeforeMs": 1705.0,
+      "seqwriteAfterMs": 1483.0,
+      "ratio": 1.044,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 2031,
+      "seqwriteBeforeMs": 1638.0,
+      "seqwriteAfterMs": 1313.0,
+      "ratio": 1.377,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1641,
+      "seqwriteBeforeMs": 1823.0,
+      "seqwriteAfterMs": 1736.0,
+      "ratio": 0.922,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1814,
+      "seqwriteBeforeMs": 2007.0,
+      "seqwriteAfterMs": 1592.0,
+      "ratio": 1.008,
+      "bytes": 2147483659,
+      "ok": true
+    }
+  ],
+  "launch": {
+    "runs": [
+      {
+        "ms": 1115.5,
+        "ownMs": 1115.5,
+        "stallMs": 0,
+        "firstFrameWaitMs": 8.1
+      },
+      {
+        "ms": 870.9,
+        "ownMs": 870.9,
+        "stallMs": 0,
+        "firstFrameWaitMs": 7.4
+      },
+      {
+        "ms": 928.0,
+        "ownMs": 928.0,
+        "stallMs": 0,
+        "firstFrameWaitMs": 8.2
+      }
+    ],
+    "p50": 928.0,
+    "ownP50": 928.0
+  },
+  "platformStalls": {
+    "txt2gFirstPaint": [
+      {
+        "rawMs": 40.5,
+        "ownMs": 40.5,
+        "firstFrameWaitMs": 12.5,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 41.2,
+        "ownMs": 41.2,
+        "firstFrameWaitMs": 11.5,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 27.9,
+        "ownMs": 27.9,
+        "firstFrameWaitMs": 12.2,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      }
+    ],
+    "txt300mFirstPaint": [
+      {
+        "rawMs": 128.2,
+        "ownMs": 128.2,
+        "firstFrameWaitMs": 10.4,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 120.1,
+        "ownMs": 120.1,
+        "firstFrameWaitMs": 4.2,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 121.5,
+        "ownMs": 121.5,
+        "firstFrameWaitMs": 4.9,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      }
+    ],
+    "steady": [
+      {
+        "rawMax": 9.2,
+        "ownMax": 9.2,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 333,
+        "ownMax": 25.1,
+        "stalls": 1,
+        "worstStallMs": 307.9
+      },
+      {
+        "rawMax": 442.1,
+        "ownMax": 20.2,
+        "stalls": 1,
+        "worstStallMs": 421.9
+      }
+    ],
+    "fling": [
+      {
+        "rawMax": 9.1,
+        "ownMax": 9.1,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 8.8,
+        "ownMax": 8.8,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9,
+        "ownMax": 9,
+        "stalls": 0,
+        "worstStallMs": 0
+      }
+    ],
+    "wrappedScroll": [
+      {
+        "rawMax": 13.2,
+        "ownMax": 13.2,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 318.3,
+        "ownMax": 17.1,
+        "stalls": 1,
+        "worstStallMs": 301.2
+      },
+      {
+        "rawMax": 15.3,
+        "ownMax": 15.3,
+        "stalls": 0,
+        "worstStallMs": 0
+      }
+    ],
+    "scrollAfterIdle": [
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 9.4,
+          "worstMs": 9.4
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 8.4,
+          "worstMs": 8.4
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 16.7,
+          "worstMs": 242.1
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 23.8,
+          "worstMs": 132.6
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 19,
+          "worstMs": 137.3
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 20.7,
+          "worstMs": 64
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 11.7,
+          "worstMs": 11.7
+        }
+      ],
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 9.1,
+          "worstMs": 9.1
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 338.8
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 10.5,
+          "worstMs": 10.5
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 16.7,
+          "worstMs": 294.8
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 19.1,
+          "worstMs": 79.2
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 15.5,
+          "worstMs": 15.5
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 310.4
+        }
+      ],
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 9.8,
+          "worstMs": 9.8
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 352.1
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 15.6,
+          "worstMs": 15.6
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 16.7,
+          "worstMs": 314
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 18.4,
+          "worstMs": 113.1
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 16,
+          "worstMs": 16
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 255
+        }
+      ]
+    ]
+  },
+  "longTasks": 0.0,
+  "budgets": [
+    {
+      "id": "txt.firstPaint",
+      "value": 40.5,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.742,
+      "effectiveBudget": 172.22,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.index",
+      "value": 636.974,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.742,
+      "effectiveBudget": 2296.33,
+      "budget": 4000,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpBeforeIndex.max",
+      "value": 69.8,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.742,
+      "effectiveBudget": 172.22,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpIndexed.p95",
+      "value": 16.4,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpIndexed.max",
+      "value": 23.6,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.search.total",
+      "value": 1332.0,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.742,
+      "effectiveBudget": 1722.25,
+      "budget": 3000,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.insert.p95",
+      "value": 0.05,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 3.33,
+      "budget": 5,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.insert.max",
+      "value": 0.1,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 3.33,
+      "budget": 5,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.typing.p95",
+      "value": 8.6,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 10.67,
+      "budget": 16,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.typing.p99",
+      "value": 9.1,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 22.0,
+      "budget": 33,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.steady.p99",
+      "value": 8.7,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.steady.max",
+      "value": 9.2,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.fling.p99",
+      "value": 8.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.fling.max",
+      "value": 9.1,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.longTasks",
+      "value": 0.0,
+      "unit": "tasks",
+      "kind": "zero",
+      "factor": 1.0,
+      "effectiveBudget": 0,
+      "budget": 0,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.save.ratio",
+      "value": 1.044,
+      "unit": "×",
+      "kind": "ratio",
+      "factor": 1.0,
+      "effectiveBudget": 1.25,
+      "budget": 1.25,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.memory",
+      "value": 8.0,
+      "unit": "MiB",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 1536.0,
+      "budget": 1536,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.firstPaint",
+      "value": 121.5,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.742,
+      "effectiveBudget": 172.22,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.caret.max",
+      "value": 16.299999997019768,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.wrapToggle.max",
+      "value": 30.0,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.wrapScroll.max",
+      "value": 15.3,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    }
+  ]
+}

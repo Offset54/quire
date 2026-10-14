@@ -1,0 +1,1430 @@
+{
+  "profile": "ref-sim-v1",
+  "date": "2026-10-15T00:42:11.6571173+09:00",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 258V",
+    "ramGiB": 31.5,
+    "performanceCores": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "power": {
+      "batteryPercent": 100,
+      "ok": true,
+      "onAc": true
+    },
+    "webview2": "155.0.4283.45",
+    "commit": "02a5733"
+  },
+  "refSim": {
+    "pinning": "job object, performance cores",
+    "logicalCpusReported": 8,
+    "viewport": "1280x720 logical (1920x1080 device px at 150 %)",
+    "dCpu": 1.5,
+    "dIo": 1.737,
+    "coldReadMBps": 3474.300722200685
+  },
+  "runs": 3,
+  "txt2g": {
+    "cpuLogicalOverride": "8",
+    "expectedLines": 1662532,
+    "file": "C:\\Users\\MSJin\\dev\\quire\\.claude\\worktrees\\loving-sammet-2565a5\\.cache\\fixtures\\mixed-lines-2gib.txt",
+    "firstFrameWaitMs": 10.4,
+    "firstFrameWaitStallMs": 0,
+    "firstPaintMs": 39.6,
+    "firstPaintStalls": [],
+    "fling": {
+      "frameIntervalMs": {
+        "max": 9,
+        "mean": 7.73,
+        "n": 388,
+        "p50": 7.8,
+        "p95": 8.3,
+        "p99": 8.7
+      },
+      "framesOver50ms": 0,
+      "longFrames": [],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 9,
+        "mean": 7.73,
+        "n": 388,
+        "p50": 7.8,
+        "p95": 8.3,
+        "p99": 8.7
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 0,
+        "frames": [],
+        "totalMs": 0,
+        "worstMs": 0
+      },
+      "worstFrame": {
+        "atMs": 175,
+        "gapMs": 9
+      }
+    },
+    "indexMs": 641.7787999999999,
+    "insertMs": {
+      "max": 0.08,
+      "mean": 0.03,
+      "n": 200,
+      "p50": 0.03,
+      "p95": 0.05,
+      "p99": 0.07
+    },
+    "jumpBeforeIndex": {
+      "ms": {
+        "max": 69.8,
+        "mean": 59.44,
+        "n": 5,
+        "p50": 53.9,
+        "p95": 69.8,
+        "p99": 69.8
+      },
+      "ownMs": {
+        "max": 69.8,
+        "mean": 59.44,
+        "n": 5,
+        "p50": 53.9,
+        "p95": 69.8,
+        "p99": 69.8
+      },
+      "runs": [
+        {
+          "coreMs": 11.9181,
+          "exact": false,
+          "invokeMs": 31.100000001490116,
+          "landed": false,
+          "line": 968106,
+          "ms": 68.70000000298023,
+          "ownMs": 68.70000000298023,
+          "revealMs": 32.100000001490116,
+          "top": "   1037510| be table 한국어",
+          "viewCoreMs": 27.588
+        },
+        {
+          "coreMs": 13.0538,
+          "exact": false,
+          "invokeMs": 22.5,
+          "landed": false,
+          "line": 864216,
+          "ms": 69.79999999701977,
+          "ownMs": 69.79999999701977,
+          "revealMs": 38.10000000149011,
+          "top": "    929063| with column ",
+          "viewCoreMs": 33.794
+        },
+        {
+          "coreMs": 13.8879,
+          "exact": false,
+          "invokeMs": 18.600000001490116,
+          "landed": false,
+          "line": 1521117,
+          "ms": 52.10000000149011,
+          "ownMs": 52.10000000149011,
+          "revealMs": 27.899999998509884,
+          "top": "   1604086| therefore st",
+          "viewCoreMs": 24.858
+        },
+        {
+          "coreMs": 12.1743,
+          "exact": false,
+          "invokeMs": 14.600000001490116,
+          "landed": false,
+          "line": 1161637,
+          "ms": 53.89999999850989,
+          "ownMs": 53.89999999850989,
+          "revealMs": 30.600000001490116,
+          "top": "   1217248| of index alt",
+          "viewCoreMs": 25.597
+        },
+        {
+          "coreMs": 0.8034,
+          "exact": false,
+          "invokeMs": 9.099999994039536,
+          "landed": false,
+          "line": 1252022,
+          "ms": 52.69999999552965,
+          "ownMs": 52.69999999552965,
+          "revealMs": 37.70000000298023,
+          "top": "   1302004| benchmark al",
+          "viewCoreMs": 33.066
+        }
+      ]
+    },
+    "jumpIndexed": {
+      "allLanded": true,
+      "ms": {
+        "max": 375.3,
+        "mean": 23.55,
+        "n": 30,
+        "p50": 13.2,
+        "p95": 16.4,
+        "p99": 375.3
+      },
+      "ownMs": {
+        "max": 21.8,
+        "mean": 11.77,
+        "n": 30,
+        "p50": 13.2,
+        "p95": 16.4,
+        "p99": 21.8
+      },
+      "runs": [
+        {
+          "coreMs": 0.0377,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 1146206,
+          "ms": 10.600000001490116,
+          "ownMs": 10.600000001490116,
+          "revealMs": 6,
+          "top": "   1146194| benchmark pa",
+          "viewCoreMs": 0.645
+        },
+        {
+          "coreMs": 0.030800000000000004,
+          "exact": true,
+          "invokeMs": 2,
+          "landed": true,
+          "line": 866373,
+          "ms": 15.5,
+          "ownMs": 15.5,
+          "revealMs": 3.700000002980232,
+          "top": "    866361| layout page ",
+          "viewCoreMs": 0.857
+        },
+        {
+          "coreMs": 0.0122,
+          "exact": true,
+          "invokeMs": 3.200000002980232,
+          "landed": true,
+          "line": 252412,
+          "ms": 13.899999998509884,
+          "ownMs": 13.899999998509884,
+          "revealMs": 8.399999998509884,
+          "top": "    252400| for texture ",
+          "viewCoreMs": 4.256
+        },
+        {
+          "coreMs": 0.0792,
+          "exact": true,
+          "invokeMs": 1.7999999970197678,
+          "landed": true,
+          "line": 81567,
+          "ms": 16.399999998509884,
+          "ownMs": 16.399999998509884,
+          "revealMs": 4.700000002980232,
+          "top": "     81555| budget the f",
+          "viewCoreMs": 1.215
+        },
+        {
+          "coreMs": 0.1323,
+          "exact": true,
+          "invokeMs": 2.200000002980232,
+          "landed": true,
+          "line": 376257,
+          "ms": 15.100000001490116,
+          "ownMs": 15.100000001490116,
+          "revealMs": 4.299999997019768,
+          "top": "    376245| meanwhile wa",
+          "viewCoreMs": 0.732
+        },
+        {
+          "coreMs": 0.0551,
+          "exact": true,
+          "invokeMs": 2.100000001490116,
+          "landed": true,
+          "line": 477752,
+          "ms": 375.29999999701977,
+          "ownMs": 21.799999997019768,
+          "revealMs": 3,
+          "top": "    477740| naïve naïve ",
+          "viewCoreMs": 0.672
+        },
+        {
+          "coreMs": 0.021,
+          "exact": true,
+          "invokeMs": 7.200000002980232,
+          "landed": true,
+          "line": 1657600,
+          "ms": 15.299999997019768,
+          "ownMs": 15.299999997019768,
+          "revealMs": 4.799999997019768,
+          "top": "   1657588| glyph cursor",
+          "viewCoreMs": 1.165
+        },
+        {
+          "coreMs": 0.0191,
+          "exact": true,
+          "invokeMs": 2.399999998509884,
+          "landed": true,
+          "line": 1181069,
+          "ms": 15.5,
+          "ownMs": 15.5,
+          "revealMs": 3.799999997019768,
+          "top": "   1181057| kerning fram",
+          "viewCoreMs": 0.657
+        },
+        {
+          "coreMs": 0.0138,
+          "exact": true,
+          "invokeMs": 2.200000002980232,
+          "landed": true,
+          "line": 1116194,
+          "ms": 13.899999998509884,
+          "ownMs": 13.899999998509884,
+          "revealMs": 4.199999995529652,
+          "top": "   1116182| meanwhile as",
+          "viewCoreMs": 1.076
+        },
+        {
+          "coreMs": 0.012,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 601649,
+          "ms": 14.700000002980232,
+          "ownMs": 14.700000002980232,
+          "revealMs": 4.299999997019768,
+          "top": "    601637| façade docum",
+          "viewCoreMs": 1.238
+        },
+        {
+          "coreMs": 0.0369,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 426156,
+          "ms": 7.400000005960464,
+          "ownMs": 7.400000005960464,
+          "revealMs": 3.899999998509884,
+          "top": "    426144| 성능 meanwhile",
+          "viewCoreMs": 1.406
+        },
+        {
+          "coreMs": 0.0933,
+          "exact": true,
+          "invokeMs": 1.600000001490116,
+          "landed": true,
+          "line": 173855,
+          "ms": 7.399999998509884,
+          "ownMs": 7.399999998509884,
+          "revealMs": 3.299999997019768,
+          "top": "    173843| the is",
+          "viewCoreMs": 0.602
+        },
+        {
+          "coreMs": 0.0157,
+          "exact": true,
+          "invokeMs": 2.100000001490116,
+          "landed": true,
+          "line": 1495379,
+          "ms": 14,
+          "ownMs": 14,
+          "revealMs": 4.199999995529652,
+          "top": "   1495367| was texture ",
+          "viewCoreMs": 1
+        },
+        {
+          "coreMs": 0.06810000000000001,
+          "exact": true,
+          "invokeMs": 2.100000001490116,
+          "landed": true,
+          "line": 1412860,
+          "ms": 15.400000005960464,
+          "ownMs": 15.400000005960464,
+          "revealMs": 5.5,
+          "top": "   1412848| is",
+          "viewCoreMs": 1.268
+        },
+        {
+          "coreMs": 0.06470000000000001,
+          "exact": true,
+          "invokeMs": 2,
+          "landed": true,
+          "line": 1396116,
+          "ms": 13.199999995529652,
+          "ownMs": 13.199999995529652,
+          "revealMs": 3.299999997019768,
+          "top": "   1396104| 데이터 데이터 faça",
+          "viewCoreMs": 0.435
+        },
+        {
+          "coreMs": 0.0139,
+          "exact": true,
+          "invokeMs": 1.600000001490116,
+          "landed": true,
+          "line": 750155,
+          "ms": 8.399999998509884,
+          "ownMs": 8.399999998509884,
+          "revealMs": 3.699999995529651,
+          "top": "    750143| meanwhile qu",
+          "viewCoreMs": 0.869
+        },
+        {
+          "coreMs": 0.056499999999999995,
+          "exact": true,
+          "invokeMs": 1.5,
+          "landed": true,
+          "line": 467470,
+          "ms": 15,
+          "ownMs": 15,
+          "revealMs": 4.5,
+          "top": "    467458| slide viewer",
+          "viewCoreMs": 1.453
+        },
+        {
+          "coreMs": 0.017499999999999998,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1399152,
+          "ms": 14.399999998509884,
+          "ownMs": 14.399999998509884,
+          "revealMs": 4.399999998509884,
+          "top": "   1399140| 편집기 layout c",
+          "viewCoreMs": 1.103
+        },
+        {
+          "coreMs": 0.0142,
+          "exact": true,
+          "invokeMs": 1.7999999970197678,
+          "landed": true,
+          "line": 75627,
+          "ms": 6.899999998509884,
+          "ownMs": 6.899999998509884,
+          "revealMs": 2.899999998509884,
+          "top": "     75615| editor caref",
+          "viewCoreMs": 0.509
+        },
+        {
+          "coreMs": 0.0333,
+          "exact": true,
+          "invokeMs": 1.7000000029802322,
+          "landed": true,
+          "line": 1273670,
+          "ms": 7.100000001490116,
+          "ownMs": 7.100000001490116,
+          "revealMs": 2.600000001490116,
+          "top": "   1273658| layout",
+          "viewCoreMs": 0.366
+        },
+        {
+          "coreMs": 0.0122,
+          "exact": true,
+          "invokeMs": 1.7999999970197678,
+          "landed": true,
+          "line": 1601311,
+          "ms": 8.599999994039536,
+          "ownMs": 8.599999994039536,
+          "revealMs": 4.299999997019768,
+          "top": "   1601299| as quickly f",
+          "viewCoreMs": 1.299
+        },
+        {
+          "coreMs": 0.018199999999999997,
+          "exact": true,
+          "invokeMs": 1.899999998509884,
+          "landed": true,
+          "line": 1338360,
+          "ms": 13.899999998509884,
+          "ownMs": 13.899999998509884,
+          "revealMs": 3.899999998509884,
+          "top": "   1338348| which and 데이",
+          "viewCoreMs": 0.693
+        },
+        {
+          "coreMs": 0.0649,
+          "exact": true,
+          "invokeMs": 1.9000000059604645,
+          "landed": true,
+          "line": 191263,
+          "ms": 7.300000004470348,
+          "ownMs": 7.300000004470348,
+          "revealMs": 3.1999999955296516,
+          "top": "    191251| 🙂 index",
+          "viewCoreMs": 0.669
+        },
+        {
+          "coreMs": 0.0178,
+          "exact": true,
+          "invokeMs": 1.600000001490116,
+          "landed": true,
+          "line": 560310,
+          "ms": 7.700000002980232,
+          "ownMs": 7.700000002980232,
+          "revealMs": 2.799999997019768,
+          "top": "    560298| Straße",
+          "viewCoreMs": 0.534
+        },
+        {
+          "coreMs": 0.0155,
+          "exact": true,
+          "invokeMs": 2.200000002980232,
+          "landed": true,
+          "line": 1079911,
+          "ms": 8.600000001490116,
+          "ownMs": 8.600000001490116,
+          "revealMs": 3,
+          "top": "   1079899| although fro",
+          "viewCoreMs": 0.569
+        },
+        {
+          "coreMs": 0.0134,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 93072,
+          "ms": 7.400000005960464,
+          "ownMs": 7.400000005960464,
+          "revealMs": 2.899999998509884,
+          "top": "     93060| façade docum",
+          "viewCoreMs": 0.5
+        },
+        {
+          "coreMs": 0.0252,
+          "exact": true,
+          "invokeMs": 1.6999999955296516,
+          "landed": true,
+          "line": 447295,
+          "ms": 14.100000001490116,
+          "ownMs": 14.100000001490116,
+          "revealMs": 5,
+          "top": "    447283| page from se",
+          "viewCoreMs": 1.941
+        },
+        {
+          "coreMs": 0.059,
+          "exact": true,
+          "invokeMs": 1.600000001490116,
+          "landed": true,
+          "line": 839510,
+          "ms": 8.399999998509884,
+          "ownMs": 8.399999998509884,
+          "revealMs": 3.399999998509884,
+          "top": "    839498| carefully",
+          "viewCoreMs": 0.981
+        },
+        {
+          "coreMs": 0.0162,
+          "exact": true,
+          "invokeMs": 1.6999999955296516,
+          "landed": true,
+          "line": 1277450,
+          "ms": 8.399999998509884,
+          "ownMs": 8.399999998509884,
+          "revealMs": 3.200000002980232,
+          "top": "   1277438| 🙂 budget se",
+          "viewCoreMs": 0.527
+        },
+        {
+          "coreMs": 0.06219999999999999,
+          "exact": true,
+          "invokeMs": 1.8000000044703484,
+          "landed": true,
+          "line": 451183,
+          "ms": 6.800000004470348,
+          "ownMs": 6.800000004470348,
+          "revealMs": 3.399999998509884,
+          "top": "    451171| therefore at",
+          "viewCoreMs": 0.633
+        }
+      ]
+    },
+    "lineCount": {
+      "exact": true,
+      "line": 1662533
+    },
+    "memory": {
+      "after": {
+        "peakWorkingSet": 2179383296,
+        "privateBytes": 14106624,
+        "workingSet": 2178654208
+      },
+      "before": {
+        "peakWorkingSet": 30892032,
+        "privateBytes": 5836800,
+        "workingSet": 27729920
+      },
+      "privateGrowthMiB": 8
+    },
+    "openMs": 7.2,
+    "ownFirstPaintMs": 39.6,
+    "processCreatedEpochMs": 1791992384328.9004,
+    "scenario": "txt-2g",
+    "scrollAfterIdle": [
+      {
+        "idleMs": 100,
+        "ownWorstMs": 12.9,
+        "worstMs": 12.9
+      },
+      {
+        "idleMs": 300,
+        "ownWorstMs": 16.7,
+        "worstMs": 334.7
+      },
+      {
+        "idleMs": 500,
+        "ownWorstMs": 9.3,
+        "worstMs": 9.3
+      },
+      {
+        "idleMs": 700,
+        "ownWorstMs": 16.7,
+        "worstMs": 312.7
+      },
+      {
+        "idleMs": 1000,
+        "ownWorstMs": 19.1,
+        "worstMs": 119
+      },
+      {
+        "idleMs": 2000,
+        "ownWorstMs": 16.2,
+        "worstMs": 16.2
+      },
+      {
+        "idleMs": 300,
+        "ownWorstMs": 16.7,
+        "worstMs": 297.7
+      }
+    ],
+    "steady": {
+      "frameIntervalMs": {
+        "max": 362.1,
+        "mean": 8.3,
+        "n": 603,
+        "p50": 7.6,
+        "p95": 8.3,
+        "p99": 8.9
+      },
+      "framesOver50ms": 1,
+      "longFrames": [
+        {
+          "blockingDuration": 0,
+          "duration": 365.1000000014901,
+          "entryType": "long-animation-frame",
+          "firstUIEventTimestamp": 0,
+          "name": "long-animation-frame",
+          "navigationId": 1354,
+          "paintTime": 11980.89999999851,
+          "presentationTime": 11996,
+          "renderStart": 11969.69999999553,
+          "scripts": [
+            {
+              "duration": 8.800000004470348,
+              "entryType": "script",
+              "executionStart": 11969.79999999702,
+              "forcedStyleAndLayoutDuration": 6.6,
+              "invoker": "FrameRequestCallback",
+              "invokerType": "user-callback",
+              "name": "script",
+              "navigationId": 1354,
+              "pauseDuration": 0,
+              "sourceCharPosition": 321447,
+              "sourceFunctionName": "",
+              "sourceURL": "http://tauri.localhost/assets/index-LwR_Lvfu.js",
+              "startTime": 11969.79999999702,
+              "windowAttribution": "self"
+            }
+          ],
+          "startTime": 11615.79999999702,
+          "styleAndLayoutStart": 11979.79999999702
+        }
+      ],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 27.9,
+        "mean": 7.74,
+        "n": 603,
+        "p50": 7.6,
+        "p95": 8.3,
+        "p99": 8.9
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 1,
+        "frames": [
+          {
+            "atMs": 56,
+            "gapMs": 362.1,
+            "stallMs": 334.2
+          }
+        ],
+        "totalMs": 334.2,
+        "worstMs": 334.2
+      },
+      "worstFrame": {
+        "atMs": 56,
+        "gapMs": 362.1000000000003
+      }
+    },
+    "typing": {
+      "adoptMs": {
+        "max": 1.6,
+        "mean": 0.31,
+        "n": 300,
+        "p50": 0.3,
+        "p95": 0.5,
+        "p99": 0.8
+      },
+      "confirmMs": {
+        "max": 17.5,
+        "mean": 9.88,
+        "n": 300,
+        "p50": 9.5,
+        "p95": 14.8,
+        "p99": 15.9
+      },
+      "coreMs": {
+        "max": 3.13,
+        "mean": 1.38,
+        "n": 300,
+        "p50": 1.24,
+        "p95": 2.41,
+        "p99": 2.86
+      },
+      "echoChecks": 300,
+      "echoMismatches": 0,
+      "echoed": 300,
+      "latencyMs": {
+        "max": 10.4,
+        "mean": 5.25,
+        "n": 300,
+        "p50": 5.4,
+        "p95": 8.6,
+        "p99": 9.1
+      },
+      "longTasks": 0,
+      "ownLatencyMs": {
+        "max": 10.4,
+        "mean": 5.25,
+        "n": 300,
+        "p50": 5.4,
+        "p95": 8.6,
+        "p99": 9.1
+      },
+      "requests": 300,
+      "roundTripMs": {
+        "max": 10.9,
+        "mean": 5.8,
+        "n": 300,
+        "p50": 5.6,
+        "p95": 9,
+        "p99": 9.8
+      },
+      "samples": 300,
+      "waitMs": {
+        "max": 0.5,
+        "mean": 0.13,
+        "n": 300,
+        "p50": 0.1,
+        "p95": 0.2,
+        "p99": 0.4
+      }
+    }
+  },
+  "txt2gAll": {
+    "firstPaintMs": [
+      39.6,
+      39.3,
+      39.7
+    ],
+    "ownFirstPaintMs": [
+      39.6,
+      39.3,
+      39.7
+    ],
+    "indexMs": [
+      641.7787999999999,
+      563.3635,
+      586.9845
+    ],
+    "typingP95": [
+      8.6,
+      8.7,
+      8.4
+    ],
+    "insertP95": [
+      0.05,
+      0.03,
+      0.03
+    ]
+  },
+  "search": {
+    "coreFirstHitMs": 13.7304,
+    "coreMs": 1240.4363,
+    "cpuLogicalOverride": "8",
+    "firstHitMs": 45.9,
+    "indexCompleteAtEnd": false,
+    "matches": 59805,
+    "pattern": "kerning budget",
+    "processCreatedEpochMs": 1791992473027.3066,
+    "scenario": "txt-2g-search",
+    "totalMs": 1270.2,
+    "truncated": false
+  },
+  "searchAll": [
+    {
+      "totalMs": 1269.5,
+      "firstHitMs": 38.4,
+      "matches": 59805
+    },
+    {
+      "totalMs": 1274.1,
+      "firstHitMs": 44.1,
+      "matches": 59805
+    },
+    {
+      "totalMs": 1270.2,
+      "firstHitMs": 45.9,
+      "matches": 59805
+    }
+  ],
+  "txt300m": {
+    "caretMs": {
+      "coreMs": {
+        "0:move": 0.377,
+        "1:move": 0.322,
+        "2:move": 0.255,
+        "3:move": 1.858,
+        "4:move": 0.356,
+        "5:move": 0.295,
+        "6:collapse": 0.294,
+        "7:type": 3.715
+      },
+      "each": {
+        "collapse": 8.200000002980232,
+        "docEnd": 8.399999998509884,
+        "end": 7.899999998509884,
+        "home": 8.699999995529652,
+        "left": 7.899999998509884,
+        "selectToStart": 8.300000004470348,
+        "typeAtEnd": 8.299999997019768,
+        "wordLeft": 7.400000005960464
+      },
+      "max": 8.699999995529652
+    },
+    "cpuLogicalOverride": "8",
+    "firstFrameWaitMs": 7.2,
+    "firstFrameWaitStallMs": 0,
+    "firstPaintMs": 127.4,
+    "firstPaintStalls": [],
+    "firstViewCoreMs": 0.187,
+    "longTasks": 0,
+    "openedMs": 6.4,
+    "ownFirstPaintMs": 127.4,
+    "processCreatedEpochMs": 1791992478500.623,
+    "scenario": "txt-300m",
+    "wrapToggleMs": {
+      "max": 32.399999998509884,
+      "off": 27.5,
+      "on": 32.399999998509884
+    },
+    "wrappedScroll": {
+      "frameIntervalMs": {
+        "max": 328.5,
+        "mean": 9.35,
+        "n": 214,
+        "p50": 7.9,
+        "p95": 8.6,
+        "p99": 9
+      },
+      "framesOver50ms": 1,
+      "longFrames": [
+        {
+          "blockingDuration": 0,
+          "duration": 66,
+          "entryType": "long-animation-frame",
+          "firstUIEventTimestamp": 0,
+          "name": "long-animation-frame",
+          "navigationId": 6393,
+          "paintTime": 2069.1999999955297,
+          "presentationTime": 2072,
+          "renderStart": 2068.89999999851,
+          "scripts": [],
+          "startTime": 2003.1999999955297,
+          "styleAndLayoutStart": 2069.1999999955297
+        }
+      ],
+      "longTasks": 0,
+      "ownFrameIntervalMs": {
+        "max": 17,
+        "mean": 7.89,
+        "n": 214,
+        "p50": 7.9,
+        "p95": 8.6,
+        "p99": 9
+      },
+      "placeholderFramesPct": 0,
+      "platformStalls": {
+        "count": 1,
+        "frames": [
+          {
+            "atMs": 1326,
+            "gapMs": 328.5,
+            "stallMs": 311.5
+          }
+        ],
+        "totalMs": 311.5,
+        "worstMs": 311.5
+      },
+      "worstFrame": {
+        "atMs": 1326,
+        "gapMs": 328.5
+      }
+    }
+  },
+  "txt300mAll": [
+    {
+      "firstPaintMs": 537.2,
+      "caretMax": 16.400000005960464,
+      "wrapMax": 30.899999998509884
+    },
+    {
+      "firstPaintMs": 127.4,
+      "caretMax": 8.699999995529652,
+      "wrapMax": 32.399999998509884
+    },
+    {
+      "firstPaintMs": 122.6,
+      "caretMax": 472.5,
+      "wrapMax": 32.100000001490116
+    }
+  ],
+  "save": {
+    "saveMs": 1811,
+    "seqwriteBeforeMs": 1842.0,
+    "seqwriteAfterMs": 1712.0,
+    "ratio": 1.019,
+    "bytes": 2147483659,
+    "ok": true
+  },
+  "saveAll": [
+    {
+      "saveMs": 1723,
+      "seqwriteBeforeMs": 1027.0,
+      "seqwriteAfterMs": 1611.0,
+      "ratio": 1.306,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1334,
+      "seqwriteBeforeMs": 1972.0,
+      "seqwriteAfterMs": 992.0,
+      "ratio": 0.9,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1741,
+      "seqwriteBeforeMs": 1822.0,
+      "seqwriteAfterMs": 1983.0,
+      "ratio": 0.915,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1811,
+      "seqwriteBeforeMs": 1842.0,
+      "seqwriteAfterMs": 1712.0,
+      "ratio": 1.019,
+      "bytes": 2147483659,
+      "ok": true
+    },
+    {
+      "saveMs": 1739,
+      "seqwriteBeforeMs": 1688.0,
+      "seqwriteAfterMs": 1425.0,
+      "ratio": 1.117,
+      "bytes": 2147483659,
+      "ok": true
+    }
+  ],
+  "launch": {
+    "runs": [
+      {
+        "ms": 1040.6,
+        "ownMs": 1040.6,
+        "stallMs": 0,
+        "firstFrameWaitMs": 10.8
+      },
+      {
+        "ms": 1002.4,
+        "ownMs": 857.2,
+        "stallMs": 145.2,
+        "firstFrameWaitMs": 161.9
+      },
+      {
+        "ms": 1027.6,
+        "ownMs": 1027.6,
+        "stallMs": 0,
+        "firstFrameWaitMs": 13.6
+      }
+    ],
+    "p50": 1027.6,
+    "ownP50": 1027.6
+  },
+  "platformStalls": {
+    "txt2gFirstPaint": [
+      {
+        "rawMs": 39.6,
+        "ownMs": 39.6,
+        "firstFrameWaitMs": 10.4,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 39.3,
+        "ownMs": 39.3,
+        "firstFrameWaitMs": 10.4,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 39.7,
+        "ownMs": 39.7,
+        "firstFrameWaitMs": 12.7,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      }
+    ],
+    "txt300mFirstPaint": [
+      {
+        "rawMs": 537.2,
+        "ownMs": 149.5,
+        "firstFrameWaitMs": 404.4,
+        "firstFrameWaitStallMs": 387.7,
+        "stalls": []
+      },
+      {
+        "rawMs": 127.4,
+        "ownMs": 127.4,
+        "firstFrameWaitMs": 7.2,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      },
+      {
+        "rawMs": 122.6,
+        "ownMs": 122.6,
+        "firstFrameWaitMs": 4.6,
+        "firstFrameWaitStallMs": 0,
+        "stalls": []
+      }
+    ],
+    "steady": [
+      {
+        "rawMax": 362.1,
+        "ownMax": 27.9,
+        "stalls": 1,
+        "worstStallMs": 334.2
+      },
+      {
+        "rawMax": 212.2,
+        "ownMax": 26.1,
+        "stalls": 1,
+        "worstStallMs": 186.1
+      },
+      {
+        "rawMax": 47.9,
+        "ownMax": 19,
+        "stalls": 1,
+        "worstStallMs": 28.9
+      }
+    ],
+    "fling": [
+      {
+        "rawMax": 9,
+        "ownMax": 9,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9,
+        "ownMax": 9,
+        "stalls": 0,
+        "worstStallMs": 0
+      },
+      {
+        "rawMax": 9.3,
+        "ownMax": 9.3,
+        "stalls": 0,
+        "worstStallMs": 0
+      }
+    ],
+    "wrappedScroll": [
+      {
+        "rawMax": 383,
+        "ownMax": 16.7,
+        "stalls": 2,
+        "worstStallMs": 366.3
+      },
+      {
+        "rawMax": 328.5,
+        "ownMax": 17,
+        "stalls": 1,
+        "worstStallMs": 311.5
+      },
+      {
+        "rawMax": 373.3,
+        "ownMax": 17.4,
+        "stalls": 1,
+        "worstStallMs": 355.9
+      }
+    ],
+    "scrollAfterIdle": [
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 12.9,
+          "worstMs": 12.9
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 334.7
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 9.3,
+          "worstMs": 9.3
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 16.7,
+          "worstMs": 312.7
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 19.1,
+          "worstMs": 119
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 16.2,
+          "worstMs": 16.2
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 297.7
+        }
+      ],
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 13.6,
+          "worstMs": 13.6
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 314.2
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 16.7,
+          "worstMs": 475.4
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 16.7,
+          "worstMs": 311.9
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 16.7,
+          "worstMs": 47.3
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 16.4,
+          "worstMs": 16.4
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 297.5
+        }
+      ],
+      [
+        {
+          "idleMs": 100,
+          "ownWorstMs": 9.5,
+          "worstMs": 9.5
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 343.8
+        },
+        {
+          "idleMs": 500,
+          "ownWorstMs": 16.7,
+          "worstMs": 485.3
+        },
+        {
+          "idleMs": 700,
+          "ownWorstMs": 16.7,
+          "worstMs": 283.7
+        },
+        {
+          "idleMs": 1000,
+          "ownWorstMs": 17,
+          "worstMs": 79.3
+        },
+        {
+          "idleMs": 2000,
+          "ownWorstMs": 16,
+          "worstMs": 16
+        },
+        {
+          "idleMs": 300,
+          "ownWorstMs": 16.7,
+          "worstMs": 288.5
+        }
+      ]
+    ]
+  },
+  "longTasks": 0.0,
+  "budgets": [
+    {
+      "id": "txt.firstPaint",
+      "value": 39.6,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.737,
+      "effectiveBudget": 172.7,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.index",
+      "value": 641.7787999999999,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.737,
+      "effectiveBudget": 2302.62,
+      "budget": 4000,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpBeforeIndex.max",
+      "value": 69.8,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.737,
+      "effectiveBudget": 172.7,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpIndexed.p95",
+      "value": 16.4,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.jumpIndexed.max",
+      "value": 21.8,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.search.total",
+      "value": 1270.2,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.737,
+      "effectiveBudget": 1726.97,
+      "budget": 3000,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.insert.p95",
+      "value": 0.05,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 3.33,
+      "budget": 5,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.insert.max",
+      "value": 0.08,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 3.33,
+      "budget": 5,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.typing.p95",
+      "value": 8.6,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 10.67,
+      "budget": 16,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.typing.p99",
+      "value": 9.1,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 22.0,
+      "budget": 33,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.steady.p99",
+      "value": 8.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.steady.max",
+      "value": 27.9,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.fling.p99",
+      "value": 8.7,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 16.7,
+      "budget": 16.7,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.scroll.fling.max",
+      "value": 9.0,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.longTasks",
+      "value": 0.0,
+      "unit": "tasks",
+      "kind": "zero",
+      "factor": 1.0,
+      "effectiveBudget": 0,
+      "budget": 0,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.save.ratio",
+      "value": 1.019,
+      "unit": "×",
+      "kind": "ratio",
+      "factor": 1.0,
+      "effectiveBudget": 1.25,
+      "budget": 1.25,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt.memory",
+      "value": 8.0,
+      "unit": "MiB",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 1536.0,
+      "budget": 1536,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.firstPaint",
+      "value": 127.4,
+      "unit": "ms",
+      "kind": "mixed",
+      "factor": 1.737,
+      "effectiveBudget": 172.7,
+      "budget": 300,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.caret.max",
+      "value": 8.699999995529652,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.wrapToggle.max",
+      "value": 32.399999998509884,
+      "unit": "ms",
+      "kind": "cpu",
+      "factor": 1.5,
+      "effectiveBudget": 66.67,
+      "budget": 100,
+      "pass": true,
+      "measured": true
+    },
+    {
+      "id": "txt300.wrapScroll.max",
+      "value": 17.0,
+      "unit": "ms",
+      "kind": "raw",
+      "factor": 1.0,
+      "effectiveBudget": 50.0,
+      "budget": 50,
+      "pass": true,
+      "measured": true
+    }
+  ]
+}
