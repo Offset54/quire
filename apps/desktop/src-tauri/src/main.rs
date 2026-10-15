@@ -7,6 +7,7 @@ mod frame;
 mod frontend_cache;
 mod images;
 mod md;
+mod paste;
 #[cfg(feature = "bench-fixtures")]
 mod synthetic;
 mod tracing_setup;
@@ -312,6 +313,8 @@ fn main() {
         md::md_set_remote,
         md::md_status,
         md::md_outline,
+        md::md_table,
+        md::md_paste_image,
         md::md_blocks,
         bench::bench_scenario,
         bench::bench_open_synthetic,
@@ -363,6 +366,8 @@ fn main() {
         md::md_set_remote,
         md::md_status,
         md::md_outline,
+        md::md_table,
+        md::md_paste_image,
         md::md_blocks,
     ]);
 

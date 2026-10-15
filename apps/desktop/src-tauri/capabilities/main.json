@@ -46,6 +46,8 @@
     "allow-md-status",
     "allow-md-blocks",
     "allow-md-outline",
+    "allow-md-table",
+    "allow-md-paste-image",
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-ask",

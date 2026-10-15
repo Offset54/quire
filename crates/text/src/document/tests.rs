@@ -321,3 +321,32 @@ proptest! {
         check_envelope(&before, &after, d.take_change())?;
     }
 }
+
+#[test]
+fn replace_is_one_undo_step_and_checks_its_ranges() {
+    let mut d = doc("ab|cd\nef");
+    act(
+        &mut d,
+        Action::Replace {
+            edits: vec![(0, 0, "| ".into()), (2, 5, "x".into()), (6, 6, "> ".into())],
+        },
+    );
+    assert_eq!(all(&d), "| abx\n> ef");
+    act(&mut d, Action::Undo);
+    assert_eq!(all(&d), "ab|cd\nef");
+    for bad in [
+        vec![(3, 2, String::new())],
+        vec![(0, 99, String::new())],
+        vec![(2, 4, String::new()), (3, 5, String::new())],
+    ] {
+        assert!(d.apply(&Action::Replace { edits: bad }).is_err());
+    }
+    let mut u = doc("한글");
+    assert!(
+        u.apply(&Action::Replace {
+            edits: vec![(1, 3, String::new())]
+        })
+        .is_err()
+    );
+    assert_eq!(all(&d), "ab|cd\nef");
+}

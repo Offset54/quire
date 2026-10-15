@@ -170,6 +170,7 @@ export class Session {
     this.view = new TxtView(host, this.doc, {
       onHeader: (header) => {
         this.md?.textChanged(header.revision);
+        this.md?.caretMoved();
         const st = getState().status;
         update({
           header,
@@ -194,6 +195,8 @@ export class Session {
       onScroll: (offset) => {
         this.md?.sourceScrolled(offset);
       },
+      onTab: (shift) => this.md?.onTab(shift) ?? false,
+      onPasteImage: (file) => this.md?.pasteImage(file) ?? false,
     });
     this.view.focus();
     if (md && getState().status?.markdown) {
@@ -218,6 +221,7 @@ export class Session {
     if (name === "toggleView" && this.md) this.md.toggleView();
     else if (name === "toggleSplit" && this.md) this.md.toggleSplit();
     else if (name === "toggleOutline" && this.md) this.md.toggleOutline();
+    else if (name === "formatTable" && this.md) this.md.tableAction("format");
     else this.commandHandler(name);
   }
 

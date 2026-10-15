@@ -26,6 +26,8 @@ use quire_markdown::document::MarkdownDoc;
 use quire_markdown::images::ImagePolicy;
 use quire_markdown::preview::{self, Highlight, Preview, Window};
 use quire_markdown::render::RenderOptions;
+use quire_markdown::scan::BlockKind;
+use quire_markdown::table_edit::{TableAction, edit_table};
 use quire_markdown::words::WordCounter;
 use quire_text::buffer::Snapshot;
 use quire_text::document::TextChange;
@@ -687,6 +689,83 @@ pub async fn md_set_remote(svc: State<'_, MdService>, doc: u64, on: bool) -> Cmd
             .set_options(MdService::options(path.as_deref(), on.then_some(doc)));
         m.push_window(&mut st, true)?;
         Ok(())
+    })
+}
+
+/// Tables larger than this aren't edited by the helpers.
+const TABLE_EDIT_MAX: u64 = 1024 * 1024;
+
+/// A table helper (task 10) at `offset`: the replacement and the caret, in
+/// document offsets, for the text at `revision`; `null` when the offset
+/// isn't in a table or the action doesn't apply. The frontend applies it
+/// as one edit (`replace`) if the text is still at that revision.
+#[tauri::command]
+pub async fn md_table(
+    svc: State<'_, MdService>,
+    doc: u64,
+    offset: u64,
+    action: String,
+) -> CmdResult<Value> {
+    guarded(|| {
+        let Some(action) = TableAction::parse(&action) else {
+            return Err(format!("unknown table action {action}"));
+        };
+        let m = svc.get(doc)?;
+        let _reading = m.readers.read();
+        let mut st = m.state.lock();
+        m.apply_edit(&mut st)?;
+        let MdState {
+            md, snap, revision, ..
+        } = &mut *st;
+        md.extend_to(&*snap, offset).map_err(io_err)?;
+        let blocks = md.index().blocks();
+        let Some(b) = blocks.get(md.index().block_at(offset)) else {
+            return Ok(Value::Null);
+        };
+        if b.kind != BlockKind::Table || b.end - b.start > TABLE_EDIT_MAX || offset < b.start {
+            return Ok(Value::Null);
+        }
+        let bytes = snap.read(b.range()).map_err(io_err)?;
+        let Ok(src) = std::str::from_utf8(&bytes) else {
+            return Ok(Value::Null);
+        };
+        let Some(e) = edit_table(src, (offset - b.start) as usize, action) else {
+            return Ok(Value::Null);
+        };
+        Ok(json!({
+            "revision": *revision,
+            "from": b.start + e.from as u64,
+            "to": b.start + e.to as u64,
+            "text": e.text,
+            "caret": b.start + e.caret as u64,
+        }))
+    })
+}
+
+/// A pasted image (task 10, decision A): the raw request body is the
+/// image; it is stored as PNG in `assets/` next to the document. Returns
+/// the relative link to insert.
+#[tauri::command]
+pub async fn md_paste_image(
+    svc: State<'_, MdService>,
+    request: tauri::ipc::Request<'_>,
+) -> CmdResult<String> {
+    guarded(|| {
+        let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+            return Err("expected a raw body".into());
+        };
+        let doc: u64 = request
+            .headers()
+            .get("x-quire-doc")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.parse().ok())
+            .ok_or("missing header x-quire-doc")?;
+        let path = svc.txt.session(doc)?.file.lock().path.clone();
+        let Some(dir) = path.as_deref().and_then(Path::parent) else {
+            return Err("save the document first: pasted images go next to it".into());
+        };
+        let png = crate::paste::to_png(body).map_err(io_err)?;
+        crate::paste::store(dir, &png, &crate::paste::today()).map_err(io_err)
     })
 }
 

@@ -8,7 +8,9 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { notify, update } from "../txt/doc-store";
 import type { TxtView } from "../txt/txt-view";
 import { SourceDecorator } from "./decorate";
+import { t } from "../i18n";
 import { OutlineRail } from "./outline";
+import { KIND } from "./protocol";
 import { MdPreview } from "./preview";
 
 export type ViewMode = "source" | "preview" | "split";
@@ -53,7 +55,18 @@ export interface MdStatus {
   mode: ViewMode;
   /** The outline rail is shown. */
   outline: boolean;
+  /** The caret is in a table (the table helpers apply). */
+  inTable: boolean;
 }
+
+export type TableActionName =
+  | "format"
+  | "insertRowBelow"
+  | "deleteRow"
+  | "insertColumnRight"
+  | "deleteColumn"
+  | "nextCell"
+  | "prevCell";
 
 let mdStatus: MdStatus | undefined;
 const listeners = new Set<() => void>();
@@ -81,6 +94,7 @@ function emptyStatus(): MdStatus {
     blocked: false,
     mode: savedMode(),
     outline: savedOutline(),
+    inTable: false,
   };
 }
 
@@ -138,7 +152,9 @@ export class MdController {
         this.outline.refresh();
       }, OUTLINE_REFRESH_MS);
     });
-    this.decorator = new SourceDecorator(doc, source);
+    this.decorator = new SourceDecorator(doc, source, () => {
+      this.caretMoved();
+    });
     this.decorator.update(0);
     const touch = (pane: "source" | "preview") => () => {
       this.driving = pane;
@@ -226,6 +242,69 @@ export class MdController {
    *  view, to the reading view). */
   toggleView(): void {
     this.setMode(this.mode === "preview" ? "source" : "preview");
+  }
+
+  /** Whether the caret is in a table, as far as the block map knows. */
+  private caretInTable(): boolean {
+    const p = this.source.primary();
+    return p !== undefined && this.decorator.kindAt(p.head) === KIND.table;
+  }
+
+  /** The caret or the text changed: the table helpers' availability. */
+  caretMoved(): void {
+    const inTable = this.caretInTable();
+    if (inTable !== (mdStatus?.inTable ?? false)) setMd({ inTable });
+  }
+
+  /** Tab / Shift+Tab: to the next or previous table cell when the caret
+   *  is in a table. */
+  onTab(shift: boolean): boolean {
+    if (!this.caretInTable()) return false;
+    this.tableAction(shift ? "prevCell" : "nextCell");
+    return true;
+  }
+
+  /** A table helper (task 10): the core computes the replacement, applied
+   *  as one edit if the text didn't change meanwhile. */
+  tableAction(action: TableActionName): void {
+    const p = this.source.primary();
+    if (!p) return;
+    void invoke<{ revision: number; from: number; to: number; text: string; caret: number } | null>(
+      "md_table",
+      { doc: this.doc, offset: p.head, action },
+    )
+      .then((r) => {
+        if (!r) {
+          // Not in a table after all: Tab inserts a tab.
+          if (action === "nextCell" || action === "prevCell") this.source.send({ type: "tab" });
+          return;
+        }
+        if (this.source.primary()?.revision !== r.revision) return;
+        if (r.from !== r.to || r.text !== "") {
+          this.source.send({ type: "replace", edits: [[r.from, r.to, r.text]] });
+        }
+        this.source.send({ type: "setSelections", ranges: [[r.caret, r.caret]] });
+      })
+      .catch((err: unknown) => {
+        notify("error", String(err));
+      });
+  }
+
+  /** A pasted image (decision A): stored next to the document by the core,
+   *  then its link is pasted (one undo step). */
+  pasteImage(file: File): boolean {
+    void file
+      .arrayBuffer()
+      .then((buf) =>
+        invoke<string>("md_paste_image", buf, { headers: { "x-quire-doc": String(this.doc) } }),
+      )
+      .then((link) => {
+        this.source.paste(`![](${link})`);
+      })
+      .catch((err: unknown) => {
+        notify("error", t("md.pasteImageFailed", { message: String(err) }));
+      });
+    return true;
   }
 
   /** Ctrl+Shift+O: the outline rail on or off (remembered). */

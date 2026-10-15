@@ -65,7 +65,9 @@ export type Action =
       unit: "char" | "word" | "line";
     }
   | { type: "setSelections"; ranges: [number, number][] }
-  | { type: "cut" };
+  | { type: "cut" }
+  /** Replacements a helper computed: one undo step (crates/text). */
+  | { type: "replace"; edits: [number, number, string][] };
 
 /** Extra styling for one row (Markdown source decoration): a class for
  *  the row and classed spans of its text (UTF-16 ranges, sorted, disjoint). */
@@ -152,6 +154,10 @@ export interface TxtCallbacks {
   onCommand(name: string): void;
   /** The top row moved: byte offset of the viewport's top (scroll sync). */
   onScroll?(offset: number): void;
+  /** Tab or Shift+Tab with one caret; true if handled (Markdown tables). */
+  onTab?(shift: boolean): boolean;
+  /** An image was pasted (no text on the clipboard); true if handled. */
+  onPasteImage?(file: File): boolean;
 }
 
 /** Latency of one input, for the HUD and benchmarks. */
@@ -401,6 +407,13 @@ export class TxtView {
   }
 
   /** Byte offset at the viewport's top, interpolated within the top row. */
+  /** The primary selection (anchor, head) and the text's revision, as of
+   *  the last header from the core. */
+  primary(): { anchor: number; head: number; revision: number } | undefined {
+    const h = this.header;
+    return h && { anchor: h.primary[0], head: h.primary[1], revision: h.revision };
+  }
+
   scrollOffset(): number {
     const i = Math.floor(this.top);
     const r = this.rows[i];
@@ -1190,7 +1203,12 @@ export class TxtView {
     input.addEventListener("paste", (e) => {
       e.preventDefault();
       const text = e.clipboardData?.getData("text/plain") ?? "";
-      if (text) this.paste(text);
+      if (text) {
+        this.paste(text);
+        return;
+      }
+      const image = [...(e.clipboardData?.files ?? [])].find((f) => f.type.startsWith("image/"));
+      if (image) this.cb.onPasteImage?.(image);
     });
     input.addEventListener("keydown", (e) => {
       if (this.onKey(e)) e.stopPropagation();
@@ -1252,8 +1270,12 @@ export class TxtView {
       case "PageDown":
         return move("pageDown");
       case "Tab":
-        if (!ctrl) return act({ type: "tab" });
-        return false;
+        if (ctrl) return false;
+        if ((this.header?.selectionCount ?? 1) === 1 && this.cb.onTab?.(shift)) {
+          e.preventDefault();
+          return true;
+        }
+        return act({ type: "tab" });
       case "Escape":
         return act({ type: "collapse" });
       case "Enter":
@@ -1268,6 +1290,7 @@ export class TxtView {
         break;
     }
     if (e.altKey && !ctrl && e.key.toLowerCase() === "z") return command("toggleWrap");
+    if (e.altKey && shift && !ctrl && e.key.toLowerCase() === "f") return command("formatTable");
     if (!ctrl) return false;
     switch (e.key.toLowerCase()) {
       case "a":

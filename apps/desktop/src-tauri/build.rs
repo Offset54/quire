@@ -43,6 +43,8 @@ fn main() {
         "md_status",
         "md_blocks",
         "md_outline",
+        "md_table",
+        "md_paste_image",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
         commands.extend([

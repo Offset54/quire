@@ -17,6 +17,7 @@ pub mod preview;
 pub mod render;
 pub mod sanitize;
 pub mod scan;
+pub mod table_edit;
 pub mod tables;
 pub mod text;
 pub mod words;

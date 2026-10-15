@@ -15,6 +15,8 @@ const KEYS = {
   down: "",
   control: "",
   shift: "",
+  alt: "",
+  tab: "",
   f3: "",
 };
 export { KEYS };

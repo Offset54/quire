@@ -163,6 +163,12 @@ pub enum Action {
         ranges: Vec<(u64, u64)>,
     },
     Cut,
+    /// Replacements a helper computed (a Markdown table formatted, a pasted
+    /// image's link): `(from, to, text)`, ascending, not overlapping, on
+    /// character boundaries. One undo step; carets after each replacement.
+    Replace {
+        edits: Vec<(u64, u64, String)>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -1028,6 +1034,27 @@ impl TextDocument {
                 out.clipboard = self.selected_text()?;
                 let edits = self.deletion_ranges(&|_, at| Ok((at, at)))?;
                 out.changed = self.replace_ranges(edits, Kind::Other)?;
+            }
+            Action::Replace { edits } => {
+                let len = self.len();
+                let mut last = 0;
+                let mut checked = Vec::with_capacity(edits.len());
+                for (from, to, text) in edits {
+                    let ok = *from >= last
+                        && from <= to
+                        && *to <= len
+                        && snap_offset(&snap, *from)? == *from
+                        && snap_offset(&snap, *to)? == *to;
+                    if !ok {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            format!("bad replacement {from}..{to}"),
+                        ));
+                    }
+                    last = *to;
+                    checked.push((*from, *to, text.clone().into_bytes()));
+                }
+                out.changed = self.replace_ranges(checked, Kind::Other)?;
             }
             Action::Undo => out.changed = self.undo()?,
             Action::Redo => out.changed = self.redo()?,

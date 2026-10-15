@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-paste-image"
+description = "Enables the md_paste_image command without any pre-configured scope."
+commands.allow = ["md_paste_image"]
+
+[[permission]]
+identifier = "deny-md-paste-image"
+description = "Denies the md_paste_image command without any pre-configured scope."
+commands.deny = ["md_paste_image"]

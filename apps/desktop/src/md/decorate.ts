@@ -104,8 +104,16 @@ export class SourceDecorator {
   constructor(
     private readonly doc: number,
     private readonly view: TxtView,
+    /** A new block map arrived. */
+    private readonly changed?: () => void,
   ) {
     view.setDecorator((row) => this.decorate(row));
+  }
+
+  /** The kind of the block at `offset`, if the map covers it (a hint; the
+   *  core checks again). */
+  kindAt(offset: number): number | undefined {
+    return this.blockAt(offset)?.kind;
   }
 
   private blockAt(offset: number): BlockSpan | undefined {
@@ -158,6 +166,7 @@ export class SourceDecorator {
       this.revision = m.revision;
       this.covered = [lo, hi];
       this.view.redecorate();
+      this.changed?.();
     } catch {
       // Decoration is optional; the next update tries again.
     }

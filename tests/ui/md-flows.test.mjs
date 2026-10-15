@@ -513,3 +513,136 @@ test("a large table shows as aligned pieces with one header", async () => {
   assert.ok(shape.heads <= 1, "at most one header");
   if (shape.firstShown) assert.equal(shape.heads, 1);
 });
+
+/** The document's text, as the core has it (a Buffer: byte offsets). */
+async function docText() {
+  await focusEditor();
+  await wd.chord([KEYS.control, "s"]);
+  await wd.until(async () => /Saved/.test(await status()), 10_000, "saved");
+  return fs.readFileSync(sample);
+}
+
+test("table helpers: format, Tab between cells, one undo step each", async () => {
+  const before = await docText();
+  const at = before.indexOf(Buffer.from("| a | b |"));
+  assert.ok(at >= 0);
+  await focusEditor();
+  await wd.exec(
+    `const v = window.__quire.session.view; v.send({ type: "setSelections", ranges: [[${at + 2}, ${at + 2}]] }); void v.reveal(${at});`,
+  );
+  await wd.until(
+    () =>
+      wd.exec(
+        "return [...document.querySelectorAll('.statusbar button')].some((b) => b.textContent === 'Table')",
+      ),
+    5000,
+    "caret in the table",
+  );
+  await wd.chord([KEYS.alt, KEYS.shift, "f"]);
+  let text = await untilOrDump(
+    async () => {
+      const t = await docText();
+      return t.includes("| a   | b   |\n| --- | --- |\n| 1   | 2   |") && t;
+    },
+    10_000,
+    "formatted table",
+  );
+  // Only the table changed.
+  const end = before.indexOf(Buffer.from("| 1 | 2 |")) + "| 1 | 2 |".length;
+  assert.deepEqual(text.subarray(0, at), before.subarray(0, at));
+  assert.deepEqual(
+    text.subarray(text.indexOf(Buffer.from("| 1   | 2   |")) + 13),
+    before.subarray(end),
+  );
+  // Tab from the last cell adds a row; Shift+Tab goes back.
+  const two = text.indexOf(Buffer.from("| 2   |")) + 3;
+  await wd.exec(
+    `window.__quire.session.view.send({ type: "setSelections", ranges: [[${two}, ${two}]] })`,
+  );
+  await new Promise((r) => setTimeout(r, 200));
+  await wd.chord([KEYS.tab]);
+  await untilOrDump(
+    async () => {
+      const t = await docText();
+      return t.includes("| 1   | 2   |\n|     |     |") && t;
+    },
+    10_000,
+    "a new row",
+  );
+  await wd.exec(
+    `document.querySelector('.txt-input').dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: 'z', cancelable: true }))`,
+  );
+  await untilOrDump(
+    async () => {
+      const t = await docText();
+      return /\| z +\| +\|/.test(t.toString());
+    },
+    10_000,
+    "typed in the new row's first cell",
+  );
+  // Undo: the typing, then the new row (one step), then the format (one step).
+  await focusEditor();
+  for (let i = 0; i < 3; i++) await wd.chord([KEYS.control, "z"]);
+  await untilOrDump(
+    async () => {
+      const t = await docText();
+      return t.equals(before) && t;
+    },
+    10_000,
+    "back to the original bytes",
+  );
+});
+
+test("pasting an image stores it in assets/ once and links it (one undo step)", async () => {
+  const before = await docText();
+  const png3 = png(3, 2);
+  const paste = `
+    const bytes = new Uint8Array([${[...png3].join(",")}]);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "image.png", { type: "image/png" }));
+    document.querySelector('.txt-input').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+  `;
+  await focusEditor();
+  await wd.exec(`window.__quire.session.view.send({ type: "setSelections", ranges: [[0, 0]] })`);
+  await new Promise((r) => setTimeout(r, 200));
+  await wd.exec(paste);
+  // Wait for the link in the view before saving: an edit that arrives
+  // while a save runs is refused ("busy").
+  await untilOrDump(
+    async () => (await sourceRows()).some((r) => r.t.startsWith("![](assets/image-")),
+    10_000,
+    "the link in the source view",
+  );
+  const text = await untilOrDump(
+    async () => {
+      const t = await docText();
+      globalThis.__head = t.subarray(0, 60).toString();
+      return t.subarray(0, 4).toString() === "![](" && t;
+    },
+    10_000,
+    "the link inserted",
+  ).catch(async (err) => {
+    throw new Error(
+      `${String(err)} head=${JSON.stringify(globalThis.__head)} md=${JSON.stringify(await wd.exec("return { rev: window.__quire.session.view.primary(), sel: window.__quire.session.view.primary() }"))}`,
+    );
+  });
+  const link = /^!\[\]\((assets\/image-\d{8}-[0-9a-f]{8}\.png)\)/.exec(text.toString())[1];
+  assert.deepEqual(fs.readFileSync(path.join(mdDir, link)), png3);
+  // The same image again: the same file.
+  await wd.exec(paste);
+  await untilOrDump(
+    async () =>
+      (await sourceRows()).some((r) => r.t.startsWith("![](assets/") && r.t.indexOf("![](", 4) > 0),
+    10_000,
+    "the second link in the source view",
+  );
+  await untilOrDump(
+    async () => (await docText()).toString().startsWith(`![](${link})![](${link})`),
+    10_000,
+    "the same link again",
+  );
+  assert.equal(fs.readdirSync(path.join(mdDir, "assets")).length, 1);
+  await focusEditor();
+  for (let i = 0; i < 2; i++) await wd.chord([KEYS.control, "z"]);
+  await untilOrDump(async () => (await docText()).equals(before), 10_000, "undone");
+});
