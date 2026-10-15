@@ -491,6 +491,9 @@ export class MdPreview {
       });
       big.prepend(label);
     }
+    for (const pre of el.querySelectorAll<HTMLElement>('pre[data-hl="large"]')) {
+      pre.dataset.hlLabel = t("md.codeTooLarge");
+    }
     let blocked = false;
     for (const img of el.querySelectorAll<HTMLImageElement>("img[data-blocked-src]")) {
       blocked = true;

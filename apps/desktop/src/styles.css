@@ -737,6 +737,145 @@ input {
   line-height: 1.45;
 }
 
+/* Code blocks (ADR-0029): the language as a label; code without a grammar
+   or over the size cap shows plain, labeled (§2: degrade honestly). */
+.markdown-body pre[data-lang] {
+  position: relative;
+}
+
+.markdown-body pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.markdown-body pre[data-hl="large"]::before {
+  content: attr(data-lang) " · " attr(data-hl-label);
+}
+
+.markdown-body .md-piece:not(.md-piece-first) > pre::before {
+  content: none;
+}
+
+/* Highlight classes from crates/highlight (one palette per theme). */
+.hl-comment {
+  color: #6a737d;
+  font-style: italic;
+}
+.hl-keyword,
+.hl-markup-heading {
+  color: #a626a4;
+}
+.hl-string,
+.hl-string-special,
+.hl-character,
+.hl-markup-raw {
+  color: #50a14f;
+}
+.hl-escape {
+  color: #0e8a8a;
+}
+.hl-number,
+.hl-boolean,
+.hl-constant,
+.hl-constant-builtin {
+  color: #b76b01;
+}
+.hl-function,
+.hl-function-method,
+.hl-function-builtin,
+.hl-function-macro,
+.hl-markup-link {
+  color: #2f6fdd;
+}
+.hl-type,
+.hl-type-builtin,
+.hl-constructor,
+.hl-module {
+  color: #c18401;
+}
+.hl-tag {
+  color: #e45649;
+}
+.hl-attribute,
+.hl-property,
+.hl-label {
+  color: #986801;
+}
+.hl-variable-builtin,
+.hl-variable-parameter {
+  color: #d1495b;
+}
+.hl-operator,
+.hl-punctuation-special {
+  color: #0184bc;
+}
+.hl-markup-bold {
+  font-weight: 600;
+}
+.hl-markup-italic {
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hl-comment {
+    color: #7f848e;
+  }
+  .hl-keyword,
+  .hl-markup-heading {
+    color: #c678dd;
+  }
+  .hl-string,
+  .hl-string-special,
+  .hl-character,
+  .hl-markup-raw {
+    color: #98c379;
+  }
+  .hl-escape {
+    color: #56b6c2;
+  }
+  .hl-number,
+  .hl-boolean,
+  .hl-constant,
+  .hl-constant-builtin {
+    color: #d19a66;
+  }
+  .hl-function,
+  .hl-function-method,
+  .hl-function-builtin,
+  .hl-function-macro,
+  .hl-markup-link {
+    color: #61afef;
+  }
+  .hl-type,
+  .hl-type-builtin,
+  .hl-constructor,
+  .hl-module {
+    color: #e5c07b;
+  }
+  .hl-tag {
+    color: #e06c75;
+  }
+  .hl-attribute,
+  .hl-property,
+  .hl-label {
+    color: #d19a66;
+  }
+  .hl-variable-builtin,
+  .hl-variable-parameter {
+    color: #e06c75;
+  }
+  .hl-operator,
+  .hl-punctuation-special {
+    color: #56b6c2;
+  }
+}
+
 .markdown-body table {
   border-collapse: collapse;
   display: block;

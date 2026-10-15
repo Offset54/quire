@@ -101,5 +101,6 @@
   "md.source": "Source",
   "md.split": "Split",
   "md.reading": "Reading",
+  "md.codeTooLarge": "too large to highlight",
   "md.tooLarge": "This block is too large to preview ({size} KiB). Its beginning is shown as source; edit it in the source view."
 }

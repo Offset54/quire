@@ -11,10 +11,17 @@
 //! signature changed. Each rendering gets a revision number, so the
 //! frontend, which keeps blocks by id, can tell a new rendering of the same
 //! block from the one it has.
+//!
+//! Code highlighting is lazy (ADR-0029): renderings take highlighted code
+//! from `quire_highlight::service`'s cache, or render it plain and request
+//! it. Once the background thread has it, a pass over the shown entries
+//! ([`Preview::highlight_due`], [`Highlight::Upgrade`]) renders them again,
+//! a few milliseconds at a time.
 
 use std::collections::HashMap;
 use std::io;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use xxhash_rust::xxh3::Xxh3;
 
@@ -172,6 +179,28 @@ pub struct Window {
     pub len: u64,
 }
 
+/// Highlighting a rendering waited for is ready.
+fn highlight_ready(r: &Rendered) -> bool {
+    r.highlight_pending
+        .iter()
+        .any(|k| quire_highlight::service::is_ready(*k))
+}
+
+/// How renderings made now treat code in a known language (ADR-0029).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Highlight {
+    /// From the highlight cache, else plain and requested (first paint,
+    /// scrolling).
+    Off,
+    /// Small code whose grammar is ready is highlighted right away (an
+    /// edited block, so it doesn't flash plain while typing).
+    New,
+    /// For this long, also render again the cached renderings whose
+    /// highlighting is now ready. A rendering started before the end
+    /// finishes.
+    Upgrade(Duration),
+}
+
 /// The preview's render cache.
 pub struct Preview {
     /// Renderings by entry id (a block's id, or a piece's).
@@ -180,7 +209,12 @@ pub struct Preview {
     layouts: HashMap<u64, Option<Arc<Layout>>>,
     /// Render with the tables as they are, without waiting for a rebuild.
     provisional: bool,
+    highlight: Highlight,
+    /// End of an [`Highlight::Upgrade`] pass.
+    highlight_until: Option<Instant>,
     opts: RenderOptions,
+    /// `opts` with highlighting on.
+    opts_hl: RenderOptions,
     opts_gen: u64,
     next_rev: u64,
     tick: u64,
@@ -202,11 +236,15 @@ fn entry_bytes(r: &Rendered) -> u64 {
 
 impl Preview {
     pub fn new(opts: RenderOptions) -> Self {
+        let (opts, opts_hl) = Self::split(opts);
         Self {
             entries: HashMap::new(),
             layouts: HashMap::new(),
             provisional: false,
+            highlight: Highlight::Off,
+            highlight_until: None,
             opts,
+            opts_hl,
             opts_gen: 1,
             next_rev: 1,
             tick: 0,
@@ -221,8 +259,51 @@ impl Preview {
     /// New render options (the remote toggle): every block renders again
     /// when next shown.
     pub fn set_options(&mut self, opts: RenderOptions) {
-        self.opts = opts;
+        (self.opts, self.opts_hl) = Self::split(opts);
         self.opts_gen += 1;
+    }
+
+    fn split(opts: RenderOptions) -> (RenderOptions, RenderOptions) {
+        let plain = RenderOptions {
+            highlight: false,
+            ..opts.clone()
+        };
+        let hl = RenderOptions {
+            highlight: true,
+            ..opts
+        };
+        (plain, hl)
+    }
+
+    /// How renderings made from now on treat code ([`Highlight`]).
+    pub fn set_highlight(&mut self, mode: Highlight) {
+        self.highlight = mode;
+        self.highlight_until = match mode {
+            Highlight::Upgrade(budget) => Some(Instant::now() + budget),
+            _ => None,
+        };
+    }
+
+    /// (highlight new renderings, render pending ones again).
+    fn highlighting(&self) -> (bool, bool) {
+        match self.highlight {
+            Highlight::Off => (false, false),
+            Highlight::New => (true, false),
+            Highlight::Upgrade(_) => {
+                let on = self.highlight_until.is_some_and(|d| Instant::now() < d);
+                (false, on)
+            }
+        }
+    }
+
+    /// Whether any of `shown` (entry id, revision) was rendered plain
+    /// waiting for highlighting that is now ready.
+    pub fn highlight_due(&self, shown: &[(u64, u64)]) -> bool {
+        shown.iter().any(|(id, rev)| {
+            self.entries
+                .get(id)
+                .is_some_and(|e| e.rev == *rev && highlight_ready(&e.rendered))
+        })
     }
 
     /// Provisional rendering: while on, blocks render against the tables as
@@ -299,8 +380,10 @@ impl Preview {
         } else {
             doc.tables_generation()
         };
+        let (highlight, upgrade) = self.highlighting();
         if let Some(e) = self.entries.get_mut(&id)
             && e.opts_gen == self.opts_gen
+            && !(upgrade && highlight_ready(&e.rendered))
         {
             if e.tables_gen == tables_gen {
                 e.tick = self.tick;
@@ -313,7 +396,8 @@ impl Preview {
                 return Ok((e.rev, e.lines, Arc::clone(&e.rendered)));
             }
         }
-        let (rendered, lines) = make(doc, provisional, &self.opts)?;
+        let opts = if highlight { &self.opts_hl } else { &self.opts };
+        let (rendered, lines) = make(doc, provisional, opts)?;
         let rendered = Arc::new(rendered);
         let sig = signature(doc.current_tables(), &b, &rendered);
         let rev = self.next_rev;
@@ -861,5 +945,98 @@ mod tests {
         assert_ne!(w2.blocks[0].rev, w1.blocks[0].rev);
         assert!(w2.blocks[0].html.as_ref().unwrap().html.contains(">1</a>"));
         assert_ne!(w2.blocks[1].rev, w1.blocks[1].rev, "renumbered");
+    }
+
+    /// Waits until the background highlighter has what `w` waits for.
+    fn wait_due(p: &Preview, w: &Window) {
+        let shown: Vec<(u64, u64)> = w.blocks.iter().map(|b| (b.id, b.rev)).collect();
+        let t0 = Instant::now();
+        while !p.highlight_due(&shown) {
+            assert!(t0.elapsed() < Duration::from_secs(20), "never highlighted");
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    }
+
+    #[test]
+    fn code_is_highlighted_after_the_window_and_when_edited() {
+        let mut text = String::from(
+            "Intro.
+
+```rust
+fn preview_a() {}
+```
+
+```cobol
+X.
+```
+",
+        );
+        let (mut doc, mut p) = setup(&text);
+        let w = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        let code = html_of(&w, w.blocks[1].id).unwrap();
+        assert!(
+            code.contains("data-lang=\"rust\" data-hl=\"pending\""),
+            "{code}"
+        );
+        assert!(!code.contains("hl-keyword"));
+        let other = html_of(&w, w.blocks[2].id).unwrap();
+        assert!(other.contains("data-hl=\"none\""), "{other}");
+        wait_due(&p, &w);
+
+        // The pass renders the waiting block again, nothing else.
+        p.set_highlight(Highlight::Upgrade(Duration::from_secs(10)));
+        let w2 = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        p.set_highlight(Highlight::Off);
+        assert_eq!(w2.blocks[0].rev, w.blocks[0].rev);
+        assert_ne!(w2.blocks[1].rev, w.blocks[1].rev);
+        assert_eq!(
+            w2.blocks[2].rev, w.blocks[2].rev,
+            "no grammar: nothing to do"
+        );
+        let code = html_of(&w2, w2.blocks[1].id).unwrap();
+        assert!(
+            code.contains("hl-keyword") && !code.contains("data-hl"),
+            "{code}"
+        );
+        let shown: Vec<(u64, u64)> = w2.blocks.iter().map(|b| (b.id, b.rev)).collect();
+        assert!(!p.highlight_due(&shown));
+
+        // An edited block is highlighted in its first window (its grammar
+        // is ready now).
+        let at = text.find("{}").unwrap();
+        text.insert_str(at, "1 ");
+        doc.edit(text.as_bytes(), at as u64, 0, 2).unwrap();
+        p.set_highlight(Highlight::New);
+        let w3 = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        p.set_highlight(Highlight::Off);
+        let code = html_of(&w3, w3.blocks[1].id).unwrap();
+        assert!(
+            code.contains("hl-keyword") && code.contains(">1</span> "),
+            "{code}"
+        );
+    }
+
+    #[test]
+    fn an_expired_pass_leaves_code_pending() {
+        let text = "```rust
+fn preview_expired() {}
+```
+";
+        let (mut doc, mut p) = setup(text);
+        let w = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        wait_due(&p, &w);
+        p.set_highlight(Highlight::Upgrade(Duration::ZERO));
+        let w2 = p
+            .window(&mut doc, text.as_bytes(), 0, 0, 5, &|_, _| false)
+            .unwrap();
+        assert_eq!(w2.blocks[0].rev, w.blocks[0].rev);
     }
 }

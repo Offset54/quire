@@ -65,6 +65,8 @@ function writeSample() {
     "![tracker](https://tracker.invalid/pixel.png)\n",
     "| a | b |\n|---|---|\n| 1 | 2 |\n",
     '<script>window.__pwned = true</script>\n\n<div onclick="window.__pwned = true">raw div</div>\n',
+    "```rust\nfn main() { let answer = 42; }\n```\n",
+    "```cobol\nDISPLAY 'HI'.\n```\n",
   ];
   for (let i = 0; i < 400; i++) {
     parts.push(`## Section ${i}\n`);
@@ -314,6 +316,40 @@ test("save writes the edit and leaves the rest byte-exact", async () => {
 
 // After the save: the preview reads the saved file through a new
 // snapshot (an old one would read it shifted by the unsaved edits).
+test("code is highlighted after the paint; other languages are labeled plain", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, "\\"]);
+  await wd.until(async () => (await mode()) === "split", 5000, "split mode");
+  const at = fs.readFileSync(sample).indexOf(Buffer.from("```rust"));
+  await wd.exec(`window.__quire.session.md.preview.reveal(${at})`);
+  const code = await untilOrDump(
+    () =>
+      wd.exec(`
+        const rust = document.querySelector('.md-block pre[data-lang="rust"]');
+        const cobol = document.querySelector('.md-block pre[data-lang="cobol"]');
+        if (!rust || !cobol || !rust.querySelector('.hl-keyword')) return false;
+        return {
+          keyword: rust.querySelector('.hl-keyword').textContent,
+          text: rust.querySelector('code').textContent,
+          rustHl: rust.dataset.hl ?? null,
+          cobolHl: cobol.dataset.hl ?? null,
+          label: getComputedStyle(cobol, '::before').content,
+        };
+      `),
+    10_000,
+    "highlighted code",
+  );
+  assert.ok(["fn", "let"].includes(code.keyword), code.keyword);
+  assert.equal(code.text, "fn main() { let answer = 42; }\n");
+  assert.equal(code.rustHl, null);
+  assert.equal(code.cobolHl, "none");
+  assert.equal(code.label, '"cobol"');
+  // Leave the view mode as the next flow expects it.
+  await focusEditor();
+  await wd.chord([KEYS.control, "\\"]);
+  await wd.until(async () => (await mode()) !== "split", 5000, "split mode off");
+});
+
 test("a large table shows as aligned pieces with one header", async () => {
   await focusEditor();
   await wd.chord([KEYS.control, "\\"]);

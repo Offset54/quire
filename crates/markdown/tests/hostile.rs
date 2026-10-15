@@ -129,6 +129,9 @@ const ATTRS: &[&str] = &[
     "data-footnote-backref-idx",
     "aria-label",
     "data-math-style",
+    // Code blocks (ADR-0029): the fence's language, escaped, and why it is plain.
+    "data-lang",
+    "data-hl",
 ];
 
 fn data_dir() -> PathBuf {

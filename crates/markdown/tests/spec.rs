@@ -143,6 +143,7 @@ fn spec_suites() {
                 flavor,
                 document: true,
                 sanitize: None,
+                highlight: false,
             };
             let got = std::panic::catch_unwind(|| render_document(ex.markdown.as_bytes(), &opts))
                 .unwrap_or_else(|_| "<<panic>>".into());
@@ -199,6 +200,7 @@ fn commonmark_with_every_extension() {
         flavor: Flavor::PRODUCT,
         document: true,
         sanitize: None,
+        highlight: false,
     };
     let (mut n, mut ok) = (0, 0);
     for ex in examples(&text) {

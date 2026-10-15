@@ -21,9 +21,10 @@ use std::time::{Duration, Instant};
 
 use parking_lot::{Condvar, Mutex, RwLock};
 use quire_core::memory::{CacheClass, DocId, Evictable, MemoryGovernor, Registration};
+use quire_highlight::service::{self as highlight_service, Listener};
 use quire_markdown::document::MarkdownDoc;
 use quire_markdown::images::ImagePolicy;
-use quire_markdown::preview::{self, Preview, Window};
+use quire_markdown::preview::{self, Highlight, Preview, Window};
 use quire_markdown::render::RenderOptions;
 use quire_markdown::words::WordCounter;
 use quire_text::buffer::Snapshot;
@@ -49,6 +50,9 @@ pub fn is_markdown(path: &Path) -> bool {
 /// Rendered blocks kept per document before the oldest go (the governor can
 /// ask for less).
 const PREVIEW_CACHE: u64 = 64 * 1024 * 1024;
+/// One highlighting pass over the shown code (ADR-0029): the state lock is
+/// held this long at most, plus the rendering in progress.
+const HIGHLIGHT_SLICE: Duration = Duration::from_millis(8);
 
 #[derive(Clone, Copy, Debug)]
 struct Viewport {
@@ -100,6 +104,9 @@ pub struct MdDoc {
     /// Counts snapshot replacements by saves (a reader holding a clone
     /// of the snapshot starts over when it changes).
     snap_gen: AtomicU64,
+    /// Wakes the worker when background highlighting is ready (ADR-0029);
+    /// registered weakly with `quire_highlight::service`.
+    highlight_listener: Arc<Listener>,
 }
 
 impl Evictable for MdDoc {
@@ -210,6 +217,38 @@ impl MdDoc {
         Ok(Some(p.at))
     }
 
+    /// Applies a recorded change and pushes the window as it is now.
+    ///
+    /// Whoever takes the change pushes it: the worker, or a request that
+    /// reads the state first (`md_view`, `md_blocks`). Otherwise an edit a
+    /// request took would first show with the corrections, after the
+    /// O(document) rebuild of the tables.
+    fn apply_edit(&self, st: &mut MdState) -> CmdResult<()> {
+        let Some(at) = self.apply_pending(st)? else {
+            return Ok(());
+        };
+        // First the window as it is now, against the tables as they are:
+        // the edited block's text and structure don't wait for an
+        // O(document) rebuild of the tables. If the edit changed what a
+        // block contributes (a footnote reference, a definition, a heading),
+        // the corrections follow once no further edit is waiting.
+        st.preview.set_provisional(true);
+        // The edited block keeps its highlighting (ADR-0029).
+        st.preview.set_highlight(Highlight::New);
+        let pushed = self.push_window(st, false);
+        st.preview.set_highlight(Highlight::Off);
+        let indexing = !st.md.index().is_complete();
+        st.preview.set_provisional(indexing);
+        let pushed = pushed?;
+        *self.words_due.lock() = Some(Instant::now() + WORDS_DELAY);
+        let ms = at.elapsed().as_secs_f64() * 1000.0;
+        *self.last_edit.lock() = Some((st.revision, ms));
+        if pushed {
+            tracing::trace!(ms, "preview patch pushed");
+        }
+        Ok(())
+    }
+
     /// The window around `v`, marking what it sends as sent.
     fn window(&self, st: &mut MdState, v: Viewport) -> CmdResult<Window> {
         let MdState {
@@ -262,7 +301,11 @@ impl MdDoc {
             // (until then every stretch changes them; the completion push
             // brings them).
             let corrections = complete && tables_pending;
-            if !has_pending && complete && !corrections {
+            let highlight = !has_pending && !corrections && {
+                let st = self.state.lock();
+                st.preview.highlight_due(&st.shown)
+            };
+            if !has_pending && complete && !corrections && !highlight {
                 let due = *self.words_due.lock();
                 if due.is_some_and(|d| d <= Instant::now()) {
                     self.count_words();
@@ -281,28 +324,14 @@ impl MdDoc {
             let _reading = self.readers.read();
             let mut st = self.state.lock();
             let step = if has_pending {
-                self.apply_pending(&mut st).and_then(|at| {
-                    // First the window as it is now, against the tables as
-                    // they are: the edited block's text and structure don't
-                    // wait for an O(document) rebuild of the tables. If the
-                    // edit changed what a block contributes (a footnote
-                    // reference, a definition, a heading), the corrections
-                    // follow once no further edit is waiting.
-                    st.preview.set_provisional(true);
-                    let pushed = self.push_window(&mut st, false);
-                    let indexing = !st.md.index().is_complete();
-                    st.preview.set_provisional(indexing);
-                    let pushed = pushed?;
-                    if let Some(at) = at {
-                        *self.words_due.lock() = Some(Instant::now() + WORDS_DELAY);
-                        let ms = at.elapsed().as_secs_f64() * 1000.0;
-                        *self.last_edit.lock() = Some((st.revision, ms));
-                        if pushed {
-                            tracing::trace!(ms, "preview patch pushed");
-                        }
-                    }
-                    Ok(())
-                })
+                self.apply_edit(&mut st)
+            } else if highlight {
+                // Shown code, highlighted a slice at a time (ADR-0029).
+                st.preview
+                    .set_highlight(Highlight::Upgrade(HIGHLIGHT_SLICE));
+                let r = self.push_window(&mut st, false).map(|_| ());
+                st.preview.set_highlight(Highlight::Off);
+                r
             } else if corrections {
                 let started = Instant::now();
                 let r = self.push_window(&mut st, false).map(|_| ());
@@ -410,7 +439,7 @@ impl MdDoc {
     fn blocks_in(&self, from: u64, to: u64) -> CmdResult<Vec<u8>> {
         let _reading = self.readers.read();
         let mut st = self.state.lock();
-        self.apply_pending(&mut st)?;
+        self.apply_edit(&mut st)?;
         let MdState {
             md, snap, revision, ..
         } = &mut *st;
@@ -491,6 +520,13 @@ impl MdService {
         let revision = f.doc.revision();
         let opts = Self::options(f.path.as_deref(), None);
         let md = Arc::new_cyclic(|weak: &Weak<MdDoc>| {
+            let me = weak.clone();
+            let highlight_listener: Arc<Listener> = Arc::new(move || {
+                if let Some(m) = me.upgrade() {
+                    let _p = m.pending.lock();
+                    m.wake.notify_one();
+                }
+            });
             let weak: Weak<dyn Evictable> = weak.clone();
             let reg =
                 self.governor
@@ -525,8 +561,10 @@ impl MdService {
                 words_due: Mutex::new(None),
                 readers: Arc::clone(&s.readers),
                 snap_gen: AtomicU64::new(0),
+                highlight_listener,
             }
         });
+        highlight_service::add_listener(Arc::downgrade(&md.highlight_listener));
         let weak = Arc::downgrade(&md);
         s.set_listener(
             &mut f,
@@ -608,7 +646,7 @@ pub async fn md_view(
         let _reading = m.readers.read();
         let mut st = m.state.lock();
         // Show the latest text.
-        m.apply_pending(&mut st)?;
+        m.apply_edit(&mut st)?;
         for id in forget.unwrap_or_default() {
             st.sent.remove(&id);
         }
@@ -620,7 +658,13 @@ pub async fn md_view(
         st.viewport = Some(v);
         let w = m.window(&mut st, v)?;
         let msg = preview::encode(&w, seq, st.revision);
+        let highlight = st.preview.highlight_due(&st.shown);
         drop(st);
+        if highlight {
+            // The worker highlights the window's code next.
+            let _p = m.pending.lock();
+            m.wake.notify_one();
+        }
         m.charge();
         Ok(Response::new(msg))
     })

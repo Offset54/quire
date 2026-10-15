@@ -15,6 +15,7 @@ quire-core = { path = "../../../crates/core" }
 quire-raster = { path = "../../../crates/raster" }
 quire-text = { path = "../../../crates/text" }
 quire-markdown = { path = "../../../crates/markdown" }
+quire-highlight = { path = "../../../crates/highlight" }
 encoding_rs = "0.8"
 notify = "8"
 qoi = "0.4"

@@ -39,6 +39,13 @@ pub struct RenderOptions {
     /// this policy (ADR-0028). `None` only for the spec harness, which
     /// compares the renderer's output before sanitization.
     pub sanitize: Option<ImagePolicy>,
+    /// Fenced code in a known language (ADR-0029) is highlighted from the
+    /// highlight cache; on a miss it renders plain, the work is requested
+    /// from `quire_highlight::service`, and the rendering lists what it
+    /// waits for ([`Rendered::highlight_pending`]). With this on, small code
+    /// whose grammar is ready is highlighted right here instead (exports,
+    /// an edited block).
+    pub highlight: bool,
 }
 
 impl Default for RenderOptions {
@@ -49,6 +56,7 @@ impl Default for RenderOptions {
             flavor: Flavor::PRODUCT,
             document: false,
             sanitize: Some(ImagePolicy::default()),
+            highlight: true,
         }
     }
 }
@@ -64,6 +72,9 @@ pub struct Rendered {
     pub footnotes: Vec<String>,
     /// Headings rendered (their ids come from the outline).
     pub headings: usize,
+    /// Cache keys of code rendered plain while its highlighting is done in
+    /// the background ([`RenderOptions::highlight`]).
+    pub highlight_pending: Vec<u128>,
 }
 
 struct State<'r> {
@@ -76,6 +87,7 @@ struct State<'r> {
     /// An element dropped with its content (`<script>`, …) is open: raw HTML
     /// and text are left out until it closes (one state per block).
     skip: Option<String>,
+    highlight_pending: Vec<u128>,
 }
 
 fn is_stub<'a>(node: &'a AstNode<'a>, base: usize) -> bool {
@@ -297,6 +309,12 @@ fn format<'a>(
             }
             Ok(ChildRendering::HTML)
         }
+        NodeValue::CodeBlock(ref c) if context.user.opts.sanitize.is_some() => {
+            if entering {
+                code_block(context, node, &c.info, &c.literal)?;
+            }
+            Ok(ChildRendering::HTML)
+        }
         NodeValue::FootnoteReference(r) => {
             if entering {
                 let key = normalize_label(&r.name);
@@ -391,6 +409,76 @@ fn format<'a>(
     }
 }
 
+/// A code block (ADR-0029): `<pre>` carries the language (`data-lang`, the
+/// info string's first word) and, when the code isn't highlighted, why
+/// (`data-hl`: `none` no grammar, `large` over the size cap, `pending` not
+/// yet); the frontend labels it. Math blocks stay comrak's.
+fn code_block<'a>(
+    context: &mut Context<State<'_>>,
+    node: &'a AstNode<'a>,
+    info: &str,
+    literal: &str,
+) -> fmt::Result {
+    let lang = info.split_ascii_whitespace().next().unwrap_or("");
+    if lang == "math" {
+        format_node_default(context, node, true)?;
+        return Ok(());
+    }
+    use quire_highlight::service;
+    let mut body = None;
+    let mut state = "";
+    if !lang.is_empty() {
+        match quire_highlight::language(lang).filter(|l| !l.hidden) {
+            None => state = "none",
+            Some(_) if !quire_highlight::within_cap(literal) => state = "large",
+            Some(l) => {
+                let key = service::key(lang, literal);
+                let inline = context.user.opts.highlight
+                    && (context.user.opts.document
+                        || (literal.len() <= quire_highlight::INLINE_MAX_BYTES && l.is_ready()));
+                let r = match service::lookup(key) {
+                    Some(r) => Some(r),
+                    None if inline => Some(service::compute(lang, literal)),
+                    None => None,
+                };
+                match r {
+                    Some(Ok(html)) => body = Some(html),
+                    Some(Err(_)) => state = "none",
+                    None => {
+                        service::request(lang, literal);
+                        state = "pending";
+                        context.user.highlight_pending.push(key);
+                    }
+                }
+            }
+        }
+    }
+    context.cr()?;
+    context.write_str("<pre")?;
+    sourcepos(context, node)?;
+    if !lang.is_empty() {
+        context.write_str(" data-lang=\"")?;
+        context.escape(lang)?;
+        context.write_str("\"")?;
+    }
+    if !state.is_empty() {
+        write!(context, " data-hl=\"{state}\"")?;
+    }
+    context.write_str("><code")?;
+    if !lang.is_empty() {
+        context.write_str(" class=\"language-")?;
+        context.escape(lang)?;
+        context.write_str("\"")?;
+    }
+    context.write_str(">")?;
+    match body {
+        Some(html) => context.write_str(&html)?,
+        None => context.escape(literal)?,
+    }
+    context.write_str("</code></pre>")?;
+    context.lf()
+}
+
 /// Raw HTML through the sanitizer, image sources through the policy.
 fn clean_html(context: &mut Context<State<'_>>, html: &str) -> String {
     let state = &mut context.user;
@@ -448,16 +536,18 @@ pub fn render_block(bytes: &[u8], block: u64, tables: &Tables, opts: &RenderOpti
         opts,
         headings: 0,
         skip: None,
+        highlight_pending: Vec::new(),
     };
-    let headings =
+    let (headings, highlight_pending) =
         format_document_with_formatter(root, &o, &mut html, &Plugins::default(), format, state)
-            .map_or(0, |st| st.headings);
+            .map_or((0, Vec::new()), |st| (st.headings, st.highlight_pending));
     let deps = std::mem::take(&mut *deps.lock().unwrap_or_else(|e| e.into_inner()));
     Rendered {
         html,
         deps,
         footnotes,
         headings,
+        highlight_pending,
     }
 }
 

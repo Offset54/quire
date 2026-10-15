@@ -94,6 +94,7 @@ async function openSplit(host: HTMLElement, path: string) {
     session,
     view,
     md,
+    t0,
     openedMs,
     firstPaintMs: end - t0,
     ownFirstPaintMs: end - t0 - stallMs,
@@ -199,6 +200,12 @@ export async function md20m(host: HTMLElement): Promise<unknown> {
   const mem0 = await memory();
   const o = await openSplit(host, e.file);
   log(`first paint ${round1(o.firstPaintMs)} ms`);
+  // Code in the window highlighted after the first paint (ADR-0029;
+  // reported, not a budget row).
+  const pendingCode = () => o.md.preview.element.querySelectorAll('pre[data-hl="pending"]').length;
+  const pendingAtPaint = pendingCode();
+  await until(() => pendingCode() === 0, 10_000, "code highlighted");
+  const codeHighlightedMs = performance.now() - o.t0;
   const indexMs = await indexed();
   const mem1 = await memory();
   const status = await invoke<Record<string, unknown>>("md_status", { doc: o.session.doc });
@@ -215,6 +222,8 @@ export async function md20m(host: HTMLElement): Promise<unknown> {
     firstPaintLongFrames: o.longFrames,
     longTaskTimes: o.longTaskTimes,
     indexMs: round1(indexMs),
+    codeHighlightedMs: round1(codeHighlightedMs),
+    codePendingAtPaint: pendingAtPaint,
     status,
     memory: {
       before: mem0,
