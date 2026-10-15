@@ -12,3 +12,7 @@ Ref-sim runs (ADR-0021) on the dev machine; not reference-machine numbers.
 | `refsim-txt-2026-10-15-002701.json` | 7e73047 | **Disturbed**: test builds ran during part of the run. 21/21 pass, kept for reference only |
 | `refsim-md-2026-10-15-003943.json` | 02a5733 | Clean. 10/11: keystroke judged on unstalled keystrokes (ADR-0024 addendum) p95 21.1 ms, max 24.8 ms; typing p99 71.1 ms raw in one run of three (a platform stall; own 17.6 ms) |
 | `refsim-txt-2026-10-15-003943.json` | 02a5733 | Clean. 21/21 |
+| `refsim-md-2026-10-15-023333.json` | 94a4cfc | Clean. 10/11 with typing judged on own values (ADR-0024 addendum 2). No platform stalls this run, so `md.keystroke.max` 35.1 ms counted: reference-definition keystrokes waited for the O(document) table rebuild because `md_blocks` took the edit from the worker (fixed in 74bbb67). The TXT suite after it hung (fixed with `refsim run --timeout`, fb7c787) |
+| `refsim-md-2026-10-15-170811.json` | 30928b7 | Clean, with highlighting, KaTeX and Mermaid. **11/11**: first paint 113 ms (333 effective), keystroke p95 22.7 / max 28.5 ms (33.3), typing p99 7.7 ms own, preview max frame 11.4 ms, no long tasks |
+| `refsim-txt-2026-10-15-170611.json` | 30928b7 | Clean. **21/21**; launch-2g 899 ms (own 835) |
+| `refsim-m0-2026-10-15-170611.json` | 30928b7 | M0 suite (first run since 2026-10-08): **startup.warm 542 ms fails** (500 effective; 457–480 on 2026-10-08), cold 491 ms passes, scrolling rows pass. Binary 51.4 MB (18.6 MB before the grammars); attribution in progress (CLAUDE.md) |

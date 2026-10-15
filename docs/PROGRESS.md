@@ -4,7 +4,7 @@
 |---|---|
 | Phase | M2 (Markdown) in progress |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-14 |
+| Last updated | 2026-10-15 |
 
 ## Milestones
 
@@ -27,16 +27,16 @@
 | 2 | Block index and incremental parsing | Done: `crates/markdown` index, analysis, tables ([ADR-0027](adr/0027-markdown-incremental-parsing.md)); property test 100,000 cases; 20 MiB index 593 ms raw (background), edit 0.1–0.6 ms |
 | 3 | Block rendering and spec suite | Done: per-block rendering through comrak's formatter; spec harness 1,342/1,352 (99.26 %), exceptions in [markdown-spec-exceptions.md](markdown-spec-exceptions.md) |
 | 4 | Sanitization and content loading | Done ([ADR-0028](adr/0028-markdown-sanitization-and-content-loading.md)): allowlist sanitizer in rendering, one image policy, `quire-img` scheme (display-size decode, remote images behind the per-document toggle), hostile-HTML set |
-| 5 | Code highlighting | Not started |
+| 5 | Code highlighting | Done ([ADR-0029](adr/0029-code-highlighting.md)): `crates/highlight`, tree-sitter 0.27 with the 21 grammars of decision D (all MIT); a background thread with a cache by content hash, shown blocks upgraded after the paint, small edited blocks inline; 256 KiB / 16 KiB-line cap; unknown languages plain and labeled. Measured raw: 0.9–9.9 ms per 200-line block, first use of a grammar up to 357 ms (Swift), off the preview's thread. Binary +33 MB (RISKS #15) |
 | 6 | Preview surface | Done ([ADR-0030](adr/0030-markdown-preview-surface.md)): byte-anchored DOM blocks in host windows, render cache with dependency signatures, provisional windows then corrections, progressive placement, large tables and code as pieces, font warm-up. Ref-sim (clean run 2026-10-15): first paint 73–90 ms (333 ms effective), preview scrolling max frame ≤ 9.2 ms, no long tasks; 10 of 11 md rows pass, typing p99 fails in one run of three on a platform stall |
-| 7 | KaTeX and Mermaid | Not started |
+| 7 | KaTeX and Mermaid | Done ([ADR-0033](adr/0033-math-and-diagrams.md), [ADR-0032](adr/0032-unlicense-allowed.md)): KaTeX 0.18.11 lazy, 4 ms slices; Mermaid 11.17.2 in a sandboxed frame served by the `quire-frame` scheme, SVG shown as an image; errors keep the source with a badge. User decision 2026-10-15: Unlicense allowed (Mermaid's d3), EPL-2.0 kept out |
 | 8 | Source view and incremental preview | Mostly done: `.md` in the TXT view with decoration, view modes (Ctrl+E, Ctrl+\\, remembered), keystroke → provisional window → corrections, word count. Keystroke → preview in ref-sim: p50 11–15 ms, unstalled p95 20–22 ms / max 24–27 ms; 9–15 % of keystrokes (after a pause) hit platform stalls of 150–375 ms (reported, not judged: ADR-0024 addendum) |
-| 9 | Scroll sync, outline, click-to-source | In progress: two-way scroll sync and click-to-source done (UI flows); outline rail to do |
-| 10 | Editing helpers | Not started |
+| 9 | Scroll sync, outline, click-to-source | Done: two-way scroll sync, click-to-source, outline rail (virtualized, current section, Ctrl+Shift+O remembered; `md_outline`) |
+| 10 | Editing helpers | Done: table helpers (format/align by display width, insert/delete row and column, Tab/Shift+Tab, one undo step each through the engine's new `Replace` action, untouched bytes exact); image paste into `assets/image-<yyyymmdd>-<hash8>.png`, deduplicated (decision A) |
 | 11 | Exports | Not started |
 | 12 | Corpora, fixtures and fuzzing | Not started |
 | 13 | Benchmarks | In progress: `md-20m`, `md-20m-edit`, `tools/bench/refsim-md.ps1`, `md` rows in `bench/budgets.json`, ref-sim runs listed in `bench/results/m2/README.md`; criterion benches to do |
-| 14 | WebDriver UI flows | In progress: 9 Markdown flows (open, split view, images and remote toggle, typing, scroll sync, Ctrl+E, save, large table pieces after a save); image paste, table format, export to do |
+| 14 | WebDriver UI flows | In progress: 14 Markdown flows (adds highlighting, math and diagrams, outline, table helpers, image paste), 26 in all, pass locally; export to do |
 | 15 | Carried from M1 | Done: webview tile-bitmap cache reported to the governor (`frontend_cache.rs`; bench: 160 MiB counted on both sides after scrolling); command-line open failure shown on the welcome screen; reopen with another encoding shows progress with Cancel (UI flows 10 and 11) |
 | 16 | M2 report | Not started |
 
