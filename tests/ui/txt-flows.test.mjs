@@ -94,7 +94,8 @@ test("typing, undo and redo", async () => {
   await focusEditor();
   await keys("Hello ");
   await wd.until(async () => (await rows())[0].t.startsWith("Hello line 0"), 5000, "typed text");
-  assert.match(await status(), /Unsaved/);
+  // The rows show the local echo; the status follows the core's answer.
+  await wd.until(async () => /Unsaved/.test(await status()), 5000, "unsaved status");
   await wd.chord([KEYS.control, "z"]);
   await wd.until(async () => (await rows())[0].t === "line 0\tsome text with a tab", 5000, "undo");
   await wd.chord([KEYS.control, "y"]);
