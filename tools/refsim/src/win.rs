@@ -115,8 +115,15 @@ pub fn info() -> Result<serde_json::Value, String> {
 /// Runs `program` inside a Job Object. With `pcores`, every process in the
 /// job (the program and everything it starts, e.g. WebView2) is limited to
 /// the performance cores. `logical` is passed on as `QUIRE_CPU_LOGICAL` so
-/// the app sizes its pools for the emulated machine.
-pub fn run(program: &[String], pcores: bool, logical: Option<u32>) -> Result<i32, String> {
+/// the app sizes its pools for the emulated machine. After `timeout`
+/// seconds the program is given up on: exit code 124, and every process in
+/// the job ends with this one (the job kills them when it closes).
+pub fn run(
+    program: &[String],
+    pcores: bool,
+    logical: Option<u32>,
+    timeout: Option<u64>,
+) -> Result<i32, String> {
     // SAFETY: plain Win32 calls with valid arguments; the job handle stays
     // open (and the job alive) until this process exits.
     unsafe {
@@ -151,10 +158,25 @@ pub fn run(program: &[String], pcores: bool, logical: Option<u32>) -> Result<i32
     if let Some(n) = logical {
         cmd.env("QUIRE_CPU_LOGICAL", n.to_string());
     }
-    let status = cmd
-        .status()
+    let mut child = cmd
+        .spawn()
         .map_err(|e| format!("failed to start {}: {e}", program[0]))?;
-    Ok(status.code().unwrap_or(1))
+    let deadline = timeout.map(|s| Instant::now() + Duration::from_secs(s));
+    loop {
+        if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
+            return Ok(status.code().unwrap_or(1));
+        }
+        if deadline.is_some_and(|d| Instant::now() >= d) {
+            eprintln!(
+                "refsim: {} still running after {} s; giving up",
+                program[0],
+                timeout.unwrap_or(0)
+            );
+            let _ = child.kill();
+            return Ok(124);
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
 }
 
 /// Opening a file for unbuffered I/O makes the cache manager flush and purge

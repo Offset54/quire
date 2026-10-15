@@ -71,7 +71,7 @@ function Invoke-Scenario([string] $scenario, [string] $file, [string[]] $appArgs
   $env:QUIRE_BENCH_FILE = $file
   $env:LOCALAPPDATA = $appData
   try {
-    & $refsim run --pcores --logical 8 -- $app @appArgs | Out-Null
+    & $refsim run --pcores --logical 8 --timeout 600 -- $app @appArgs | Out-Null
   } finally {
     $env:LOCALAPPDATA = $saved
     "QUIRE_BENCH", "QUIRE_BENCH_OUT", "QUIRE_BENCH_VIEWPORT", "QUIRE_BENCH_FILE" | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }

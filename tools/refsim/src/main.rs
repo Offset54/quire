@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! refsim info                         CPU sets, memory, power, as JSON
-//! refsim run [--pcores] [--logical N] -- <program> [args...]
+//! refsim run [--pcores] [--logical N] [--timeout S] -- <program> [args...]
 //!                                     run a program (and every process it starts)
 //!                                     pinned to the performance cores
 //! refsim purge <file>...              evict files from the OS file cache
@@ -23,7 +23,7 @@ use std::time::Instant;
 
 fn usage() -> ! {
     eprintln!(
-        "usage: refsim info | run [--pcores] [--logical N] -- <program> [args...] | purge <file>... | seqread <file> | seqwrite <file> <bytes> | ballast <GiB> <seconds> | calibrate"
+        "usage: refsim info | run [--pcores] [--logical N] [--timeout S] -- <program> [args...] | purge <file>... | seqread <file> | seqwrite <file> <bytes> | ballast <GiB> <seconds> | calibrate"
     );
     std::process::exit(2)
 }
@@ -102,12 +102,14 @@ fn main() {
         "run" => {
             let mut pcores = false;
             let mut logical = None;
+            let mut timeout = None;
             let mut rest = args[1..].iter();
             let mut program = Vec::new();
             while let Some(a) = rest.next() {
                 match a.as_str() {
                     "--pcores" => pcores = true,
                     "--logical" => logical = rest.next().and_then(|s| s.parse().ok()),
+                    "--timeout" => timeout = rest.next().and_then(|s| s.parse().ok()),
                     "--" => {
                         program = rest.cloned().collect();
                         break;
@@ -118,7 +120,7 @@ fn main() {
             if program.is_empty() {
                 usage()
             }
-            match win::run(&program, pcores, logical) {
+            match win::run(&program, pcores, logical, timeout) {
                 Ok(code) => std::process::exit(code),
                 Err(e) => Err(e),
             }
