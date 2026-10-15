@@ -8,11 +8,23 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { notify, update } from "../txt/doc-store";
 import type { TxtView } from "../txt/txt-view";
 import { SourceDecorator } from "./decorate";
+import { OutlineRail } from "./outline";
 import { MdPreview } from "./preview";
 
 export type ViewMode = "source" | "preview" | "split";
 
 const MODE_KEY = "quire.md.mode";
+const OUTLINE_KEY = "quire.md.outline";
+/** The outline is asked for again this long after the preview changed. */
+const OUTLINE_REFRESH_MS = 400;
+
+function savedOutline(): boolean {
+  try {
+    return localStorage.getItem(OUTLINE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
 
 function savedMode(): ViewMode {
   try {
@@ -39,6 +51,8 @@ export interface MdStatus {
   remote: boolean;
   blocked: boolean;
   mode: ViewMode;
+  /** The outline rail is shown. */
+  outline: boolean;
 }
 
 let mdStatus: MdStatus | undefined;
@@ -66,6 +80,7 @@ function emptyStatus(): MdStatus {
     remote: false,
     blocked: false,
     mode: savedMode(),
+    outline: savedOutline(),
   };
 }
 
@@ -73,6 +88,9 @@ export class MdController {
   readonly preview: MdPreview;
   private readonly decorator: SourceDecorator;
   private revision = 0;
+  readonly outline: OutlineRail;
+  private outlineOn: boolean;
+  private outlineTimer = 0;
   mode: ViewMode;
   /** The pane the user last touched (wheel, keys, pointer) drives the
    *  other; a pane moved by sync never drives back (no feedback loop). */
@@ -91,6 +109,7 @@ export class MdController {
     this.preview = new MdPreview(previewHost, doc, imagePrefix, frameUrl, {
       onScroll: (off) => {
         this.synced("preview", off);
+        if (this.mode !== "source") this.outline.setPosition(off);
       },
       onSourceClick: (off) => {
         if (this.mode !== "split") return;
@@ -102,6 +121,22 @@ export class MdController {
       onError: (msg) => {
         notify("error", msg);
       },
+    });
+    this.outline = new OutlineRail(doc, (off) => {
+      this.goTo(off);
+    });
+    root.prepend(this.outline.element);
+    this.outlineOn = savedOutline();
+    root.dataset.outline = this.outlineOn ? "on" : "off";
+    // Headings change with the text: ask again a moment after the preview
+    // changed (only when the rail is shown; the core answers "unchanged"
+    // cheaply).
+    this.preview.onPatch(() => {
+      if (!this.outlineOn) return;
+      window.clearTimeout(this.outlineTimer);
+      this.outlineTimer = window.setTimeout(() => {
+        this.outline.refresh();
+      }, OUTLINE_REFRESH_MS);
     });
     this.decorator = new SourceDecorator(doc, source);
     this.decorator.update(0);
@@ -122,7 +157,7 @@ export class MdController {
         e: "toggleView",
         "\\": "toggleSplit",
         s: e.shiftKey ? "saveAs" : "save",
-        o: "open",
+        o: e.shiftKey ? "toggleOutline" : "open",
         n: "new",
         f: "find",
       };
@@ -177,6 +212,7 @@ export class MdController {
   private onEvent(e: MdEvent): void {
     if (e.kind === "indexed") {
       setMd({ indexed: true, blocks: e.blocks ?? 0 });
+      this.outline.refresh();
       performance.measure("md-index", {
         start: performance.now() - (e.ms ?? 0),
         duration: e.ms ?? 0,
@@ -190,6 +226,31 @@ export class MdController {
    *  view, to the reading view). */
   toggleView(): void {
     this.setMode(this.mode === "preview" ? "source" : "preview");
+  }
+
+  /** Ctrl+Shift+O: the outline rail on or off (remembered). */
+  toggleOutline(): void {
+    this.outlineOn = !this.outlineOn;
+    this.root.dataset.outline = this.outlineOn ? "on" : "off";
+    try {
+      localStorage.setItem(OUTLINE_KEY, this.outlineOn ? "on" : "off");
+    } catch {
+      // Not remembered this time.
+    }
+    setMd({ outline: this.outlineOn });
+    if (this.outlineOn) {
+      this.outline.refresh();
+      this.outline.setPosition(
+        this.mode === "source" ? this.source.scrollOffset() : this.preview.topOffset(),
+      );
+    }
+  }
+
+  /** A heading in the outline was chosen: show it in the panes shown. */
+  goTo(offset: number): void {
+    if (this.mode !== "source") void this.preview.reveal(offset, 0);
+    if (this.mode !== "preview") this.source.scrollToOffset(offset);
+    this.outline.setPosition(offset);
   }
 
   /** Ctrl+\: split view on or off (off returns to the editing view). */
@@ -229,6 +290,7 @@ export class MdController {
   sourceScrolled(offset: number): void {
     this.decorator.update(this.revision);
     this.synced("source", offset);
+    if (this.mode === "source") this.outline.setPosition(offset);
   }
 
   /** The text changed (a new view header from the core). */
@@ -251,7 +313,9 @@ export class MdController {
 
   destroy(): void {
     this.destroyed = true;
+    window.clearTimeout(this.outlineTimer);
     this.decorator.destroy();
+    this.outline.destroy();
     this.preview.destroy();
     void invoke("md_detach", { doc: this.doc });
     setMd(undefined);

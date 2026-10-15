@@ -578,6 +578,61 @@ input {
   min-width: 0;
 }
 
+/* The outline rail (M2 task 9). */
+.md-outline {
+  display: none;
+  flex: 0 0 240px;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: var(--bar-bg);
+  font-size: 13px;
+}
+
+.editor-panes.markdown[data-outline="on"] > .md-outline {
+  display: flex;
+}
+
+.md-outline-empty {
+  padding: 8px 12px;
+  color: var(--muted);
+}
+
+.md-outline-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  outline: none;
+}
+
+.md-outline-spacer {
+  position: relative;
+}
+
+.md-outline-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  line-height: 24px;
+  padding-right: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.md-outline-row:hover {
+  background: var(--line);
+}
+
+.md-outline-row.current {
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
 .md-preview-host {
   flex: 1;
   min-width: 0;

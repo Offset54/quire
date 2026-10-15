@@ -690,6 +690,58 @@ pub async fn md_set_remote(svc: State<'_, MdService>, doc: u64, on: bool) -> Cmd
     })
 }
 
+/// Longest heading text sent to the outline rail.
+const OUTLINE_TEXT_MAX: usize = 200;
+
+/// The outline (task 9): headings in document order as
+/// `[start byte of their block, level, text]`, with the tables' generation.
+/// `null` while the index runs or the tables wait for a rebuild after an
+/// edit, and when the frontend already has generation `since`.
+#[tauri::command]
+pub async fn md_outline(
+    svc: State<'_, MdService>,
+    doc: u64,
+    since: Option<u64>,
+) -> CmdResult<Value> {
+    guarded(|| {
+        let m = svc.get(doc)?;
+        let st = m.state.lock();
+        if !st.md.index().is_complete() || st.md.tables_pending() {
+            return Ok(Value::Null);
+        }
+        let generation = st.md.current_generation();
+        if since == Some(generation) {
+            return Ok(Value::Null);
+        }
+        let starts: HashMap<u64, u64> = st
+            .md
+            .index()
+            .blocks()
+            .iter()
+            .map(|b| (b.id, b.start))
+            .collect();
+        let entries: Vec<Value> = st
+            .md
+            .current_tables()
+            .outline()
+            .iter()
+            .filter_map(|e| {
+                let start = *starts.get(&e.block)?;
+                let mut text = e.text.as_str();
+                if text.len() > OUTLINE_TEXT_MAX {
+                    let mut cut = OUTLINE_TEXT_MAX;
+                    while !text.is_char_boundary(cut) {
+                        cut -= 1;
+                    }
+                    text = &text[..cut];
+                }
+                Some(json!([start, e.level, text]))
+            })
+            .collect();
+        Ok(json!({ "generation": generation, "entries": entries }))
+    })
+}
+
 /// Index state and the last edit's timing (status bar, benchmarks).
 #[tauri::command]
 pub async fn md_status(svc: State<'_, MdService>, doc: u64) -> CmdResult<Value> {

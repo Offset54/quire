@@ -287,7 +287,22 @@ test("scrolling the preview scrolls the source (and back)", async () => {
 });
 
 test("Ctrl+E switches to the reading view and back, keeping the position", async () => {
-  const before = firstSection((await previewBlocks()).map((b) => b.t));
+  // The previous flow's scrolling may still be settling: start from a
+  // position that holds for 300 ms.
+  let before;
+  let last;
+  await wd.until(
+    async () => {
+      const n = firstSection((await previewBlocks()).map((b) => b.t));
+      const stable = n !== undefined && n === last;
+      last = n;
+      if (!stable) await new Promise((r) => setTimeout(r, 300));
+      before = n;
+      return stable;
+    },
+    10_000,
+    "a settled position",
+  );
   assert.ok(before !== undefined && before > 5, "scrolled into the document");
   const near = (n) => n !== undefined && Math.abs(n - before) <= 1;
   await focusEditor();
@@ -414,6 +429,64 @@ test("math renders with KaTeX and diagrams in the sandboxed frame; errors keep t
   assert.equal(r.scripts, 0);
   // The app's document keeps its prototype frozen (src/freeze.ts).
   assert.equal(await wd.exec("return Object.isFrozen(Object.prototype)"), true);
+});
+
+test("the outline rail lists the headings, follows the position and goes to a heading", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, KEYS.shift, "o"]);
+  const n = await untilOrDump(
+    () =>
+      wd.exec(`
+        const rail = document.querySelector('.md-outline');
+        if (!rail || rail.offsetParent === null) return false;
+        const k = window.__quire.session.md.outline.headings().length;
+        return k > 0 && document.querySelectorAll('.md-outline-row').length > 0 && k;
+      `),
+    10_000,
+    "outline rows",
+  );
+  // 400 "## Section i" ("# Notes title" became "Hello # Notes title" in
+  // the typing flow).
+  assert.equal(n, 400);
+  // Go to a heading far down: the editing view scrolls there, and it is
+  // the current one.
+  await wd.exec(`
+    const list = document.querySelector('.md-outline-list');
+    list.scrollTop = 201 * 24 - 48;
+  `);
+  await wd.until(
+    () =>
+      wd.exec(
+        "return [...document.querySelectorAll('.md-outline-row')].some((r) => r.textContent === 'Section 200')",
+      ),
+    5000,
+    "row for Section 200",
+  );
+  await wd.exec(
+    "[...document.querySelectorAll('.md-outline-row')].find((r) => r.textContent === 'Section 200').click()",
+  );
+  await untilOrDump(
+    async () => firstSection((await sourceRows()).map((r) => r.t)) === 200,
+    5000,
+    "source at Section 200",
+  );
+  await wd.until(
+    () =>
+      wd
+        .exec("return document.querySelector('.md-outline-row.current')?.textContent ?? ''")
+        .then((t) => t === "Section 200"),
+    5000,
+    "Section 200 is current",
+  );
+  // The choice is remembered; turn it off again for the next flows.
+  assert.equal(await wd.exec("return localStorage.getItem('quire.md.outline')"), "on");
+  await focusEditor();
+  await wd.chord([KEYS.control, KEYS.shift, "o"]);
+  await wd.until(
+    () => wd.exec("return document.querySelector('.md-outline').offsetParent === null"),
+    5000,
+    "outline hidden",
+  );
 });
 
 test("a large table shows as aligned pieces with one header", async () => {

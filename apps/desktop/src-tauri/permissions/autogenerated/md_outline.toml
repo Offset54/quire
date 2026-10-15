@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-outline"
+description = "Enables the md_outline command without any pre-configured scope."
+commands.allow = ["md_outline"]
+
+[[permission]]
+identifier = "deny-md-outline"
+description = "Denies the md_outline command without any pre-configured scope."
+commands.deny = ["md_outline"]

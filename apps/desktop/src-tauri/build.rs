@@ -42,6 +42,7 @@ fn main() {
         "md_set_remote",
         "md_status",
         "md_blocks",
+        "md_outline",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
         commands.extend([

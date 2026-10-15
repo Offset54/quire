@@ -217,6 +217,7 @@ export class Session {
   command(name: string): void {
     if (name === "toggleView" && this.md) this.md.toggleView();
     else if (name === "toggleSplit" && this.md) this.md.toggleSplit();
+    else if (name === "toggleOutline" && this.md) this.md.toggleOutline();
     else this.commandHandler(name);
   }
 

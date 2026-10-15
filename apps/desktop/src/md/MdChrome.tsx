@@ -63,6 +63,16 @@ export function MdStatusItems({ session }: { session: Session }) {
           {t("md.remoteOn")}
         </button>
       )}
+      <button
+        type="button"
+        className={md.outline ? "on" : ""}
+        title="Ctrl+Shift+O"
+        onClick={() => {
+          session.md?.toggleOutline();
+        }}
+      >
+        {t("md.outline")}
+      </button>
       <span className="segmented" role="group" aria-label={t("md.viewMode")}>
         {button("source", t("md.source"), "Ctrl+E")}
         {button("split", t("md.split"), "Ctrl+\\")}

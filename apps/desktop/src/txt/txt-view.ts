@@ -1289,7 +1289,7 @@ export class TxtView {
       case "s":
         return command(shift ? "saveAs" : "save");
       case "o":
-        return command("open");
+        return command(shift ? "toggleOutline" : "open");
       case "n":
         return command("new");
       case "e":
