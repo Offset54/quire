@@ -3239,6 +3239,7 @@ dependencies = [
 name = "quire-desktop"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "encoding_rs",
  "image",
  "notify",

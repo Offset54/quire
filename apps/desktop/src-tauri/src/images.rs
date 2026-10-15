@@ -263,6 +263,21 @@ impl ImageService {
         }
     }
 
+    /// The original bytes and type of an image the scheme would serve at
+    /// `path` (after the prefix), for exports (`export.rs`).
+    pub fn export_bytes(&self, path: &str) -> Result<(Arc<Vec<u8>>, &'static str), String> {
+        let path = path.split('?').next().unwrap_or(path);
+        self.serve(path, 0)
+            .map(|s| (s.bytes, s.mime))
+            .map_err(|e| match e {
+                Refused::NotFound => "not found".to_owned(),
+                Refused::NotAnImage => "not an image".to_owned(),
+                Refused::TooLarge => "too large".to_owned(),
+                Refused::RemoteOff => "remote content is off for this document".to_owned(),
+                Refused::Failed(m) => m,
+            })
+    }
+
     fn serve(&self, path: &str, width: u32) -> Result<Served, Refused> {
         if let Some(enc) = path.strip_prefix("local/") {
             let p = percent_decode(enc).ok_or(Refused::NotFound)?;

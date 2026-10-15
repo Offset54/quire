@@ -3,6 +3,7 @@
 
 #[cfg(feature = "bench-fixtures")]
 mod bench;
+mod export;
 mod frame;
 mod frontend_cache;
 mod images;
@@ -315,6 +316,8 @@ fn main() {
         md::md_outline,
         md::md_table,
         md::md_paste_image,
+        md::md_export_html,
+        md::md_export_save,
         md::md_blocks,
         bench::bench_scenario,
         bench::bench_open_synthetic,
@@ -368,6 +371,8 @@ fn main() {
         md::md_outline,
         md::md_table,
         md::md_paste_image,
+        md::md_export_html,
+        md::md_export_save,
         md::md_blocks,
     ]);
 
