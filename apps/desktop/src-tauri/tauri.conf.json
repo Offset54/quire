@@ -20,12 +20,13 @@
         "img-src": "'self' blob: data: http://quire-img.localhost quire-img:",
         "font-src": "'self'",
         "connect-src": "ipc: http://ipc.localhost",
+        "frame-src": "http://quire-frame.localhost quire-frame:",
         "object-src": "'none'",
         "base-uri": "'none'",
         "form-action": "'none'",
         "frame-ancestors": "'none'"
       },
-      "freezePrototype": true
+      "freezePrototype": false
     }
   },
   "bundle": {

@@ -85,9 +85,10 @@ export class MdController {
     private readonly source: TxtView,
     previewHost: HTMLElement,
     imagePrefix: string,
+    frameUrl: string,
     command: (name: string) => void,
   ) {
-    this.preview = new MdPreview(previewHost, doc, imagePrefix, {
+    this.preview = new MdPreview(previewHost, doc, imagePrefix, frameUrl, {
       onScroll: (off) => {
         this.synced("preview", off);
       },
@@ -153,12 +154,20 @@ export class MdController {
       else pending.push(e);
     };
     const holder = new MdPreviewChannel();
-    const info = await invoke<{ imagePrefix: string }>("md_attach", {
+    const info = await invoke<{ imagePrefix: string; frameUrl: string }>("md_attach", {
       doc,
       channel: holder.channel,
       events,
     });
-    const ctl = new MdController(doc, root, source, previewHost, info.imagePrefix, command);
+    const ctl = new MdController(
+      doc,
+      root,
+      source,
+      previewHost,
+      info.imagePrefix,
+      info.frameUrl,
+      command,
+    );
     box.ctl = ctl;
     holder.target = ctl.preview;
     for (const e of pending) ctl.onEvent(e);

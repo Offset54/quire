@@ -762,6 +762,58 @@ input {
   content: none;
 }
 
+/* Math and diagrams (ADR-0033): the source shows, muted, until rendered;
+   errors keep the source with a badge. */
+.markdown-body [data-math-style]:not([data-rich="done"]) {
+  color: var(--muted);
+  font-family: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  font-size: 0.875em;
+}
+
+.markdown-body .md-math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0 0 16px;
+}
+
+.markdown-body .md-rich-error {
+  outline: 1px dashed var(--warn);
+  outline-offset: 2px;
+}
+
+.md-rich-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--warn);
+  color: var(--editor-bg);
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.markdown-body .md-diagram {
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.markdown-body .md-diagram img {
+  max-width: 100%;
+  height: auto;
+}
+
+.md-diagram-frame {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 1024px;
+  height: 768px;
+  border: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Highlight classes from crates/highlight (one palette per theme). */
 .hl-comment {
   color: #6a737d;

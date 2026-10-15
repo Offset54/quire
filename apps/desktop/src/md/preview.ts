@@ -17,6 +17,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { t } from "../i18n";
 import { normalize, topOffset } from "./anchor";
 import { decodeWindow, type BlockMeta, type WindowMessage } from "./protocol";
+import { RichRenderer } from "./rich";
 
 const BEFORE = 40;
 const AFTER = 80;
@@ -105,13 +106,19 @@ export class MdPreview {
   private reportedBytes = -1;
   /** Whether a frame ever showed rendered blocks (first paint marks). */
   private painted = false;
+  /** Math and diagrams (ADR-0033). */
+  private readonly rich: RichRenderer;
 
   constructor(
     host: HTMLElement,
     readonly doc: number,
     private readonly imagePrefix: string,
+    frameUrl: string,
     private readonly cb: PreviewCallbacks,
   ) {
+    this.rich = new RichRenderer(frameUrl, () => {
+      this.invalidate();
+    });
     this.element = document.createElement("div");
     this.element.className = "md-preview";
     this.viewport = document.createElement("div");
@@ -218,6 +225,7 @@ export class MdPreview {
     this.destroyed = true;
     cancelAnimationFrame(this.frame);
     this.resizeObserver.disconnect();
+    this.rich.destroy();
     void invoke("memory_release", { cache: "md-preview-dom", key: this.doc });
     void invoke("memory_release", { cache: "preview-images", key: this.doc });
     this.element.remove();
@@ -470,6 +478,7 @@ export class MdPreview {
       p.el.style.minHeight = "";
       p.el.innerHTML = have.html;
       p.el.dataset.images = "";
+      p.el.dataset.richSeen = "";
       this.decorate(p.el);
     } else if (!have && p.rev === -1) {
       // A placeholder of about the right height until the HTML arrives
@@ -605,14 +614,17 @@ export class MdPreview {
     }
     if (this.lo > 0 || this.hi < n) this.invalidate();
     this.layer.style.transform = `translateY(${-this.layerTop()}px)`;
-    // 4. Images near the viewport.
+    // 4. Images, math and diagrams near the viewport.
     const top = this.layerTop();
     let y = 0;
     for (let i = this.lo; i < this.hi; i++) {
       const h = this.heights[i] ?? 0;
       if (y + h > top - this.viewH && y < top + 2 * this.viewH) {
         const el = this.placed.get(this.win[i]!.id)?.el;
-        if (el) this.loadImages(el);
+        if (el) {
+          this.loadImages(el);
+          this.rich.visit(el);
+        }
       }
       y += h;
     }

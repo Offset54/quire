@@ -18,5 +18,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: "es2023",
     sourcemap: true,
+    rollupOptions: {
+      // The Mermaid frame page (ADR-0033), served by the host's
+      // `quire-frame` scheme.
+      input: { main: "index.html", "mermaid-frame": "mermaid-frame.html" },
+    },
   },
 }));

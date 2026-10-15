@@ -99,6 +99,8 @@ fn known(cache: &str) -> Option<(&'static str, CacheClass)> {
         "tile-bitmaps" => Some(("tile-bitmaps", CacheClass::Raster)),
         "preview-images" => Some(("preview-images", CacheClass::DecodedImage)),
         "md-preview-dom" => Some(("md-preview-dom", CacheClass::Layout)),
+        // Rendered math and diagrams, shared by all documents (ADR-0033).
+        "md-rich" => Some(("md-rich", CacheClass::Layout)),
         _ => None,
     }
 }

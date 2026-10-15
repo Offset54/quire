@@ -67,6 +67,10 @@ function writeSample() {
     '<script>window.__pwned = true</script>\n\n<div onclick="window.__pwned = true">raw div</div>\n',
     "```rust\nfn main() { let answer = 42; }\n```\n",
     "```cobol\nDISPLAY 'HI'.\n```\n",
+    "Inline $x^2 + y_1$ and broken $\\nosuchcommand{x}$ math.\n",
+    "$$\n\\int_0^1 f(t)\\,dt\n$$\n",
+    "```mermaid\ngraph TD\n  A[Start] --> B[Done]\n```\n",
+    "```mermaid\nthis is not a diagram\n```\n",
   ];
   for (let i = 0; i < 400; i++) {
     parts.push(`## Section ${i}\n`);
@@ -348,6 +352,68 @@ test("code is highlighted after the paint; other languages are labeled plain", a
   await focusEditor();
   await wd.chord([KEYS.control, "\\"]);
   await wd.until(async () => (await mode()) !== "split", 5000, "split mode off");
+});
+
+test("math renders with KaTeX and diagrams in the sandboxed frame; errors keep the source", async () => {
+  await focusEditor();
+  await wd.chord([KEYS.control, "\\"]);
+  await wd.until(async () => (await mode()) === "split", 5000, "split mode");
+  const at = fs.readFileSync(sample).indexOf(Buffer.from("Inline $x^2"));
+  await wd.exec(`window.__quire.session.md.preview.reveal(${at})`);
+  let r;
+  try {
+    r = await untilOrDump(
+      () =>
+        wd.exec(`
+        const vp = document.querySelector('.md-viewport');
+        const inline = vp.querySelectorAll('.md-math:not(.md-math-display) .katex').length;
+        const display = vp.querySelectorAll('.md-math-display .katex-display').length;
+        const mathErr = vp.querySelector('[data-math-style].md-rich-error .md-rich-badge');
+        const fig = vp.querySelector('figure.md-diagram img');
+        const diagErr = vp.querySelector('pre[data-lang="mermaid"].md-rich-error .md-rich-badge');
+        window.__richProbe = {
+          inline, display, mathErr: !!mathErr, fig: !!fig, diagErr: !!diagErr,
+          math: [...vp.querySelectorAll('[data-math-style]')].map((e) => e.dataset.rich ?? '-'),
+          mermaid: [...vp.querySelectorAll('pre[data-lang="mermaid"]')].map((e) => (e.dataset.rich ?? '-') + ' ' + (e.querySelector('.md-rich-badge')?.title ?? '')),
+          frames: document.querySelectorAll('iframe.md-diagram-frame').length,
+          texts: [...vp.querySelectorAll('.md-block')].map((b) => b.innerText.slice(0, 30)),
+        };
+        if (!inline || !display || !mathErr || !fig || !fig.complete || !diagErr) return false;
+        return {
+          inline, display,
+          mathErrSource: mathErr.parentElement.textContent,
+          figSrc: fig.getAttribute('src').slice(0, 26),
+          figWidth: fig.naturalWidth,
+          diagErrTitle: diagErr.title,
+          frames: [...document.querySelectorAll('iframe.md-diagram-frame')].map((f) => f.getAttribute('sandbox')),
+          scripts: vp.querySelectorAll('script, foreignObject').length,
+        };
+      `),
+      20_000,
+      "math and diagrams",
+    );
+  } catch (err) {
+    throw new Error(
+      `${String(err)} ${JSON.stringify(await wd.exec("return window.__richProbe"))}`,
+      {
+        cause: err,
+      },
+    );
+  } finally {
+    await focusEditor();
+    await wd.chord([KEYS.control, "\\"]);
+    await wd.until(async () => (await mode()) !== "split", 5000, "split mode off");
+  }
+  assert.equal(r.inline, 1);
+  assert.equal(r.display, 1);
+  assert.match(r.mathErrSource, /nosuchcommand/);
+  assert.equal(r.figSrc, "data:image/svg+xml;charset");
+  assert.ok(r.figWidth > 0, "the diagram image decoded");
+  assert.ok(r.diagErrTitle.length > 0, "the error message is the badge's title");
+  assert.deepEqual(r.frames, ["allow-scripts"]);
+  assert.equal(r.scripts, 0);
+  // The app's document keeps its prototype frozen (src/freeze.ts).
+  assert.equal(await wd.exec("return Object.isFrozen(Object.prototype)"), true);
 });
 
 test("a large table shows as aligned pieces with one header", async () => {

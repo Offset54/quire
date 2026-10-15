@@ -3,6 +3,7 @@
 
 #[cfg(feature = "bench-fixtures")]
 mod bench;
+mod frame;
 mod frontend_cache;
 mod images;
 mod md;
@@ -253,6 +254,9 @@ fn main() {
         images::SCHEME,
         move |_ctx, request, responder| served.handle(request, move |r| responder.respond(r)),
     );
+    let builder = builder.register_uri_scheme_protocol(frame::SCHEME, |ctx, request| {
+        frame::handle(ctx.app_handle(), &request)
+    });
     let markdown = md::MdService::new(
         Arc::clone(&txt),
         Arc::clone(&image_service),

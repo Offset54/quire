@@ -17,6 +17,8 @@ const ALLOWED = new Set([
   "BSL-1.0",
   "CC0-1.0",
   "0BSD",
+  // User decision 2026-10-15 (ADR-0032): robust-predicates via Mermaid's d3.
+  "Unlicense",
 ]);
 
 /** Evaluates a simple SPDX expression: ids joined by OR / AND, optional parentheses. */

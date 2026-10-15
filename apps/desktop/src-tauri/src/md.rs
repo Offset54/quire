@@ -605,6 +605,8 @@ impl MdService {
 pub struct Attached {
     /// The image scheme's URL prefix (for the frontend's checks).
     pub image_prefix: &'static str,
+    /// Where the Mermaid frame page is served (ADR-0033).
+    pub frame_url: String,
 }
 
 #[tauri::command]
@@ -618,6 +620,7 @@ pub async fn md_attach(
         svc.attach(doc, channel, events)?;
         Ok(Attached {
             image_prefix: images::url_prefix(),
+            frame_url: format!("{}{}", crate::frame::url_prefix(), crate::frame::PAGE),
         })
     })
 }

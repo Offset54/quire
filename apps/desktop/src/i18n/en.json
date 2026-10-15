@@ -102,5 +102,12 @@
   "md.split": "Split",
   "md.reading": "Reading",
   "md.codeTooLarge": "too large to highlight",
+  "md.mathError": "Math error",
+  "md.mathTooLarge": "Math too large to render",
+  "md.diagramError": "Diagram error",
+  "md.diagramTooLarge": "Diagram too large to render",
+  "md.diagramTimeout": "The diagram took too long to render.",
+  "md.diagramFrameFailed": "The diagram renderer did not start.",
+  "md.diagramAlt": "Mermaid diagram",
   "md.tooLarge": "This block is too large to preview ({size} KiB). Its beginning is shown as source; edit it in the source view."
 }
