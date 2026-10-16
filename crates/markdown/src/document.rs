@@ -11,7 +11,7 @@ use crate::options::Flavor;
 use crate::render::{RenderOptions, Rendered, render_block};
 use crate::scan::BlockKind;
 use crate::tables::Tables;
-use crate::text::Text;
+use crate::text::{Text, mid_document};
 
 #[derive(Debug)]
 pub struct MarkdownDoc {
@@ -115,7 +115,8 @@ impl MarkdownDoc {
         if b.kind == BlockKind::FrontMatter {
             return Ok(false);
         }
-        let a = analyze(&text.read(r)?, self.index.flavor());
+        let start = r.start;
+        let a = analyze(&mid_document(&text.read(r)?, start), self.index.flavor());
         if a.is_empty() {
             return Ok(false);
         }
@@ -270,7 +271,7 @@ impl MarkdownDoc {
         if b.kind == BlockKind::FrontMatter {
             return render_front_matter(bytes, opts);
         }
-        render_block(bytes, b.id, &self.tables, opts)
+        render_block(&mid_document(bytes, b.start), b.id, &self.tables, opts)
     }
 
     /// Generation of the tables: changes when they are rebuilt (call
@@ -286,8 +287,8 @@ impl MarkdownDoc {
         if b.kind == BlockKind::FrontMatter {
             return render_front_matter(bytes, opts);
         }
-        let id = b.id;
-        render_block(bytes, id, self.tables(), opts)
+        let (id, start) = (b.id, b.start);
+        render_block(&mid_document(bytes, start), id, self.tables(), opts)
     }
 
     /// Renders block `i` of the index.

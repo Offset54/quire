@@ -1,0 +1,2 @@
+
+fun main() { val x: Int = 1; println("$x") }

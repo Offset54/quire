@@ -64,3 +64,7 @@ Spec suites through this pipeline (`crates/markdown/tests/spec.rs`): CommonMark 
 - Until the background index completes, references to definitions further down render as text and footnotes show their labels instead of numbers; both are patched when the tables change (M2 plan risk 1).
 - Moving later blocks' offsets is O(blocks) per edit (≈ 0.5 ms for 211k blocks). If it ever matters, offsets can become relative in a tree.
 - `cargo fuzz` targets for the scanner and the incremental index (differential against a whole parse) come with task 12.
+
+## Addendum (M2 task 12, 2026-10-15): a byte order mark past the start is text
+
+The `md_scan` and `md_incremental` fuzz targets found that a line starting with U+FEFF past the document's start (`\u{feff}> q`) parsed differently in a stretch or block of its own: comrak skips a byte order mark at the start of whatever it parses, so the stretch saw a block quote where the whole document has a paragraph. Every parse of text that starts past offset 0 (index stretches, front-matter remainder, block analysis and rendering) now turns a leading U+FEFF into U+2060 WORD JOINER first (`text::mid_document`): the same length, also zero-width and no-break, and not skipped. The document's own byte order mark at offset 0 is still comrak's to skip. Evidence: `index::tests::a_byte_order_mark_mid_document_is_text`; crash inputs in `fuzz/regressions/md_scan/` and `fuzz/regressions/md_incremental/`.

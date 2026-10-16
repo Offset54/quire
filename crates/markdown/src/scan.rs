@@ -14,7 +14,7 @@ use comrak::nodes::NodeValue;
 use comrak::{Arena, parse_document};
 
 use crate::options::{self, Flavor};
-use crate::text::{line_starts, same_len_utf8};
+use crate::text::{line_starts, mid_document, same_len_utf8};
 
 /// What a top-level block is.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -239,10 +239,14 @@ pub fn scan_document(bytes: &[u8], flavor: &Flavor) -> Vec<Found> {
             may_vanish: false,
         });
     }
-    out.extend(scan(&bytes[fm..], flavor).into_iter().map(|f| Found {
-        range: f.range.start + fm..f.range.end + fm,
-        ..f
-    }));
+    out.extend(
+        scan(&mid_document(&bytes[fm..], fm as u64), flavor)
+            .into_iter()
+            .map(|f| Found {
+                range: f.range.start + fm..f.range.end + fm,
+                ..f
+            }),
+    );
     out
 }
 

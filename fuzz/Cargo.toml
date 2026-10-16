@@ -3,7 +3,7 @@ name = "quire-fuzz"
 version = "0.0.0"
 edition = "2024"
 publish = false
-description = "cargo-fuzz targets for the text engine (M1 task 13); not shipped"
+description = "cargo-fuzz targets for the text engine (M1 task 13), Markdown and highlighting (M2 task 12); not shipped"
 
 [package.metadata]
 cargo-fuzz = true
@@ -13,6 +13,8 @@ libfuzzer-sys = "0.4"
 encoding_rs = "0.8"
 quire-core = { path = "../crates/core" }
 quire-text = { path = "../crates/text" }
+quire-markdown = { path = "../crates/markdown" }
+quire-highlight = { path = "../crates/highlight" }
 
 # Its own workspace: built with nightly by cargo-fuzz, never by the main one.
 [workspace]
@@ -42,6 +44,34 @@ bench = false
 [[bin]]
 name = "search"
 path = "fuzz_targets/search.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "md_scan"
+path = "fuzz_targets/md_scan.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "md_incremental"
+path = "fuzz_targets/md_incremental.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "md_sanitize"
+path = "fuzz_targets/md_sanitize.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "highlight"
+path = "fuzz_targets/highlight.rs"
 test = false
 doc = false
 bench = false

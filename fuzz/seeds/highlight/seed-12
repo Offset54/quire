@@ -1,0 +1,1 @@
+$x = Get-ChildItem -Path . | Where-Object { $_.Length -gt 1 } # c

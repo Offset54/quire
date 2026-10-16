@@ -79,3 +79,18 @@ fn details_checkboxes_and_images() {
         "&lt;img src=&quot;x onerror=y&gt;"
     );
 }
+
+/// The whole scheme is checked, however long (md_sanitize fuzz: only the
+/// first 16 characters were).
+#[test]
+fn long_schemes_are_checked_whole() {
+    for url in [
+        "microsoft-edge-holographic:x",
+        "javascriprlta(et:8)",
+        "x-very-long-protocol-handler:open",
+    ] {
+        assert!(!safe_href(url), "{url}");
+    }
+    assert!(safe_href("https://example.com/a-very-long-path:with-colon"));
+    assert!(safe_href("./relative/path/that/is/long:colon"));
+}

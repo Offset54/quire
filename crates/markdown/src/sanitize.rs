@@ -142,12 +142,11 @@ const GLOBAL_ATTRS: &[&str] = &[
 ];
 
 /// Schemes an `href` may use; relative and fragment links are fine too.
-fn safe_href(url: &str) -> bool {
+pub(crate) fn safe_href(url: &str) -> bool {
     let u = url.trim();
     let lower: String = u
         .chars()
         .filter(|c| !c.is_whitespace() && !c.is_control())
-        .take(16)
         .collect::<String>()
         .to_ascii_lowercase();
     match lower.find(':') {

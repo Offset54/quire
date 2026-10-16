@@ -1,0 +1,2 @@
+interface A { x: number }
+const a: A = { x: 1 } as const;

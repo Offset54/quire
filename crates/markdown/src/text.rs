@@ -84,6 +84,22 @@ pub fn same_len_utf8(bytes: &[u8]) -> Cow<'_, str> {
     }
 }
 
+/// comrak skips a byte order mark at the start of whatever it parses, but
+/// past the document's start U+FEFF is text (a zero-width no-break space):
+/// a stretch or block that starts on such a line would parse differently
+/// alone than in the whole document (`\u{feff}> q` is a paragraph, not a
+/// quote). For text parsed from `start > 0`, a leading U+FEFF becomes
+/// U+2060 WORD JOINER: the same length, also zero-width and no-break, and
+/// not skipped. (Found by the `md_scan` fuzz target.)
+pub fn mid_document(bytes: &[u8], start: u64) -> Cow<'_, [u8]> {
+    const BOM: &[u8] = "\u{feff}".as_bytes();
+    const WORD_JOINER: &[u8] = "\u{2060}".as_bytes();
+    match bytes.strip_prefix(BOM) {
+        Some(rest) if start > 0 => Cow::Owned([WORD_JOINER, rest].concat()),
+        _ => Cow::Borrowed(bytes),
+    }
+}
+
 /// Byte offsets of line starts in `s` (always starts with 0). A line ends
 /// after `\n`, or after a `\r` not followed by `\n` (CommonMark line endings).
 pub fn line_starts(s: &[u8]) -> Vec<usize> {

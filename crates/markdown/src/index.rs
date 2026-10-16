@@ -21,7 +21,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::options::Flavor;
 use crate::scan::{BlockKind, FRONT_MATTER_MAX, front_matter_end, front_matter_end_within, scan};
-use crate::text::Text;
+use crate::text::{Text, mid_document};
 
 /// One top-level block: whole lines `start..end` (including the last line's
 /// break). Blank lines between blocks belong to none.
@@ -221,7 +221,7 @@ impl BlockIndex {
         loop {
             let end = stretch_end(text, from, chunk)?;
             let bytes = text.read(from..end)?;
-            let mut found = scan(&bytes, &self.flavor);
+            let mut found = scan(&mid_document(&bytes, from), &self.flavor);
             let at_end = end >= len;
             let next = if at_end {
                 len

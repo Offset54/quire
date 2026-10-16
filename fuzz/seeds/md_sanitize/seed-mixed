@@ -1,0 +1,43 @@
+---
+title: t
+---
+
+# One
+
+A paragraph
+with two lines.
+
+- item
+- item two
+
+  more
+
+> quote
+> > nested
+
+```rust
+fn f() {}
+```
+
+| a | b |
+|---|---|
+| 1 | 2 |
+
+[r]: /x
+
+Uses [r] and a note[^1].
+
+[^1]: The note.
+
+$$
+x^2
+$$
+
+<details>
+<summary>S</summary>
+
+hidden
+
+</details>
+
+End.

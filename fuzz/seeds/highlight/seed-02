@@ -1,0 +1,2 @@
+template <typename T> class Box { T v; };
+auto x = std::make_unique<int>(1);

@@ -1,0 +1,1 @@
+const A = (p: { x: number }) => <div className="a">{p.x}</div>;

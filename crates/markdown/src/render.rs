@@ -20,7 +20,7 @@ use comrak::{Arena, ResolvedReference, parse_document};
 use crate::analysis::{footnote_candidates, normalize_label};
 use crate::images::{ImagePolicy, ImageSrc};
 use crate::options::{self, Flavor};
-use crate::sanitize::sanitize;
+use crate::sanitize::{safe_href, sanitize};
 use crate::tables::Tables;
 use crate::text::same_len_utf8;
 
@@ -223,14 +223,26 @@ fn format<'a>(
                 context.write_str("<a")?;
                 sourcepos(context, node)?;
                 context.write_str(" href=\"")?;
-                if !dangerous(&l.url) {
+                // Sanitized output keeps the allowlist raw HTML gets
+                // (ADR-0028); comrak's list only refuses known-bad schemes.
+                let sanitized = context.user.opts.sanitize.is_some();
+                let ok = if sanitized {
+                    safe_href(&l.url)
+                } else {
+                    !dangerous(&l.url)
+                };
+                if ok {
                     context.escape_href(&l.url)?;
                 }
                 if !l.title.is_empty() {
                     context.write_str("\" title=\"")?;
                     context.escape(&l.title)?;
                 }
-                context.write_str("\">")?;
+                context.write_str("\"")?;
+                if sanitized {
+                    context.write_str(" rel=\"noopener noreferrer\"")?;
+                }
+                context.write_str(">")?;
             } else {
                 context.write_str("</a>")?;
             }

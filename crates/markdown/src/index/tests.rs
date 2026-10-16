@@ -41,6 +41,29 @@ fn chunked_index_matches_whole_scan() {
     }
 }
 
+/// U+FEFF starting a line past the document's start is text, in every chunk
+/// size (comrak skips it only at the start of what it parses; md_scan fuzz).
+#[test]
+fn a_byte_order_mark_mid_document_is_text() {
+    let t = "\u{feff}# Title\n\npara\n\n\u{feff}> not a quote\n\n\u{feff}- not a list\n".as_bytes();
+    let kinds: Vec<_> = truth(t).into_iter().map(|b| b.2).collect();
+    assert_eq!(
+        kinds,
+        [
+            BlockKind::Heading {
+                level: 1,
+                setext: false
+            },
+            BlockKind::Paragraph,
+            BlockKind::Paragraph,
+            BlockKind::Paragraph
+        ]
+    );
+    for chunk in [8, 16, 40, 1 << 20] {
+        assert_eq!(shape(&full(t, chunk)), truth(t), "chunk {chunk}");
+    }
+}
+
 #[test]
 fn hashes_follow_bytes() {
     let ix = full(DOC.as_bytes(), 64);

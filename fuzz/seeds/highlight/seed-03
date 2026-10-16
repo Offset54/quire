@@ -1,0 +1,1 @@
+public class A { public string Name { get; set; } = "x"; }
