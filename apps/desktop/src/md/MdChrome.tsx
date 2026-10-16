@@ -42,6 +42,7 @@ const TABLE_ACTIONS: [TableActionName, MessageId, string?][] = [
 export function MdStatusItems({ session }: { session: Session }) {
   const md = useMdStatus();
   const [tableMenu, setTableMenu] = useState(false);
+  const [exportMenu, setExportMenu] = useState(false);
   if (!md) return null;
   const mode = md.mode;
   const button = (m: ViewMode, label: string, title: string) => (
@@ -59,6 +60,33 @@ export function MdStatusItems({ session }: { session: Session }) {
   return (
     <>
       {md.words !== undefined && <span>{t("md.words", { count: fmt.format(md.words) })}</span>}
+      <button
+        type="button"
+        className={exportMenu ? "on" : ""}
+        aria-haspopup="menu"
+        onClick={() => {
+          setExportMenu(!exportMenu);
+        }}
+      >
+        {t("md.export")}
+      </button>
+      {exportMenu && (
+        <div className="menu" role="menu">
+          {(["html", "pdf"] as const).map((kind) => (
+            <button
+              type="button"
+              role="menuitem"
+              key={kind}
+              onClick={() => {
+                setExportMenu(false);
+                void session.md?.exportAs(kind);
+              }}
+            >
+              {t(kind === "html" ? "md.exportHtml" : "md.exportPdf")}
+            </button>
+          ))}
+        </div>
+      )}
       {md.inTable && (
         <button
           type="button"

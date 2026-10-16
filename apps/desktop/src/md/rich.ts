@@ -27,7 +27,7 @@ const CACHE_ENTRIES = 2000;
 
 type Katex = typeof import("katex").default;
 
-type Result = { html: string } | { error: string };
+export type Result = { html: string } | { error: string };
 
 class Lru<V> {
   private readonly map = new Map<string, V>();
@@ -67,7 +67,7 @@ const mathCache = new Lru<Result>(CACHE_ENTRIES, resultSize);
 const diagramCache = new Lru<Result>(CACHE_ENTRIES / 4, resultSize);
 
 let katexLoad: Promise<Katex> | undefined;
-function loadKatex(): Promise<Katex> {
+export function loadKatex(): Promise<Katex> {
   katexLoad ??= import("./katex").then((m) => m.default);
   return katexLoad;
 }
@@ -77,7 +77,7 @@ function dark(): boolean {
 }
 
 function badge(el: HTMLElement, text: string, title?: string): void {
-  const b = document.createElement("span");
+  const b = el.ownerDocument.createElement("span");
   b.className = "md-rich-badge";
   b.textContent = text;
   if (title) b.title = title;
@@ -85,7 +85,7 @@ function badge(el: HTMLElement, text: string, title?: string): void {
 }
 
 /** The Mermaid frame: created on first use, kept for the session. */
-class DiagramFrame {
+export class DiagramFrame {
   private frame: HTMLIFrameElement | undefined;
   private ready: Promise<void> | undefined;
   private next = 1;
@@ -168,6 +168,71 @@ class DiagramFrame {
   }
 }
 
+/** Renders one `data-math-style` element in place (the preview and
+ *  exports); returns the error, if any. */
+export function renderMathElement(katex: Katex, el: HTMLElement): string | undefined {
+  const doc = el.ownerDocument;
+  const display = el.dataset.mathStyle === "display";
+  const src = el.textContent;
+  el.dataset.rich = "done";
+  if (src.length > MAX_MATH) {
+    el.classList.add("md-rich-plain");
+    badge(el, t("md.mathTooLarge"));
+    return t("md.mathTooLarge");
+  }
+  const key = `${display ? "D" : "I"}${src}`;
+  let r = mathCache.get(key);
+  if (!r) {
+    try {
+      r = {
+        html: katex.renderToString(src, {
+          displayMode: display,
+          throwOnError: true,
+          // No \href, \url, \htmlClass and friends: math can't link or
+          // style the page.
+          trust: false,
+          strict: "ignore",
+          maxExpand: 1000,
+          maxSize: 100,
+          output: "htmlAndMathml",
+        }),
+      };
+    } catch (e) {
+      r = { error: e instanceof Error ? e.message : String(e) };
+    }
+    mathCache.set(key, r);
+  }
+  if ("error" in r) {
+    el.classList.add("md-rich-error");
+    badge(el, t("md.mathError"), r.error);
+    return r.error;
+  }
+  // Display math in a code block (```math): replace the <pre>.
+  const target =
+    el.tagName === "CODE" && el.parentElement?.tagName === "PRE" ? el.parentElement : el;
+  const out = doc.createElement(display ? "div" : "span");
+  out.className = display ? "md-math md-math-display" : "md-math";
+  const pos = target.getAttribute("data-sourcepos");
+  if (pos) out.setAttribute("data-sourcepos", pos);
+  out.dataset.rich = "done";
+  out.innerHTML = r.html;
+  target.replaceWith(out);
+  return undefined;
+}
+
+/** A diagram's SVG as an <img> (preview and exports). */
+export function diagramFigure(doc: Document, svg: string, sourcepos: string | null): HTMLElement {
+  const fig = doc.createElement("figure");
+  fig.className = "md-diagram";
+  if (sourcepos) fig.setAttribute("data-sourcepos", sourcepos);
+  const img = doc.createElement("img");
+  img.alt = t("md.diagramAlt");
+  img.decoding = "async";
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  fig.append(img);
+  return fig;
+}
+
 let trimListenerInstalled = false;
 
 /** The governor asks for the caches back (frontend_cache.rs). */
@@ -247,51 +312,7 @@ export class RichRenderer {
   }
 
   private renderMath(katex: Katex, el: HTMLElement): void {
-    const display = el.dataset.mathStyle === "display";
-    const src = el.textContent;
-    el.dataset.rich = "done";
-    if (src.length > MAX_MATH) {
-      el.classList.add("md-rich-plain");
-      badge(el, t("md.mathTooLarge"));
-      return;
-    }
-    const key = `${display ? "D" : "I"}${src}`;
-    let r = mathCache.get(key);
-    if (!r) {
-      try {
-        r = {
-          html: katex.renderToString(src, {
-            displayMode: display,
-            throwOnError: true,
-            // No \href, \url, \htmlClass and friends: math can't link or
-            // style the page.
-            trust: false,
-            strict: "ignore",
-            maxExpand: 1000,
-            maxSize: 100,
-            output: "htmlAndMathml",
-          }),
-        };
-      } catch (e) {
-        r = { error: e instanceof Error ? e.message : String(e) };
-      }
-      mathCache.set(key, r);
-    }
-    if ("error" in r) {
-      el.classList.add("md-rich-error");
-      badge(el, t("md.mathError"), r.error);
-      return;
-    }
-    // Display math in a code block (```math): replace the <pre>.
-    const target =
-      el.tagName === "CODE" && el.parentElement?.tagName === "PRE" ? el.parentElement : el;
-    const out = document.createElement(display ? "div" : "span");
-    out.className = display ? "md-math md-math-display" : "md-math";
-    const pos = target.getAttribute("data-sourcepos");
-    if (pos) out.setAttribute("data-sourcepos", pos);
-    out.dataset.rich = "done";
-    out.innerHTML = r.html;
-    target.replaceWith(out);
+    renderMathElement(katex, el);
   }
 
   private async pumpDiagrams(): Promise<void> {
@@ -332,18 +353,13 @@ export class RichRenderer {
       this.changed();
       return;
     }
-    const fig = document.createElement("figure");
-    fig.className = "md-diagram";
-    const pos = pre.getAttribute("data-sourcepos");
-    if (pos) fig.setAttribute("data-sourcepos", pos);
-    const img = document.createElement("img");
-    img.alt = t("md.diagramAlt");
-    img.decoding = "async";
-    img.onload = () => {
-      this.changed();
-    };
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(r.html)}`;
-    fig.append(img);
+    const fig = diagramFigure(document, r.html, pre.getAttribute("data-sourcepos"));
+    const img = fig.querySelector("img");
+    if (img) {
+      img.onload = () => {
+        this.changed();
+      };
+    }
     pre.replaceWith(fig);
     this.changed();
   }

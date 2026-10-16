@@ -1,0 +1,230 @@
+/* The stylesheet of exported Markdown (M2 task 11, ADR-0031): self-contained,
+   light, print-friendly. Kept close to the preview's .markdown-body rules
+   in styles.css. */
+:root {
+  color-scheme: light;
+  --fg: #1d1f2b;
+  --muted: #6b6f85;
+  --line: #d9dbe3;
+  --code-bg: #f3f4f7;
+}
+
+html {
+  background: #ffffff;
+  color: var(--fg);
+}
+
+body {
+  margin: 0;
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  font-family: system-ui, "Segoe UI", "Malgun Gothic", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 24px 0 12px;
+  line-height: 1.25;
+  font-weight: 600;
+  break-after: avoid;
+}
+
+.markdown-body h1,
+.markdown-body h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--line);
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body pre,
+.markdown-body table,
+.markdown-body details,
+.markdown-body dl,
+.markdown-body figure {
+  margin: 0 0 16px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+}
+
+.markdown-body li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-body blockquote {
+  padding: 0 1em;
+  color: var(--muted);
+  border-left: 0.25em solid var(--line);
+}
+
+.markdown-body a {
+  color: #2f6fdd;
+}
+
+.markdown-body img {
+  max-width: 100%;
+}
+
+.markdown-body hr {
+  height: 2px;
+  border: 0;
+  background: var(--line);
+}
+
+.markdown-body code,
+.markdown-body pre {
+  font-family: "Cascadia Mono", Consolas, "D2Coding", ui-monospace, monospace;
+  font-size: 0.875em;
+}
+
+.markdown-body :not(pre) > code {
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  background: var(--code-bg);
+}
+
+.markdown-body pre {
+  padding: 12px 16px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--code-bg);
+  line-height: 1.45;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+}
+
+.markdown-body tr {
+  break-inside: avoid;
+}
+
+.markdown-body .footnotes {
+  font-size: 0.875em;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+.markdown-body .md-math-display {
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.markdown-body .md-diagram {
+  text-align: center;
+}
+
+.markdown-body .md-diagram img {
+  max-width: 100%;
+  height: auto;
+}
+
+.hl-comment {
+  color: #6a737d;
+  font-style: italic;
+}
+.hl-keyword,
+.hl-markup-heading {
+  color: #a626a4;
+}
+.hl-string,
+.hl-string-special,
+.hl-character,
+.hl-markup-raw {
+  color: #50a14f;
+}
+.hl-escape {
+  color: #0e8a8a;
+}
+.hl-number,
+.hl-boolean,
+.hl-constant,
+.hl-constant-builtin {
+  color: #b76b01;
+}
+.hl-function,
+.hl-function-method,
+.hl-function-builtin,
+.hl-function-macro,
+.hl-markup-link {
+  color: #2f6fdd;
+}
+.hl-type,
+.hl-type-builtin,
+.hl-constructor,
+.hl-module {
+  color: #c18401;
+}
+.hl-tag {
+  color: #e45649;
+}
+.hl-attribute,
+.hl-property,
+.hl-label {
+  color: #986801;
+}
+.hl-variable-builtin,
+.hl-variable-parameter {
+  color: #d1495b;
+}
+.hl-operator,
+.hl-punctuation-special {
+  color: #0184bc;
+}
+
+@media print {
+  .markdown-body {
+    max-width: none;
+    padding: 0;
+  }
+
+  .markdown-body pre {
+    overflow: visible;
+    white-space: pre-wrap;
+  }
+
+  .markdown-body pre,
+  .markdown-body figure,
+  .markdown-body .md-math-display {
+    break-inside: avoid;
+  }
+}
+
+@page {
+  margin: 18mm 16mm;
+}

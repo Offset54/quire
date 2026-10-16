@@ -8,7 +8,9 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { notify, update } from "../txt/doc-store";
 import type { TxtView } from "../txt/txt-view";
 import { SourceDecorator } from "./decorate";
+import { save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { t } from "../i18n";
+import { buildExport, saveExport, type ReportItem } from "./export";
 import { OutlineRail } from "./outline";
 import { KIND } from "./protocol";
 import { MdPreview } from "./preview";
@@ -117,7 +119,7 @@ export class MdController {
     private readonly source: TxtView,
     previewHost: HTMLElement,
     imagePrefix: string,
-    frameUrl: string,
+    private readonly frameUrl: string,
     command: (name: string) => void,
   ) {
     this.preview = new MdPreview(previewHost, doc, imagePrefix, frameUrl, {
@@ -290,6 +292,30 @@ export class MdController {
       });
   }
 
+  /** Exports the document as HTML or PDF (task 11): asks where, then says
+   *  what wasn't carried over. */
+  async exportAs(kind: "html" | "pdf"): Promise<void> {
+    try {
+      const ex = await buildExport(this.doc, this.frameUrl);
+      const path = await saveDialog({
+        defaultPath: `${ex.title}.${kind}`,
+        filters: [{ name: kind.toUpperCase(), extensions: [kind] }],
+      });
+      if (!path) return;
+      await saveExport(ex.html, path, kind);
+      notify("info", exportSummary(path, ex.report));
+    } catch (err) {
+      notify("error", t("md.exportFailed", { message: String(err) }));
+    }
+  }
+
+  /** Exports to `path` without asking (UI flows, benchmarks). */
+  async exportTo(kind: "html" | "pdf", path: string): Promise<ReportItem[]> {
+    const ex = await buildExport(this.doc, this.frameUrl);
+    await saveExport(ex.html, path, kind);
+    return ex.report;
+  }
+
   /** A pasted image (decision A): stored next to the document by the core,
    *  then its link is pasted (one undo step). */
   pasteImage(file: File): boolean {
@@ -400,6 +426,15 @@ export class MdController {
     setMd(undefined);
     update({});
   }
+}
+
+function exportSummary(path: string, report: readonly ReportItem[]): string {
+  if (report.length === 0) return t("md.exported", { path });
+  const items = report
+    .slice(0, 5)
+    .map((r) => `${r.source} (${r.reason})`)
+    .join("; ");
+  return t("md.exportedWithReport", { path, count: report.length, items });
 }
 
 /** Holds the push Channel until the preview exists (its windows go there). */

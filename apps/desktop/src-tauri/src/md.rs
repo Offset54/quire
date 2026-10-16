@@ -23,6 +23,7 @@ use parking_lot::{Condvar, Mutex, RwLock};
 use quire_core::memory::{CacheClass, DocId, Evictable, MemoryGovernor, Registration};
 use quire_highlight::service::{self as highlight_service, Listener};
 use quire_markdown::document::MarkdownDoc;
+use quire_markdown::document::render_document;
 use quire_markdown::images::ImagePolicy;
 use quire_markdown::preview::{self, Highlight, Preview, Window};
 use quire_markdown::render::RenderOptions;
@@ -767,6 +768,82 @@ pub async fn md_paste_image(
         let png = crate::paste::to_png(body).map_err(io_err)?;
         crate::paste::store(dir, &png, &crate::paste::today()).map_err(io_err)
     })
+}
+
+/// Documents larger than this aren't exported.
+const EXPORT_MAX: u64 = 256 * 1024 * 1024;
+
+/// The whole document rendered for export (task 11, ADR-0031): HTML with
+/// code highlighted and images inlined, the report of what was left out,
+/// and a title (the file's name).
+#[tauri::command]
+pub async fn md_export_html(svc: State<'_, MdService>, doc: u64) -> CmdResult<Value> {
+    guarded(|| {
+        let s = svc.txt.session(doc)?;
+        let (snap, path) = {
+            let f = s.file.lock();
+            (f.doc.snapshot(), f.path.clone())
+        };
+        if snap.len() > EXPORT_MAX {
+            return Err("the document is too large to export (over 256 MiB)".into());
+        }
+        let bytes = {
+            let _reading = s.readers.read();
+            snap.read(0..snap.len()).map_err(io_err)?
+        };
+        let remote = svc.images.remote_enabled(doc).then_some(doc);
+        let opts = RenderOptions {
+            sourcepos: false,
+            highlight: true,
+            ..MdService::options(path.as_deref(), remote)
+        };
+        let body = render_document(&bytes, &opts);
+        let mut report = Vec::new();
+        let html =
+            crate::export::inline_images(&body, images::url_prefix(), &svc.images, &mut report);
+        let title = path.as_deref().and_then(Path::file_stem).map_or_else(
+            || "Untitled".to_owned(),
+            |s| s.to_string_lossy().into_owned(),
+        );
+        Ok(json!({ "html": html, "report": report, "title": title }))
+    })
+}
+
+/// Writes an export: the raw body is the finished HTML page; header
+/// `x-quire-path` (percent-encoded) is where, `x-quire-kind` is `html` or
+/// `pdf` (printed by WebView2 from the page).
+#[tauri::command]
+pub async fn md_export_save(
+    app: tauri::AppHandle,
+    request: tauri::ipc::Request<'_>,
+) -> CmdResult<()> {
+    let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+        return Err("expected a raw body".into());
+    };
+    let header = |k: &str| {
+        request
+            .headers()
+            .get(k)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned)
+            .ok_or_else(|| format!("missing header {k}"))
+    };
+    let path = quire_markdown::images::percent_decode(&header("x-quire-path")?)
+        .map(std::path::PathBuf::from)
+        .ok_or("bad path")?;
+    match header("x-quire-kind")?.as_str() {
+        "html" => crate::export::write_file(&path, body).map_err(io_err),
+        #[cfg(windows)]
+        "pdf" => {
+            let html = body.clone();
+            tauri::async_runtime::spawn_blocking(move || {
+                crate::export::print_pdf(&app, &html, &path)
+            })
+            .await
+            .map_err(io_err)?
+        }
+        other => Err(format!("unknown export kind {other}")),
+    }
 }
 
 /// Longest heading text sent to the outline rail.

@@ -539,14 +539,13 @@ test("table helpers: format, Tab between cells, one undo step each", async () =>
     "caret in the table",
   );
   await wd.chord([KEYS.alt, KEYS.shift, "f"]);
-  let text = await untilOrDump(
-    async () => {
-      const t = await docText();
-      return t.includes("| a   | b   |\n| --- | --- |\n| 1   | 2   |") && t;
-    },
+  await untilOrDump(
+    async () => (await sourceRows()).some((r) => r.t === "| a   | b   |"),
     10_000,
-    "formatted table",
+    "the formatted table in the view",
   );
+  const text = await docText();
+  assert.ok(text.includes("| a   | b   |\n| --- | --- |\n| 1   | 2   |"), "formatted table");
   // Only the table changed.
   const end = before.indexOf(Buffer.from("| 1 | 2 |")) + "| 1 | 2 |".length;
   assert.deepEqual(text.subarray(0, at), before.subarray(0, at));
@@ -561,36 +560,37 @@ test("table helpers: format, Tab between cells, one undo step each", async () =>
   );
   await new Promise((r) => setTimeout(r, 200));
   await wd.chord([KEYS.tab]);
+  // Each step waits for the view before saving (an edit that arrives while
+  // a save runs is refused "busy").
   await untilOrDump(
-    async () => {
-      const t = await docText();
-      return t.includes("| 1   | 2   |\n|     |     |") && t;
-    },
+    async () => (await sourceRows()).some((r) => r.t === "|     |     |"),
     10_000,
-    "a new row",
+    "a new row in the view",
   );
+  assert.ok((await docText()).includes("| 1   | 2   |\n|     |     |"), "a new row");
   await wd.exec(
     `document.querySelector('.txt-input').dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: 'z', cancelable: true }))`,
   );
   await untilOrDump(
-    async () => {
-      const t = await docText();
-      return /\| z +\| +\|/.test(t.toString());
-    },
+    async () => (await sourceRows()).some((r) => /^\| z/.test(r.t)),
     10_000,
-    "typed in the new row's first cell",
+    "typed in the view",
   );
+  assert.match((await docText()).toString(), /\| z +\| +\|/, "typed in the new row's first cell");
   // Undo: the typing, then the new row (one step), then the format (one step).
   await focusEditor();
   for (let i = 0; i < 3; i++) await wd.chord([KEYS.control, "z"]);
+  // Wait for the view before saving: an undo that arrives while a save
+  // runs is refused ("busy").
   await untilOrDump(
     async () => {
-      const t = await docText();
-      return t.equals(before) && t;
+      const r = (await sourceRows()).map((x) => x.t);
+      return r.includes("| a | b |") && r.includes("| 1 | 2 |") && !r.some((t) => /^\| z/.test(t));
     },
     10_000,
-    "back to the original bytes",
+    "the original table in the view",
   );
+  assert.ok((await docText()).equals(before), "back to the original bytes");
 });
 
 test("pasting an image stores it in assets/ once and links it (one undo step)", async () => {
@@ -645,4 +645,60 @@ test("pasting an image stores it in assets/ once and links it (one undo step)", 
   await focusEditor();
   for (let i = 0; i < 2; i++) await wd.chord([KEYS.control, "z"]);
   await untilOrDump(async () => (await docText()).equals(before), 10_000, "undone");
+});
+
+/** Runs `md.exportTo(kind, file)` in the app and waits for its report. */
+async function exportTo(kind, file, ms) {
+  await wd.exec(
+    `window.__exported = undefined;
+     window.__quire.session.md.exportTo(arguments[0], arguments[1]).then(
+       (report) => { window.__exported = { report }; },
+       (err) => { window.__exported = { error: String(err) }; });`,
+    [kind, file],
+  );
+  const r = await untilOrDump(() => wd.exec("return window.__exported"), ms, `export to ${kind}`);
+  if (r.error) throw new Error(r.error);
+  return r.report;
+}
+
+test("export to HTML is self-contained and reports what it left out; PDF prints", async () => {
+  const html = path.join(mdDir, "notes-export.html");
+  const report = await exportTo("html", html, 60_000);
+  const page = fs.readFileSync(html, "utf8");
+  assert.match(page, /^<!doctype html>/);
+  assert.match(page, /<style>/);
+  // Nothing in the page runs or loads from elsewhere.
+  assert.doesNotMatch(page, /<script/i);
+  assert.doesNotMatch(page, /\son[a-z]+=/i);
+  assert.doesNotMatch(page, /\s(src|href)="(?!data:|#|https:\/\/example\.com\/far)/);
+  // The local image inlined; the tracker kept out and reported.
+  assert.match(page, /<img src="data:image\/png;base64,[A-Za-z0-9+/=]+" alt="local image"/);
+  assert.doesNotMatch(page, /<img[^>]*\ssrc="[^"]*tracker/);
+  assert.ok(
+    report.some((r) => r.kind === "image" && r.source.includes("tracker.invalid")),
+    JSON.stringify(report),
+  );
+  // Math rendered, with KaTeX's fonts as data URLs; the broken expression
+  // and the broken diagram are reported.
+  assert.match(page, /class="katex/);
+  assert.match(page, /src:url\(data:font\/woff2;base64,/);
+  assert.ok(
+    report.some((r) => r.kind === "math"),
+    JSON.stringify(report),
+  );
+  // The diagram as an image.
+  assert.match(page, /<img[^>]*src="data:image\/svg\+xml/);
+  assert.ok(
+    report.some((r) => r.kind === "diagram"),
+    JSON.stringify(report),
+  );
+  // Highlighted code.
+  assert.match(page, /<span class="hl-keyword">fn<\/span>/);
+
+  const pdf = path.join(mdDir, "notes-export.pdf");
+  const started = Date.now();
+  await exportTo("pdf", pdf, 120_000);
+  const head = fs.readFileSync(pdf).subarray(0, 5).toString("latin1");
+  assert.equal(head, "%PDF-");
+  console.log(`PDF export: ${fs.statSync(pdf).size} bytes in ${Date.now() - started} ms`);
 });
