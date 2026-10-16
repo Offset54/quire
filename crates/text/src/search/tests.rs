@@ -35,9 +35,9 @@ proptest! {
     #[test]
     fn chunked_search_equals_whole_buffer_search(
         doc in prop::collection::vec(prop_oneof![Just(b'a'), Just(b'b'), Just(b' '), Just(b'\n')], 0..20_000),
-        p in 0..7usize,
+        p in 0..9usize,
     ) {
-        let patterns = [("ab", false), ("aa", true), ("a[ab]*b", true), (r"\bab\b", true), ("^b", true), ("a$", true), ("b{100,}", true)];
+        let patterns = [("ab", false), ("aa", true), ("a[ab]*b", true), (r"\bab\b", true), ("^b", true), ("a$", true), ("b{100,}", true), ("a[ab ]*b", true), (r"(?:a[ab ]*)", true)];
         let (pat, regex) = patterns[p];
         let m = Matcher::new(&q(pat, regex)).unwrap();
         let s = snap(&doc);
@@ -149,4 +149,40 @@ fn a_match_cut_at_a_chunk_end_is_never_invented() {
         search_range(&s, &m, 0, doc.len() as u64, usize::MAX).unwrap(),
         naive(&doc, &m)
     );
+}
+
+#[test]
+fn a_greedy_match_that_backtracks_inside_the_window_is_rerun() {
+    // Fuzz regression (search, CI): `\b(?:.*)\b` matched up to the last word
+    // boundary inside a chunk's window, which ended before the window did,
+    // so it wasn't seen as cut; with the rest of the text it is longer.
+    let mut doc = b"a".to_vec();
+    doc.extend(std::iter::repeat_n(b' ', (CHUNK + OVERLAP) as usize));
+    doc.extend_from_slice(b"bc d");
+    for (pat, whole_word) in [(".*", true), (r"a[ a-c]*c", false)] {
+        let m = Matcher::new(&Query {
+            whole_word,
+            ..q(pat, true)
+        })
+        .unwrap();
+        let s = snap(&doc);
+        let expected = naive(&doc, &m);
+        assert_eq!(
+            search_range(&s, &m, 0, s.len(), usize::MAX).unwrap(),
+            expected,
+            "{pat}"
+        );
+        let scheduler = Scheduler::new(SchedulerConfig {
+            threads: 3,
+            urgent_reserved: 1,
+            history: 0,
+            thread_name: "t",
+        });
+        let mut got = Vec::new();
+        search_all(&s, &m, &scheduler, 2, &CancelToken::new(), &mut |b, _| {
+            got.extend_from_slice(b)
+        })
+        .unwrap();
+        assert_eq!(got, expected, "{pat} (chunked)");
+    }
 }

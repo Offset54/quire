@@ -9,6 +9,8 @@
 
 use std::sync::OnceLock;
 
+mod save_on_panic;
+
 use libfuzzer_sys::fuzz_target;
 use quire_core::scheduler::{CancelToken, Scheduler, SchedulerConfig};
 use quire_text::buffer::TextBuffer;
@@ -27,6 +29,7 @@ fn scheduler() -> &'static Scheduler {
 }
 
 fuzz_target!(|data: &[u8]| {
+    save_on_panic::guard("search", data);
     if data.len() < 3 {
         return;
     }

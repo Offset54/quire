@@ -3,10 +3,14 @@
 //! - Patterns compile with `regex-automata`'s meta engine; a literal search is
 //!   an escaped pattern, which the engine runs as a `memmem` scan.
 //! - A full search splits the document into 16 MiB chunks, searched in
-//!   parallel on the scheduler. Each chunk reads 64 KiB past its end (plus a
-//!   few bytes before its start, for `\b` and `^`), and only keeps matches
-//!   that start inside it. A match that runs into the end of that window is
-//!   re-run on a longer window (up to [`MAX_MATCH`]). Chunks merge in order;
+//!   parallel on the scheduler. Each chunk reads past its end (plus a few
+//!   bytes before its start, for `\b` and `^`), and only keeps matches that
+//!   start inside it: 64 KiB past it when no match of the pattern can be
+//!   longer (every literal search), else [`MAX_MATCH`]: then the engine
+//!   never needs text past the window to settle a match that starts in the
+//!   chunk, matches longer than [`MAX_MATCH`] aside (cut there). A match that
+//!   runs into the end of the window is re-run on a longer window (up to
+//!   [`MAX_MATCH`]). Chunks merge in order;
 //!   when a match from one chunk overlaps the next, the next chunk is
 //!   re-searched from where that match ended, so the result is exactly the
 //!   sequential leftmost-first result.
@@ -67,6 +71,9 @@ pub struct Matcher {
     re: Arc<Regex>,
     /// A match can contain a line break (`find_prev`).
     spans_lines: bool,
+    /// How far past a chunk its search window reaches: [`OVERLAP`] when no
+    /// match can be longer, else [`MAX_MATCH`].
+    window: u64,
 }
 
 impl Matcher {
@@ -82,26 +89,36 @@ impl Matcher {
         if query.whole_word {
             pat = format!(r"\b(?:{pat})\b");
         }
+        let syntax = syntax::Config::new()
+            .case_insensitive(!query.case_sensitive)
+            .multi_line(true)
+            .crlf(true);
         let re = Regex::builder()
-            .syntax(
-                syntax::Config::new()
-                    .case_insensitive(!query.case_sensitive)
-                    .multi_line(true)
-                    .crlf(true),
-            )
+            .syntax(syntax)
             .build(&pat)
             .map_err(|e| e.to_string())?;
-        let spans_lines = regex_syntax::ParserBuilder::new()
+        let hir = regex_syntax::ParserBuilder::new()
             .case_insensitive(!query.case_sensitive)
             .multi_line(true)
             .crlf(true)
             .build()
             .parse(&pat)
-            .map_or(true, |h| can_match_newline(&h));
+            .ok();
+        let spans_lines = hir.as_ref().is_none_or(can_match_newline);
+        // A match found in a window is exact when the longest possible match
+        // (plus a character of look-ahead) fits the overlap; otherwise the
+        // window reaches MAX_MATCH past the chunk (search fuzz: a match
+        // longer than the overlap whose start of text matched nothing in the
+        // window was missed).
+        let window = match hir.and_then(|h| h.properties().maximum_len()) {
+            Some(n) if (n as u64) + 4 <= OVERLAP => OVERLAP,
+            _ => MAX_MATCH,
+        };
         Ok(Self {
             query: query.clone(),
             re: Arc::new(re),
             spans_lines,
+            window,
         })
     }
 
@@ -179,7 +196,7 @@ pub fn search_range(
     while at < to && out.len() < limit {
         let chunk_end = (at + CHUNK).min(to);
         let hay_start = at.saturating_sub(BEHIND);
-        let hay_end = (chunk_end + OVERLAP).min(len);
+        let hay_end = (chunk_end + m.window).min(len);
         let hay = snap.read(hay_start..hay_end)?;
         let base = hay_start;
         let span = (at - base) as usize..hay.len();
@@ -219,7 +236,9 @@ fn long_match(snap: &Snapshot, m: &Matcher, start: u64) -> io::Result<Option<(u6
     let anchored = Input::new(&hay[..])
         .span(span.clone())
         .anchored(Anchored::Yes);
-    if let Some(x) = m.re.search(&anchored) {
+    if let Some(x) = m.re.search(&anchored)
+        && !x.is_empty()
+    {
         return Ok(Some((start, hay_start + x.end() as u64)));
     }
     let found =
