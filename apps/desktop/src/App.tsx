@@ -36,8 +36,12 @@ function Decoding() {
   );
 }
 
-/** The session the app shows; exposed for benchmarks and UI tests. */
-export const appState: { session: Session | undefined } = { session: undefined };
+/** The session the app shows, and opening a path as the app does; exposed
+ * for benchmarks and UI tests. */
+export const appState: {
+  session: Session | undefined;
+  open?: (path: string) => Promise<void>;
+} = { session: undefined };
 // UI tests (WebDriver) read it to check positions; never exposed otherwise.
 if (navigator.webdriver) {
   (window as unknown as { __quire?: typeof appState }).__quire = appState;
@@ -79,6 +83,9 @@ export function App() {
     },
     [replace],
   );
+  useEffect(() => {
+    appState.open = openFile;
+  }, [openFile]);
 
   // Startup: a file from the command line (already opening in the core),
   // and journals left by a crash.

@@ -263,8 +263,7 @@ test("a killed app offers to restore its unsaved edits", async () => {
   assert.match(await status(), /Unsaved/);
 });
 test("a large non-UTF-8 file shows decode progress and can be cancelled", async () => {
-  // 1.25 GiB of UTF-16LE: decoding outlasts the webview's startup, so there
-  // is time to see and cancel it (768 MiB raced startup on a fast runner).
+  // 1.25 GiB of UTF-16LE: decoding takes seconds.
   const big = path.join(DIR, "big-utf16.txt");
   const line = Buffer.from("UTF-16 line, 한국어 and 日本語, to decode\r\n", "utf16le");
   const block = Buffer.concat(
@@ -274,25 +273,48 @@ test("a large non-UTF-8 file shows decode progress and can be cancelled", async 
   fs.writeSync(fd, Buffer.from([0xff, 0xfe]));
   for (let i = 0; i < 80; i++) fs.writeSync(fd, block);
   fs.closeSync(fd);
-  await wd.stop().catch(() => {});
-  await launch([big]);
-  await wd.until(
-    () => wd.exec("return /Decoding/.test(document.querySelector('.banner')?.innerText ?? '')"),
-    10_000,
-    "decode progress",
-  );
-  await wd.exec(
-    "[...document.querySelectorAll('.banner button')].find((b) => b.innerText === 'Cancel').click()",
-  );
-  await wd.until(
-    () =>
-      wd.exec("return !document.querySelector('.banner') && !!document.querySelector('.welcome')"),
-    10_000,
-    "back to the welcome screen",
-  );
-  assert.equal(await wd.exec("return document.querySelectorAll('.txt-row').length"), 0);
-  assert.equal(await wd.exec("return document.querySelectorAll('.notice.error').length"), 0);
-  fs.rmSync(big);
+  const decoding = () =>
+    wd.exec("return /Decoding/.test(document.querySelector('.banner')?.innerText ?? '')");
+  const cancel = async () => {
+    await wd.exec(
+      "[...document.querySelectorAll('.banner button')].find((b) => b.innerText === 'Cancel').click()",
+    );
+    await wd.until(
+      () =>
+        wd.exec(
+          "return !document.querySelector('.banner') && !!document.querySelector('.welcome')",
+        ),
+      10_000,
+      "back to the welcome screen",
+    );
+    assert.equal(await wd.exec("return document.querySelectorAll('.txt-row').length"), 0);
+    assert.equal(await wd.exec("return document.querySelectorAll('.notice.error').length"), 0);
+  };
+  try {
+    // From the command line, decoding starts before the webview and races
+    // its startup: the progress shows if it is still running then, and
+    // otherwise the file is open.
+    await wd.stop().catch(() => {});
+    await launch([big]);
+    const seen = await wd.until(
+      async () => ((await decoding()) ? "progress" : (await rows()).length > 5 ? "open" : false),
+      20_000,
+      "decode progress or the decoded file",
+    );
+    if (seen === "progress") {
+      await cancel();
+    } else {
+      assert.match((await rows())[0].t, /^UTF-16 line, 한국어/);
+      await wd.stop().catch(() => {});
+      await launch([]);
+    }
+    // Opened from the app, progress shows from the start of the decode.
+    await wd.exec("void window.__quire.open(arguments[0])", [big]);
+    await wd.until(decoding, 10_000, "decode progress");
+    await cancel();
+  } finally {
+    fs.rmSync(big, { force: true });
+  }
 });
 
 test("a command-line file that can't be read says why on the welcome screen", async () => {
