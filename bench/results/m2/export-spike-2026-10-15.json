@@ -1,0 +1,27 @@
+{
+  "note": "Markdown export spike (M2 task 11, ADR-0031), tests/ui/export-spike.test.mjs, release build of 4d90871's export code, raw dev machine (not ref-sim), AC power, WebView2 155.0.4283.45, 31.5 GB RAM with the user's browsers open (5-15 GB free). Slices of .cache/fixtures/document-20mib.md cut at a heading. The fixture's 10 image files (assets/figure-N.png) are not generated, so every image is reported 'not found' (correct).",
+  "runs": [
+    {
+      "fixture": "spike-md-1mib.md",
+      "fixtureBytes": 1049032,
+      "html": { "ms": 4633, "bytes": 7602280, "longTasks": 4, "longestTaskMs": 2622, "report": { "image": 799 } },
+      "pdf": { "ms": 47549, "bytes": 6831829, "pages": 1131, "longTasks": 4, "longestTaskMs": 3242, "report": { "image": 799 } }
+    },
+    {
+      "fixture": "spike-md-4mib.md",
+      "fixtureBytes": 4195028,
+      "html": { "bytes": 29176719, "note": "finished; time not recorded (the run failed later)" },
+      "pdf": { "result": "stopped by the memory guard after about 11 min of printing", "peakWebViewWorkingSetGB": 5.86, "minFreeGB": 1.84 }
+    },
+    {
+      "fixture": "document-20mib.md",
+      "fixtureBytes": 20973256,
+      "html": { "bytes": 145523442, "approxMs": 180000, "composition": "18.7 MB text; ~67 MB of <span> start tags, mostly KaTeX (31,660 expressions, HTML + MathML); 253,280 highlight spans; 317 diagrams as SVG data URIs (6.6 MB); 15,830 tables" },
+      "pdf": { "result": "stopped by hand after 8 min of printing", "peakWebViewWorkingSetGB": 12.6, "minFreeGB": 0.4 }
+    },
+    {
+      "fixture": "notes.md (md-flows sample, 48 KB)",
+      "pdf": { "ms": [877, 976], "bytes": 175011 }
+    }
+  ]
+}

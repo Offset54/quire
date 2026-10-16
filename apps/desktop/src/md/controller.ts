@@ -10,7 +10,7 @@ import type { TxtView } from "../txt/txt-view";
 import { SourceDecorator } from "./decorate";
 import { save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { t } from "../i18n";
-import { buildExport, saveExport, type ReportItem } from "./export";
+import { PDF_MAX_BYTES, buildExport, pdfTooLarge, saveExport, type ReportItem } from "./export";
 import { OutlineRail } from "./outline";
 import { KIND } from "./protocol";
 import { MdPreview } from "./preview";
@@ -297,6 +297,12 @@ export class MdController {
   async exportAs(kind: "html" | "pdf"): Promise<void> {
     try {
       const ex = await buildExport(this.doc, this.frameUrl);
+      const tooLarge = kind === "pdf" ? pdfTooLarge(ex.html) : null;
+      if (tooLarge !== null) {
+        const mb = (n: number) => (n / (1024 * 1024)).toFixed(0);
+        notify("error", t("md.pdfTooLarge", { size: mb(tooLarge), limit: mb(PDF_MAX_BYTES) }));
+        return;
+      }
       const path = await saveDialog({
         defaultPath: `${ex.title}.${kind}`,
         filters: [{ name: kind.toUpperCase(), extensions: [kind] }],

@@ -157,7 +157,15 @@ pub fn print_pdf<R: tauri::Runtime>(
     let target = out.to_owned();
     let started = std::sync::atomic::AtomicBool::new(false);
     let label = format!("export-{n}");
-    let window = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url))
+    let builder = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url));
+    // Every webview of the app shares one WebView2 environment, which
+    // refuses a webview created with other browser arguments
+    // (0x8007139F): under WebDriver the main window gets msedgedriver's.
+    let builder = match crate::webdriver_browser_args() {
+        Some(args) => builder.additional_browser_args(&args),
+        None => builder,
+    };
+    let window = builder
         .visible(false)
         .on_page_load(move |w, payload| {
             if payload.event() != PageLoadEvent::Finished || started.swap(true, Ordering::AcqRel) {

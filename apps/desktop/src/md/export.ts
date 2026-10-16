@@ -94,6 +94,18 @@ export async function buildExport(doc: number, frameUrl: string): Promise<Export
   return { html, title: r.title, report };
 }
 
+/** Largest page printed to PDF (user decision 2026-10-16, ADR-0031): the
+ *  webview's printer needs gigabytes beyond this (a 29 MB page grew it past
+ *  5.8 GB); 10 MiB is about 1 MiB of math-heavy Markdown, ~1,100 pages.
+ *  The host checks the same limit (`md.rs`). */
+export const PDF_MAX_BYTES = 10 * 1024 * 1024;
+
+/** The page's size in bytes when it is too large to print to PDF. */
+export function pdfTooLarge(html: string): number | null {
+  const bytes = new TextEncoder().encode(html).length;
+  return bytes > PDF_MAX_BYTES ? bytes : null;
+}
+
 /** Writes the page to `path` as HTML, or prints it there as PDF. */
 export async function saveExport(html: string, path: string, kind: "html" | "pdf"): Promise<void> {
   await invoke("md_export_save", new TextEncoder().encode(html), {

@@ -773,6 +773,12 @@ pub async fn md_paste_image(
 /// Documents larger than this aren't exported.
 const EXPORT_MAX: u64 = 256 * 1024 * 1024;
 
+/// Largest page printed to PDF (user decision 2026-10-16, ADR-0031): the
+/// webview's printer needs gigabytes beyond it. The frontend checks the same
+/// limit first (`PDF_MAX_BYTES` in `src/md/export.ts`).
+#[cfg(windows)]
+const PDF_MAX: usize = 10 * 1024 * 1024;
+
 /// The whole document rendered for export (task 11, ADR-0031): HTML with
 /// code highlighted and images inlined, the report of what was left out,
 /// and a title (the file's name).
@@ -817,6 +823,9 @@ pub async fn md_export_save(
     app: tauri::AppHandle,
     request: tauri::ipc::Request<'_>,
 ) -> CmdResult<()> {
+    // Only the PDF printer (Windows for now) needs the app.
+    #[cfg(not(windows))]
+    let _ = &app;
     let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
         return Err("expected a raw body".into());
     };
@@ -835,6 +844,13 @@ pub async fn md_export_save(
         "html" => crate::export::write_file(&path, body).map_err(io_err),
         #[cfg(windows)]
         "pdf" => {
+            if body.len() > PDF_MAX {
+                return Err(format!(
+                    "the page is too large to print to PDF ({} MiB, over {} MiB); export it as HTML",
+                    body.len() >> 20,
+                    PDF_MAX >> 20
+                ));
+            }
             let html = body.clone();
             tauri::async_runtime::spawn_blocking(move || {
                 crate::export::print_pdf(&app, &html, &path)
