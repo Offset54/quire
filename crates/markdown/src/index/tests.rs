@@ -64,6 +64,30 @@ fn a_byte_order_mark_mid_document_is_text() {
     }
 }
 
+/// Text typed above front matter makes its lines ordinary blocks: the old
+/// front matter block, moved, is no place to line up (md_incremental fuzz).
+#[test]
+fn typing_above_front_matter_unmakes_it() {
+    let mut t = b"---\ntitle: t\n---\n\npara\n".to_vec();
+    for chunk in [16, 4096] {
+        let mut ix = full(&t, chunk);
+        assert_eq!(ix.blocks()[0].kind, BlockKind::FrontMatter);
+        let mut u = t.clone();
+        apply(&mut u, 0, 0, b"# H\n");
+        ix.edit(&u, 0, 0, 4, EDIT_BUDGET).unwrap();
+        complete(&mut ix, &u);
+        assert_eq!(shape(&ix), truth(&u), "chunk {chunk}");
+    }
+    // And deleting what was above makes it front matter again.
+    t.splice(0..0, b"# H\n".iter().copied());
+    let mut ix = full(&t, 16);
+    let mut u = t.clone();
+    apply(&mut u, 0, 4, b"");
+    ix.edit(&u, 0, 4, 0, EDIT_BUDGET).unwrap();
+    complete(&mut ix, &u);
+    assert_eq!(shape(&ix), truth(&u));
+}
+
 #[test]
 fn hashes_follow_bytes() {
     let ix = full(DOC.as_bytes(), 64);

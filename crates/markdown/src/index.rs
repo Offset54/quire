@@ -460,7 +460,10 @@ impl BlockIndex {
     fn find_tail(&self, tail_from: usize, shift: impl Fn(u64) -> u64, start: u64) -> Option<usize> {
         let tail = &self.blocks[tail_from..];
         let i = tail.partition_point(|b| shift(b.start) < start);
-        (i < tail.len() && shift(tail[i].start) == start).then_some(tail_from + i)
+        // Front matter is front matter only at 0: moved, its lines are
+        // ordinary blocks again (md_incremental fuzz).
+        (i < tail.len() && shift(tail[i].start) == start && tail[i].kind != BlockKind::FrontMatter)
+            .then_some(tail_from + i)
     }
 }
 
