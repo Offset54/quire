@@ -1,0 +1,14 @@
+{
+  "what": "cargo bench -p quire-markdown --bench markdown (criterion, raw dev machine, AC power, user's browsers open)",
+  "date": "2026-10-16",
+  "commit": "4d90871 + crates/markdown/benches/markdown.rs",
+  "document": "generated sections of mixed CommonMark + GFM (headings, lists, a table, code, math, quote, reference links, footnotes)",
+  "medians": {
+    "index/build_4mib_ms": 154.8,
+    "index/document_4mib_ms": 382.7,
+    "edit/type_and_undo/paragraph_ms": 1.16,
+    "edit/type_and_undo/fence_ms": 1.18,
+    "render/one_block_us": 5.47
+  },
+  "notes": "index/document includes block analysis (definitions, footnotes, headings). type_and_undo is two edits through MarkdownDoc (index, analyses, table invalidation) on a 4 MiB document: about 0.6 ms per edit. The fence case deletes and restores a closing fence's backtick, which re-opens the fence and widens the re-parse up to the edit budget."
+}

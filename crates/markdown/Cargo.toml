@@ -14,8 +14,13 @@ comrak = { version = "0.56", default-features = false }
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 [dev-dependencies]
+criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
 proptest = "1"
 quire-core = { path = "../core" }
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "markdown"
+harness = false
