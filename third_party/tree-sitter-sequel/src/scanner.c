@@ -125,6 +125,9 @@ bool tree_sitter_sql_external_scanner_scan(void *payload, TSLexer *lexer, const 
     }
 
     if (state->start_tag != NULL && strcmp(state->start_tag, start_tag) == 0) {
+      // quire patch (docs/adr/0034-patched-grammars.md): free the tag just
+      // scanned, as every other exit does (upstream issue #376).
+      free(start_tag);
       return false;
     }
 

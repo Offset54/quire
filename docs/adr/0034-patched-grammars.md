@@ -13,7 +13,7 @@ The next fuzz run, symbolized, found the leak the target had reported since 2026
 
 ## Decision
 
-Vendor the three published crates, unchanged except for the fixes, under `third_party/tree-sitter-md`, `third_party/tree-sitter-bash` and `third_party/tree-sitter-sequel`, and use them through `[patch.crates-io]` in the main workspace and in the fuzz workspace. In Markdown and Bash the four calls become `quire_is_ascii_digit(lexer->lookahead)` (`'0'..='9'`); in SQL, `deserialize` frees the held tag first, as upstream does. Each change is marked "quire patch". All three crates stay MIT-licensed; their license and README files stay with them. They are excluded from the workspace, so they build as dependencies with their own settings.
+Vendor the three published crates, unchanged except for the fixes, under `third_party/tree-sitter-md`, `third_party/tree-sitter-bash` and `third_party/tree-sitter-sequel`, and use them through `[patch.crates-io]` in the main workspace and in the fuzz workspace. In Markdown and Bash the four calls become `quire_is_ascii_digit(lexer->lookahead)` (`'0'..='9'`); in SQL, `deserialize` frees the held tag first, as upstream does (DerekStride/tree-sitter-sql#361), and `scan` frees a dollar-quote tag that repeats the open one (reported upstream as #376, with LeakSanitizer evidence). Each change is marked "quire patch". All three crates stay MIT-licensed; their license and README files stay with them. They are excluded from the workspace, so they build as dependencies with their own settings.
 
 When upstream releases a fix, drop the vendored copy and the patch entry (compare the scanner first). For SQL that is the release after 0.3.11.
 
@@ -28,7 +28,7 @@ When upstream releases a fix, drop the vendored copy and the patch entry (compar
 
 - About 33 MB of generated C source in the repository (`parser.c` files), a few MB compressed.
 - Upgrading any of them now means re-vendoring and re-applying the patch.
-- An upstream report and fix are worth sending (not done: that's yours to approve).
+- Upstream (user approval 2026-10-17): reported as tree-sitter-grammars/tree-sitter-markdown#274 (with the SEGV input and stack; the earlier #252 was closed as a core locale issue, and that core PR was closed unmerged) and tree-sitter/tree-sitter-bash#361 (pointing to the open fix #348). SQL's fixes are upstream already (#361 merged, #376 reported by others), so no new issue; drop the copy once a release has both.
 
 ## Evidence
 
