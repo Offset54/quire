@@ -178,6 +178,7 @@ impl ExportJob {
     }
 
     /// The flag a PDF print watches.
+    #[cfg(windows)]
     pub fn cancel_flag(&self) -> &AtomicBool {
         &self.cancel
     }
