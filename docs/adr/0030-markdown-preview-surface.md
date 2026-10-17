@@ -49,3 +49,12 @@ With highlighting, KaTeX, Mermaid, exports and the M2 fuzz fixes (the M2 close, 
 - A piece renders its rows without the rows before it. Footnote numbers are document-wide and stay right, but the back-reference ids of references to one note from two pieces of the same table are the same (`fnref-1-1` twice), so the note's back-links lead to the first of them. Recorded in RISKS.
 - The frontend keeps HTML for up to 3,000 entries and reports its size to the memory governor (`md-preview-dom`), like decoded preview images (`preview-images`).
 - `data-sourcepos` in piece HTML counts lines from the piece's own source; the frontend uses the entries' byte ranges instead.
+
+## Addendum 2026-10-17: font warm-up in a worker
+
+Opening the 1 MiB slice of the fixture from the command line showed a 58–107 ms frame in about half the runs (`bench/results/m2/open-fonts-2026-10-17.json`, raw dev machine). Long Animation Frame attribution, mapped through the source map, put it in the source view's first draw (`TxtView.draw`, a requestAnimationFrame callback), 30–51 ms of it forced style and layout: the first rows paid Windows font fallback for Hangul and emoji because the command-line file drew before the warm-up had finished. The warm-up's own steps were 7–35 ms each, also over §2's 8 ms.
+
+- A Web Worker now measures the samples on an `OffscreenCanvas` first (`src/fonts-worker.ts`, stacks in `src/font-samples.ts`); that loads the faces off the UI thread, and the page's own sample layouts afterwards take 0–5 ms.
+- Started at script start in every launch, the worker cost warm start a median 7.8 ms (slower in 12 of 16 interleaved ref-sim pairs; the warm-start margin is thin, RISKS #15). So it starts at script start only when the host says a command-line file is opening (an initialization script sets `__quireOpening`), and after the first frame otherwise, which leaves the startup scenario as it was.
+- Result: no long task or long frame since load in 6 of 6 command-line opens; the 3 s after the open had no main-thread gap over 8 ms (max 5.3–6.8 ms) in 6 of 6. An open through the app inside the probe had max gaps of 6.2–7.4 ms in 5 of 6 runs; one had 9 and 13 ms gaps at the end of the window, unattributed.
+- A file opened before the worker finishes, or text in a script the samples don't cover, still pays on the UI thread (RISKS #13).

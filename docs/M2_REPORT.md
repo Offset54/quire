@@ -88,7 +88,22 @@ The other suites on the final build: TXT 21/21 (`refsim-txt-2026-10-17-014646.js
 
 ## Known gaps
 
-- **Exports block the window** while they render math and serialize the page: long tasks up to 2.6 s (HTML) and 3.2 s (PDF) for 1 MiB of math-heavy Markdown; about 3 minutes for the 20 MiB fixture's HTML (RISKS #17). Slicing, progress and Cancel are owed; `krilla` replaces the printer in M6.
+- **Export: residual main-thread gaps.** The export blocked the window until 2026-10-17 (RISKS #17); it is streamed now (`b913d4b`, `eba2aa8`, see the addendum). Left: a few 8–12 ms gaps, mostly at the end of a 20 MiB export, and one 62–65 ms pause with no script in the frame (likely GC). PDF pages over 10 MiB are refused until `krilla` replaces the printer in M6.
+- **Fonts on first use** (RISKS #13): a document that draws before the font worker has finished, or text in a script the warm-up doesn't sample (Arabic, Thai, Devanagari, CJK ideographs), still pays Windows font fallback on the UI thread.
 - PDF export works on Windows only so far; macOS and Linux need their own print path (M7).
 - Huge lists, block quotes and HTML blocks are one preview entry each (RISKS #14); the C parsers stay a fuzzing target (RISKS #16).
 - The Microsoft IMEs still haven't been checked by hand (carried from M1).
+
+## Addendum 2026-10-17: export streaming and the open-time task
+
+Both measured with `tests/ui/export-spike.test.mjs` on a release build, raw dev machine (not ref-sim). The spike now has a MessageChannel gap probe (a gap is how long other work held the main thread), Long Animation Frame attribution, a 3 s idle baseline and an open inside the probe.
+
+**Exports** (RISKS #17 mitigated, `b913d4b` and `eba2aa8`, ADR-0031 addendum, `bench/results/m2/export-streamed-2026-10-17.json`). The core renders the page block by block on its own thread, a Web Worker renders the math, and the page relays pieces to the host, with progress and Cancel.
+
+| | Before (2026-10-15) | After |
+|---|---|---|
+| 1 MiB slice, HTML | 4.6 s, long tasks up to 2.6 s | 1.1–3.2 s, no long task; gaps ≤ 8 ms in 6 of 7 exports (one had 10 and 12 ms) |
+| 1 MiB slice, PDF | 47.5 s, long tasks up to 3.2 s | 39.6–52.8 s, 1,131 pages, no long task, max gap 6.7–7.7 ms |
+| 20 MiB fixture, HTML | ~3 min | 34.8 s first, 27.1 s warm; no long task; gaps over 8 ms only in the last half second (8–11 ms, and one 62–65 ms pause with no script in the frame) |
+
+**The open-time task** (RISKS #13, ADR-0030 addendum, `bench/results/m2/open-fonts-2026-10-17.json`). Opening the 1 MiB slice from the command line showed a 64–107 ms task in 2 of 4 runs while measuring the exports, with no export running. That breaks §4's "no UI-thread task over 50 ms" (and §2's 8 ms). It was the source view's first draw paying Windows font fallback (30–51 ms of forced layout in a requestAnimationFrame callback, mapped through the source map), because a command-line file drew before the font warm-up had finished. The warm-up's own steps were 7–35 ms. A worker now loads the faces off the UI thread. It starts at script start when a command-line file is opening and after the first frame otherwise: starting it at script start always cost warm start a median 7.8 ms over 16 interleaved ref-sim pairs. After the fix: no long task or long frame in 6 of 6 opens, and no gap over 8 ms in the 3 s after (max 5.3–6.8 ms). The warm-up steps take 0–5 ms. An open through the app inside the probe stayed at or under 7.4 ms in 5 of 6 runs; one had 9 and 13 ms gaps at the end of the window, unattributed. UI flows: 28 of 28 pass.
