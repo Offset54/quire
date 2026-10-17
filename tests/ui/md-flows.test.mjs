@@ -440,13 +440,14 @@ test("the outline rail lists the headings, follows the position and goes to a he
         const rail = document.querySelector('.md-outline');
         if (!rail || rail.offsetParent === null) return false;
         const k = window.__quire.session.md.outline.headings().length;
-        return k > 0 && document.querySelectorAll('.md-outline-row').length > 0 && k;
+        return k === 400 && document.querySelectorAll('.md-outline-row').length > 0 && k;
       `),
     10_000,
     "outline rows",
   );
   // 400 "## Section i" ("# Notes title" became "Hello # Notes title" in
-  // the typing flow).
+  // the typing flow). The outline follows the tables' rebuild after an
+  // edit, so a first read can still count the old title (401, on CI).
   assert.equal(n, 400);
   // Go to a heading far down: the editing view scrolls there, and it is
   // the current one.
