@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Phase | M2 (Markdown) in progress |
+| Phase | M2 (Markdown) done, report written ([M2_REPORT](M2_REPORT.md)) |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-15 |
+| Last updated | 2026-10-17 |
 
 ## Milestones
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
 | M1 TXT engine | Done ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | All 4 met. Ref-sim run 6 (2026-10-13): 21 of 21 TXT budgets, platform frame stalls reported separately (ADR-0024) |
-| M2 Markdown | In progress ([plan](M2_PLAN.md), approved 2026-10-13) | n/a |
+| M2 Markdown | Done ([report](M2_REPORT.md), [plan](M2_PLAN.md)) | Both met: spec suite 99.26 % with the exceptions listed; ref-sim 2026-10-17: 11 of 11 Markdown rows (plus TXT 21/21, M0 11/11) |
 | M3 PDF | Not started | n/a |
 | M4 DOCX | Not started | n/a |
 | M5 PPTX | Not started | n/a |
@@ -33,12 +33,12 @@
 | 8 | Source view and incremental preview | Mostly done: `.md` in the TXT view with decoration, view modes (Ctrl+E, Ctrl+\\, remembered), keystroke → provisional window → corrections, word count. Keystroke → preview in ref-sim: p50 11–15 ms, unstalled p95 20–22 ms / max 24–27 ms; 9–15 % of keystrokes (after a pause) hit platform stalls of 150–375 ms (reported, not judged: ADR-0024 addendum) |
 | 9 | Scroll sync, outline, click-to-source | Done: two-way scroll sync, click-to-source, outline rail (virtualized, current section, Ctrl+Shift+O remembered; `md_outline`) |
 | 10 | Editing helpers | Done: table helpers (format/align by display width, insert/delete row and column, Tab/Shift+Tab, one undo step each through the engine's new `Replace` action, untouched bytes exact); image paste into `assets/image-<yyyymmdd>-<hash8>.png`, deduplicated (decision A) |
-| 11 | Exports | Not started |
-| 12 | Corpora, fixtures and fuzzing | Not started |
-| 13 | Benchmarks | In progress: `md-20m`, `md-20m-edit`, `tools/bench/refsim-md.ps1`, `md` rows in `bench/budgets.json`, ref-sim runs listed in `bench/results/m2/README.md`; criterion benches to do |
-| 14 | WebDriver UI flows | In progress: 14 Markdown flows (adds highlighting, math and diagrams, outline, table helpers, image paste), 26 in all, pass locally; export to do |
+| 11 | Exports | Done ([ADR-0031](adr/0031-markdown-export.md)): self-contained HTML (images, KaTeX fonts and diagrams inlined, a report of what wasn't carried over) and PDF printed by WebView2. Spike: 1 MiB slice PDF 47.5 s, 1,131 pages; 4 and 20 MiB didn't finish (renderer 5.9 / 12.6 GB). User decision 2026-10-16: PDF refused over a 10 MiB page, `krilla` in M6. Export long tasks up to 3.2 s (RISKS #17) |
+| 12 | Corpora, fixtures and fuzzing | Done: fuzz targets `md_scan`, `md_incremental`, `md_sanitize`, `highlight` (every grammar), seeds, nightly matrix. Found and fixed: a BOM mid-document parsed differently in a stretch (ADR-0027 addendum); Markdown links skipped the href allowlist (ADR-0028 addendum); scheme check cut at 16 characters; front matter moved by an edit; footnote labels that depended on the stretch; search missed matches longer than the chunk overlap (M1 code); a SEGV in the Markdown grammar's C scanner (and the same calls in Bash) and a leak in SQL's, patched and vendored ([ADR-0034](adr/0034-patched-grammars.md)). Fuzz workflow green at `236c2b8`, all eight targets |
+| 13 | Benchmarks | Done: `md-20m`, `md-20m-edit`, `tools/bench/refsim-md.ps1`, `md` rows in `bench/budgets.json`; criterion `crates/markdown/benches/markdown.rs` (4 MiB index 155 ms, keystroke + undo 1.16 ms). Final ref-sim 2026-10-17: MD 11/11, TXT 21/21, M0 11/11 |
+| 14 | WebDriver UI flows | Done: 15 Markdown flows (adds export), 27 in all, pass locally. The M1 decode-progress flow no longer races startup; the table-helper flow waits for the view before saving |
 | 15 | Carried from M1 | Done: webview tile-bitmap cache reported to the governor (`frontend_cache.rs`; bench: 160 MiB counted on both sides after scrolling); command-line open failure shown on the welcome screen; reopen with another encoding shows progress with Cancel (UI flows 10 and 11) |
-| 16 | M2 report | Not started |
+| 16 | M2 report | Done: [M2_REPORT.md](M2_REPORT.md) |
 
 Decided 2026-10-15 (ADR-0024 addendum): the Markdown keystroke → preview row is judged on keystrokes the platform didn't stall (86 % in ref-sim: p95 22–24 ms, max 29–31 ms, 33.3 ms effective); the 14 % that follow a pause and wait 150–370 ms for a frame (RISKS #12) are reported with every run.
 

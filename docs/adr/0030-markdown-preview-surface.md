@@ -40,6 +40,8 @@ Ref-sim (ADR-0021: performance cores, 8 logical CPUs, 1280×720 logical), 20 MiB
 - Typing in the source view: p95 7.8–8.3 ms; p99 8.5–8.6 ms in two runs and 71.1 ms in one where a platform stall hit (own 17.6 ms); judged raw (ADR-0024).
 - Memory after the index completes: +54–55 MiB private bytes.
 
+With highlighting, KaTeX, Mermaid, exports and the M2 fuzz fixes (the M2 close, `b705a76`, `bench/results/m2/refsim-md-2026-10-17-005414.json`): first paint 84–88 ms; keystroke → preview p95 23.3 ms, max 25.1 ms, no platform stall in this run; typing p99 7.4 ms; preview scrolling max frame 8.1 ms steady, 13.8 ms fling; no long tasks; +59 MiB. All 11 rows pass. A run 40 minutes earlier on the same build (`refsim-md-2026-10-17-001130.json`), while the machine was in use, had first paints of 501 and 568 ms in two of three runs with one 50 ms long task each, and 89 ms in the third; it is kept and listed as disturbed.
+
 ## Consequences
 
 - Layout cost is ours to budget: every new kind of rendering (KaTeX, Mermaid, highlighting) must keep a placed block cheap, or be split, or arrive later as a labeled placeholder (§7).
