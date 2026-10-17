@@ -10,7 +10,7 @@ image = { version = "0.25.10", default-features = false, features = ["jpeg", "pn
 pdf-writer = "0.15.0"
 serde_json = "1.0.151"
 sha2 = "0.11.0"
-zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
+zip = { version = "9.0.4", default-features = false, features = ["deflate"] }
 
 [lints]
 workspace = true
