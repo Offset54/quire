@@ -88,6 +88,22 @@ fn typing_above_front_matter_unmakes_it() {
     assert_eq!(shape(&ix), truth(&u));
 }
 
+/// A footnote definition's label is the same whatever else its stretch
+/// holds: comrak renames it after a reference in the same parse
+/// (md_incremental fuzz: `1p\x0c` alone, `1p ` next to `[^1p ]`).
+#[test]
+fn footnote_labels_dont_depend_on_the_stretch() {
+    let def = "[^1p\x0c]: The note.\n";
+    let alone = scan_document(def.as_bytes(), &Flavor::PRODUCT);
+    let with_ref = format!("Uses [^1p ].\n\n{def}");
+    let with_ref = scan_document(with_ref.as_bytes(), &Flavor::PRODUCT);
+    assert_eq!(alone[0].kind, with_ref[1].kind);
+    assert_eq!(
+        alone[0].kind,
+        BlockKind::FootnoteDefinition { label: "1p".into() }
+    );
+}
+
 #[test]
 fn hashes_follow_bytes() {
     let ix = full(DOC.as_bytes(), 64);

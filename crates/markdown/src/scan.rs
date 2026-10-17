@@ -62,8 +62,11 @@ fn kind_of(v: &NodeValue) -> BlockKind {
         NodeValue::List(_) => BlockKind::List,
         NodeValue::BlockQuote => BlockKind::BlockQuote,
         NodeValue::Table(_) => BlockKind::Table,
+        // Normalized here: comrak renames a definition after a reference to
+        // it in the same parse, so the raw name depends on what else the
+        // stretch holds (a form feed kept or turned into a space; md_incremental fuzz).
         NodeValue::FootnoteDefinition(f) => BlockKind::FootnoteDefinition {
-            label: f.name.clone(),
+            label: crate::analysis::normalize_label(&f.name),
         },
         NodeValue::Math(_) => BlockKind::Math,
         _ => BlockKind::Other,
