@@ -2,7 +2,7 @@
 
 - Date: 2026-10-17 (plan approved 2026-10-13)
 - Commits: `c87a070` (plan) … `236c2b8` (last code), then this report, on `main` ([Offset54/quire](https://github.com/Offset54/quire))
-- CI: build, tests and gates green on Windows, macOS and Linux, and the WebDriver UI-flow job green on Windows, at `236c2b8`. Since then, CI is green at `c0eecfa` (2026-10-17, after the export streaming and the font fix); the scheduled fuzz run of 2026-10-17 07:46Z at `eba2aa8` failed and is not yet triaged. The fuzz workflow (eight targets, 10 minutes each, under AddressSanitizer and LeakSanitizer) is green at `236c2b8` (run 38999200450), after its runs on 2026-10-16/17 found five more bugs (below).
+- CI: build, tests and gates green on Windows, macOS and Linux, and the WebDriver UI-flow job green on Windows, at `236c2b8`. Since then, CI is green at `c0eecfa` (2026-10-17, after the export streaming and the font fix); the scheduled fuzz run of 2026-10-17 07:46Z at `eba2aa8` failed on the check's own scheme rule, not the product (item 14); CI and the fuzz workflow are green with the fix at `c48550d` (runs 39024997626 and 39024997716). The fuzz workflow (eight targets, 10 minutes each, under AddressSanitizer and LeakSanitizer) is green at `236c2b8` (run 38999200450), after its runs on 2026-10-16/17 found five more bugs (below).
 - **M2 is done.** Both DoD items are met: the CommonMark and GFM spec suites pass at 99.26 % with every exception listed, and the final ref-sim run meets all 11 Markdown rows of §4 (TXT 21/21 and the M0 suite 11/11 alongside). One decision was yours this stretch: PDF export of very large documents (below).
 
 ## Definition of Done (§11)
