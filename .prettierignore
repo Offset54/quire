@@ -13,3 +13,4 @@ fuzz/regressions/
 
 # Generated benchmark results
 bench/results/
+third_party/

@@ -43,6 +43,7 @@ The plan was approved on 2026-10-08. Entries stay **Proposed** until their own f
 | 0031 | Markdown export | [Accepted](0031-markdown-export.md): self-contained HTML from the preview's renderer (images, KaTeX fonts and diagrams inlined; a report of what wasn't carried over); PDF printed by WebView2, refused over a 10 MiB page (user decision 2026-10-16); `krilla` in M6 | `krilla` now (MIT OR Apache-2.0); chunked printing merged with lopdf (MIT) | M2 |
 | 0032 | Unlicense allowed | [Accepted](0032-unlicense-allowed.md) (user decision): Unlicense added to the license allowlists for `robust-predicates` in Mermaid's d3; Mermaid pinned at 11.17.2 to keep EPL-2.0 (`elkjs`) out | Allow EPL-2.0 too (Mermaid 12); no Mermaid in v1 | M2 |
 | 0033 | Math and diagrams | [Accepted](0033-math-and-diagrams.md): KaTeX bundled, lazy, in 4 ms slices in the page; Mermaid in a sandboxed frame served by the `quire-frame` scheme with its own CSP, SVG shown as an image; errors keep the source with a badge | KaTeX in the core; Mermaid in the page, a worker or a srcdoc frame; inline SVG | M2 |
+| 0034 | Patched grammars | [Accepted](0034-patched-grammars.md): tree-sitter-md 0.5.3 and tree-sitter-bash 0.25.1 vendored under `third_party/` with `isdigit(lookahead)` replaced by an ASCII check (a SEGV found by fuzzing), used through `[patch.crates-io]` | Wait for upstream; drop the two languages; pre-filter code | M2 |
 
 ## Template
 

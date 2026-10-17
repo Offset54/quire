@@ -11,6 +11,7 @@ export default tseslint.config(
       "**/target/**",
       "**/src-tauri/gen/**",
       ".cache/**",
+      "third_party/**",
     ],
   },
   js.configs.recommended,

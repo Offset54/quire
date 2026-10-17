@@ -200,6 +200,21 @@ mod tests {
         }
     }
 
+    /// The Markdown and Bash scanners passed code points to isdigit(), out
+    /// of its table past 255 (a SEGV found by the highlight fuzz target;
+    /// ADR-0034 patches them).
+    #[test]
+    fn digits_before_code_points_past_255() {
+        for (lang, code) in [
+            ("markdown", "\0\0\0\u{30}\u{86f22}</>"),
+            ("markdown", "1\u{86f22}. item\n12\u{10ffff}) item\n"),
+            ("bash", "echo {1\u{86f22}..2} {1..2\u{86f22}}\n"),
+        ] {
+            let html = highlight(lang, code).unwrap();
+            assert_eq!(text_of(&html), code, "{lang}");
+        }
+    }
+
     #[test]
     fn aliases_and_case() {
         for name in [

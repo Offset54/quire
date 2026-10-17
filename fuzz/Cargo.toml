@@ -20,6 +20,11 @@ quire-highlight = { path = "../crates/highlight" }
 [workspace]
 members = ["."]
 
+# The same patched grammars as the main workspace (ADR-0034).
+[patch.crates-io]
+tree-sitter-md = { path = "../third_party/tree-sitter-md" }
+tree-sitter-bash = { path = "../third_party/tree-sitter-bash" }
+
 [[bin]]
 name = "encoding"
 path = "fuzz_targets/encoding.rs"
