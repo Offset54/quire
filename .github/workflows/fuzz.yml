@@ -35,11 +35,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Nightly toolchain and cargo-fuzz
         run: |
-          rustup toolchain install "$NIGHTLY" --profile minimal --component llvm-tools
+          rustup toolchain install "$NIGHTLY" --profile minimal
           cargo +"$NIGHTLY" install cargo-fuzz --version "$CARGO_FUZZ" --locked
-          # Sanitizer reports (leaks, crashes) with function names.
-          sym=$(find "$(rustc +"$NIGHTLY" --print sysroot)" -name llvm-symbolizer -type f | head -1)
-          echo "ASAN_SYMBOLIZER_PATH=$sym" >> "$GITHUB_ENV"
+          # Sanitizer reports (leaks, crashes) with function names: the
+          # runner image's LLVM has llvm-symbolizer (the Rust toolchain doesn't).
+          sym=$(command -v llvm-symbolizer || ls /usr/lib/llvm-*/bin/llvm-symbolizer 2>/dev/null | sort -V | tail -1)
+          echo "llvm-symbolizer: ${sym:-not found}"
+          if [ -n "$sym" ]; then echo "ASAN_SYMBOLIZER_PATH=$sym" >> "$GITHUB_ENV"; fi
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: fuzz
