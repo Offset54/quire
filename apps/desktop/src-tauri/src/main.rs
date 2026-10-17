@@ -179,12 +179,19 @@ fn webdriver_browser_args() -> Option<String> {
     Some(format!("--disable-features={features} {}", args.join(" ")))
 }
 
-fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
+fn create_main_window(app: &tauri::App, opening: bool) -> tauri::Result<()> {
     let _span = tracing::info_span!("create_main_window").entered();
     let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
         .title("quire")
         .inner_size(1280.0, 800.0)
         .min_inner_size(640.0, 400.0);
+    // A file from the command line is opening: the page warms its fonts
+    // as its script starts, before the document's first rows (fonts.ts).
+    let builder = if opening {
+        builder.initialization_script("globalThis.__quireOpening = true;")
+    } else {
+        builder
+    };
     #[cfg(feature = "bench-fixtures")]
     let builder = bench::configure_window(builder);
     #[cfg(windows)]
@@ -233,6 +240,7 @@ fn main() {
         q.is_file().then_some(q)
     });
     tracing::info!(args = ?std::env::args_os().skip(1).collect::<Vec<_>>(), file = ?file_arg, "command line");
+    let opening = file_arg.is_some();
     if let Some(path) = file_arg {
         txt.preopen(path);
     }
@@ -394,7 +402,7 @@ fn main() {
             app.manage(FrontendCaches::new(governor, sink));
             #[cfg(feature = "bench-fixtures")]
             app.add_capability(include_str!("../dev-capabilities/bench.json"))?;
-            Ok(create_main_window(app)?)
+            Ok(create_main_window(app, opening)?)
         })
         .build(tauri::generate_context!())
         .expect("failed to build the Tauri application");

@@ -51,18 +51,21 @@ async function withLongTasks(fn) {
     `window.__long = []; window.__lo?.disconnect();
      window.__lo = new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__long.push(e.duration); });
      window.__lo.observe({ type: "longtask" });
+     const t0 = performance.now();
      window.__loaf = []; window.__lf?.disconnect();
      window.__lf = new PerformanceObserver((l) => {
        for (const e of l.getEntries()) {
          window.__loaf.push({
+           at: Math.round(e.startTime - t0),
            ms: Math.round(e.duration),
-           scripts: e.scripts.map((x) => ({ ms: Math.round(x.duration), invoker: x.invoker, src: x.sourceURL.split("/").pop(), fn: x.sourceFunctionName })),
+           blockingMs: Math.round(e.blockingDuration),
+           layoutMs: Math.round(e.startTime + e.duration - e.styleAndLayoutStart),
+           scripts: e.scripts.map((x) => ({ ms: Math.round(x.duration), forcedLayoutMs: Math.round(x.forcedStyleAndLayoutDuration), invoker: x.invoker, src: x.sourceURL.split("/").pop(), fn: x.sourceFunctionName, pos: x.sourceCharPosition })),
          });
        }
      });
      try { window.__lf.observe({ type: "long-animation-frame" }); } catch {}
-     const t0 = performance.now();
-     const gaps = (window.__gaps = { n: 0, over8: 0, over16: 0, max: 0, run: true, big: [] });
+     const gaps = (window.__gaps = { t0, n: 0, over8: 0, over16: 0, max: 0, run: true, big: [] });
      const ch = new MessageChannel();
      let last = performance.now();
      ch.port1.onmessage = () => {
@@ -82,6 +85,17 @@ async function withLongTasks(fn) {
   const long = await wd.exec("return window.__long");
   const gaps = await wd.exec("window.__gaps.run = false; return window.__gaps");
   const loaf = await wd.exec("return window.__loaf");
+  // Font warm-up steps (src/fonts.ts) and the first draws, relative to the
+  // probe's start.
+  const marks = await wd.exec(
+    `const t0 = window.__gaps.t0;
+     return performance.getEntriesByType("measure").filter((m) => m.name === "font-warm")
+       .map((m) => ["font-warm", Math.round(m.startTime - t0), Math.round(m.duration)])
+       .concat(performance.getEntriesByType("measure").filter((m) => m.name === "font-warm-worker")
+       .map((m) => ["font-warm-worker", Math.round(m.startTime - t0), Math.round(m.duration), m.detail]))
+       .concat(performance.getEntriesByType("mark").filter((m) => /first-(content|rows)/.test(m.name))
+       .map((m) => [m.name, Math.round(m.startTime - t0)]));`,
+  );
   long.sort((a, b) => b - a);
   return {
     ...r,
@@ -91,6 +105,7 @@ async function withLongTasks(fn) {
     /** [ms since the start, gap ms] of each gap over 8 ms. */
     gapsAt: gaps.big.slice(0, 20),
     loaf: loaf.slice(0, 5),
+    marks,
     longTasks: long.length,
     longestTaskMs: long[0] ?? 0,
     topTasksMs: long.slice(0, 5).map(Math.round),
@@ -115,11 +130,50 @@ test("export spike: the 20 MiB fixture to HTML and PDF", { timeout: 40 * 60_000 
     };
   };
   const out = { fixture: path.basename(fixture), fixtureBytes: fs.statSync(fixture).size };
+  // Long tasks and long frames since the page loaded: the command-line open
+  // (which races the page's start) before the probes below run.
+  out.sinceLoad = await wd.exec(
+    `const buffered = (type) => new Promise((resolve) => {
+       const o = new PerformanceObserver(() => {});
+       try { o.observe({ type, buffered: true }); } catch { resolve([]); return; }
+       setTimeout(() => { const l = o.takeRecords(); o.disconnect(); resolve(l); }, 50);
+     });
+     return Promise.all([buffered("longtask"), buffered("long-animation-frame")]).then(([tasks, frames]) => ({
+       longTasks: tasks.map((e) => [Math.round(e.startTime), Math.round(e.duration)]),
+       longFrames: frames.map((e) => ({ at: Math.round(e.startTime), ms: Math.round(e.duration),
+         scripts: e.scripts.map((x) => ({ ms: Math.round(x.duration), forcedLayoutMs: Math.round(x.forcedStyleAndLayoutDuration), invoker: x.invoker, src: x.sourceURL.split("/").pop(), pos: x.sourceCharPosition })) })),
+     }));`,
+  );
   // The page's own work after opening, with no export (the baseline the
   // export's numbers are read against).
   out.idleAfterOpen = await withLongTasks(async () => {
     await new Promise((r) => setTimeout(r, 3000));
     return { ms: 3000 };
+  });
+  // The open itself inside the probes: another file, then the fixture again
+  // through the app's open path, and 3 s of idle after it.
+  const other = path.join(DIR, "spike-other.md");
+  fs.writeFileSync(other, "# Other\n\nA small file.\n");
+  /** Opens `file` through the app; resolves once its Markdown session is up. */
+  const reopen = async (file) => {
+    const before = await wd.exec("return window.__quire.session?.doc");
+    await wd.exec("void window.__quire.open(arguments[0])", [file]);
+    await wd.until(
+      () =>
+        wd.exec("const s = window.__quire.session; return !!s?.md && s.doc !== arguments[0]", [
+          before,
+        ]),
+      60_000,
+      path.basename(file),
+    );
+  };
+  await reopen(other);
+  out.openInProbe = await withLongTasks(async () => {
+    const t0 = Date.now();
+    await reopen(fixture);
+    const opened = Date.now() - t0;
+    await new Promise((r) => setTimeout(r, 3000));
+    return { ms: Date.now() - t0, openedMs: opened };
   });
   // The first export in the session, then the same again (warm: worker,
   // KaTeX and the frame's code already compiled).

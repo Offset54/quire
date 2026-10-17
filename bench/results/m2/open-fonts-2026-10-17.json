@@ -1,0 +1,1653 @@
+{
+ "note": "Open-time main-thread task (RISKS #13 follow-up, ADR-0030 addendum 2026-10-17): tests/ui/export-spike.test.mjs on .cache/fixtures/spike-md-1mib.md, QUIRE_SPIKE_PDF=0, release builds of eba2aa8 plus the change at each stage, raw dev machine (not ref-sim), AC power. The app starts on the fixture (command-line open, which races the page's start). idleAfterOpen: 3 s probe started once the Markdown session exists; at = ms relative to the probe's start (negative: before it; long frames are reported up to ~100 ms late, so the observer sees some earlier ones). openInProbe (final stage only): another file, then the fixture again through the app's open path inside the probe, 3 s idle. sinceLoad: buffered longtask and long-animation-frame entries since the page loaded. marks: font-warm-worker [name, at, ms, per-sample ms in the worker]; txt-first-rows-ready / txt-first-content [name, at]. The 70 ms frame attributed by source map (sourceCharPosition 346032 in main-*.js) to the requestAnimationFrame callback in TxtView.invalidate (src/txt/txt-view.ts:859, draw()), 30-50 ms of it forced style and layout: the first rows paying Windows font fallback (Hangul, emoji) because the warm-up (fonts.ts) had not finished when the command-line file drew.",
+ "summary": {
+  "before": "main-thread warm-up steps 7-35 ms each (Hangul in the editor stack 23-35 ms); TxtView first draw 58-65 ms frames (33-51 ms forced layout) in 2 of 4 runs",
+  "worker": "faces warmed in a Worker on an OffscreenCanvas, started after the first frame: main-thread warm-up steps 0-5 ms; still a 52-60 ms first-draw frame (30 ms forced layout) in 2 of 4 runs, the worker finishing ~50 ms after the first rows",
+  "early": "worker started as the page's script starts: no long frame in 4 of 4; but warm start (no file) +7.8 ms median paired difference, slower in 12 of 16 pairs (ab below), so not kept unconditionally",
+  "final": "worker at script start only when the host says a command-line file is opening (initialization script), else after the first frame: no long task or long frame since load in 6 of 6; idleAfterOpen max gap 5.3-6.8 ms in 6 of 6 (none over 8 ms); openInProbe max 6.2-7.4 ms in 5 of 6, one run with 9 and 13 ms gaps at 3124 and 3147 ms, at the end of the window as the harness ends the wait and reads results (unattributed, under the 50 ms LoAF floor)"
+ },
+ "abWarmStart": {
+  "note": "ref-sim (refsim run --pcores --logical 8), startup scenario (no file), warm ms = firstFrameEpochMs - processCreatedEpochMs, pairs alternating order; main = eba2aa8 bench build, worker = the 'early' stage (worker at script start always). The final stage starts the worker only after the first frame when no file is given, so the startup scenario is unchanged by construction.",
+  "medianMain": 514.25,
+  "medianWorker": 518.4,
+  "medianPairedDiffWorkerMinusMain": 7.800000000000011,
+  "workerSlowerPairs": "12 of 16",
+  "rows": [
+   {
+    "main": 454.5,
+    "worker": 463.8
+   },
+   {
+    "main": 446.6,
+    "worker": 477.5
+   },
+   {
+    "main": 484.1,
+    "worker": 472.7
+   },
+   {
+    "main": 471.1,
+    "worker": 471.4
+   },
+   {
+    "main": 482.4,
+    "worker": 489.5
+   },
+   {
+    "main": 480.4,
+    "worker": 501.7
+   },
+   {
+    "main": 494.3,
+    "worker": 495.2
+   },
+   {
+    "main": 530,
+    "worker": 509.3
+   },
+   {
+    "main": 546.5,
+    "worker": 555
+   },
+   {
+    "main": 528.4,
+    "worker": 530.9
+   },
+   {
+    "main": 500.1,
+    "worker": 571
+   },
+   {
+    "main": 538.2,
+    "worker": 594.6
+   },
+   {
+    "main": 553.9,
+    "worker": 540.4
+   },
+   {
+    "main": 542.9,
+    "worker": 552.6
+   },
+   {
+    "main": 549.9,
+    "worker": 527.5
+   },
+   {
+    "main": 537,
+    "worker": 578.3
+   }
+  ]
+ },
+ "runs": {
+  "before": [
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 8.8,
+     "gapsOver8Ms": 2,
+     "gapsAt": [
+      [
+       861,
+       9
+      ],
+      [
+       3516,
+       8
+      ]
+     ],
+     "longFrames": [
+      {
+       "at": -78,
+       "ms": 58,
+       "scripts": [
+        {
+         "ms": 33,
+         "forcedLayoutMs": 33,
+         "invoker": "FrameRequestCallback"
+        }
+       ]
+      }
+     ],
+     "marks": [
+      [
+       "font-warm",
+       -199,
+       7
+      ],
+      [
+       "font-warm",
+       -190,
+       23
+      ],
+      [
+       "font-warm",
+       -166,
+       8
+      ],
+      [
+       "font-warm",
+       -155,
+       1
+      ],
+      [
+       "font-warm",
+       -148,
+       2
+      ],
+      [
+       "font-warm",
+       -136,
+       8
+      ],
+      [
+       "font-warm",
+       -89,
+       2
+      ],
+      [
+       "txt-first-rows-ready",
+       -127
+      ],
+      [
+       "txt-first-content",
+       -91
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 6.1,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -220,
+       10
+      ],
+      [
+       "font-warm",
+       -209,
+       25
+      ],
+      [
+       "font-warm",
+       -183,
+       8
+      ],
+      [
+       "font-warm",
+       -173,
+       1
+      ],
+      [
+       "font-warm",
+       -167,
+       3
+      ],
+      [
+       "font-warm",
+       -154,
+       8
+      ],
+      [
+       "font-warm",
+       -141,
+       3
+      ],
+      [
+       "txt-first-rows-ready",
+       -145
+      ],
+      [
+       "txt-first-content",
+       -111
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 8.4,
+     "gapsOver8Ms": 1,
+     "gapsAt": [
+      [
+       2625,
+       8
+      ]
+     ],
+     "longFrames": [
+      {
+       "at": -83,
+       "ms": 65,
+       "scripts": [
+        {
+         "ms": 51,
+         "forcedLayoutMs": 50,
+         "invoker": "FrameRequestCallback"
+        }
+       ]
+      }
+     ],
+     "marks": [
+      [
+       "font-warm",
+       -244,
+       12
+      ],
+      [
+       "font-warm",
+       -231,
+       35
+      ],
+      [
+       "font-warm",
+       -194,
+       10
+      ],
+      [
+       "font-warm",
+       -182,
+       1
+      ],
+      [
+       "font-warm",
+       -176,
+       5
+      ],
+      [
+       "font-warm",
+       -155,
+       13
+      ],
+      [
+       "font-warm",
+       -120,
+       3
+      ],
+      [
+       "txt-first-rows-ready",
+       -140
+      ],
+      [
+       "txt-first-content",
+       -122
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 7,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -208,
+       10
+      ],
+      [
+       "font-warm",
+       -196,
+       26
+      ],
+      [
+       "font-warm",
+       -169,
+       10
+      ],
+      [
+       "font-warm",
+       -158,
+       1
+      ],
+      [
+       "font-warm",
+       -151,
+       4
+      ],
+      [
+       "font-warm",
+       -139,
+       9
+      ],
+      [
+       "font-warm",
+       -116,
+       3
+      ],
+      [
+       "txt-first-rows-ready",
+       -127
+      ],
+      [
+       "txt-first-content",
+       -117
+      ]
+     ]
+    }
+   }
+  ],
+  "worker": [
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 5.6,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [
+      {
+       "at": -70,
+       "ms": 60,
+       "scripts": [
+        {
+         "ms": 30,
+         "forcedLayoutMs": 30,
+         "invoker": "FrameRequestCallback"
+        }
+       ]
+      }
+     ],
+     "marks": [
+      [
+       "font-warm",
+       -75,
+       0
+      ],
+      [
+       "font-warm",
+       -71,
+       0
+      ],
+      [
+       "font-warm",
+       -70,
+       0
+      ],
+      [
+       "font-warm",
+       -70,
+       2
+      ],
+      [
+       "font-warm",
+       -67,
+       1
+      ],
+      [
+       "font-warm",
+       -66,
+       5
+      ],
+      [
+       "font-warm",
+       -57,
+       2
+      ],
+      [
+       "font-warm-worker",
+       -168,
+       87,
+       [
+        53,
+        11,
+        6
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -133
+      ],
+      [
+       "txt-first-content",
+       -84
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 5.5,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -80,
+       0
+      ],
+      [
+       "font-warm",
+       -77,
+       0
+      ],
+      [
+       "font-warm",
+       -76,
+       0
+      ],
+      [
+       "font-warm",
+       -74,
+       3
+      ],
+      [
+       "font-warm",
+       -72,
+       1
+      ],
+      [
+       "font-warm",
+       -70,
+       5
+      ],
+      [
+       "font-warm",
+       -61,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -167,
+       85,
+       [
+        45,
+        13,
+        8
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -131
+      ],
+      [
+       "txt-first-content",
+       -106
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 5.5,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -77,
+       0
+      ],
+      [
+       "font-warm",
+       -75,
+       0
+      ],
+      [
+       "font-warm",
+       -74,
+       0
+      ],
+      [
+       "font-warm",
+       -72,
+       2
+      ],
+      [
+       "font-warm",
+       -70,
+       1
+      ],
+      [
+       "font-warm",
+       -69,
+       5
+      ],
+      [
+       "font-warm",
+       -60,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -159,
+       82,
+       [
+        44,
+        10,
+        6
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -124
+      ],
+      [
+       "txt-first-content",
+       -101
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 6.8,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [
+      {
+       "at": -73,
+       "ms": 52,
+       "scripts": [
+        {
+         "ms": 31,
+         "forcedLayoutMs": 31,
+         "invoker": "FrameRequestCallback"
+        }
+       ]
+      }
+     ],
+     "marks": [
+      [
+       "font-warm",
+       -93,
+       1
+      ],
+      [
+       "font-warm",
+       -72,
+       0
+      ],
+      [
+       "font-warm",
+       -69,
+       1
+      ],
+      [
+       "font-warm",
+       -69,
+       1
+      ],
+      [
+       "font-warm",
+       -66,
+       1
+      ],
+      [
+       "font-warm",
+       -63,
+       4
+      ],
+      [
+       "font-warm",
+       -55,
+       2
+      ],
+      [
+       "font-warm-worker",
+       -186,
+       87,
+       [
+        52,
+        12,
+        7
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -150
+      ],
+      [
+       "txt-first-content",
+       -101
+      ]
+     ]
+    }
+   }
+  ],
+  "early": [
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 5.8,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -77,
+       0
+      ],
+      [
+       "font-warm",
+       -77,
+       0
+      ],
+      [
+       "font-warm",
+       -76,
+       0
+      ],
+      [
+       "font-warm",
+       -76,
+       1
+      ],
+      [
+       "font-warm",
+       -73,
+       2
+      ],
+      [
+       "font-warm",
+       -72,
+       6
+      ],
+      [
+       "font-warm",
+       -61,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -183,
+       105,
+       [
+        56,
+        16,
+        9
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -130
+      ],
+      [
+       "txt-first-content",
+       -106
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 6.4,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -120,
+       0
+      ],
+      [
+       "font-warm",
+       -117,
+       1
+      ],
+      [
+       "font-warm",
+       -116,
+       1
+      ],
+      [
+       "font-warm",
+       -113,
+       3
+      ],
+      [
+       "font-warm",
+       -110,
+       2
+      ],
+      [
+       "font-warm",
+       -108,
+       9
+      ],
+      [
+       "font-warm",
+       -30,
+       5
+      ],
+      [
+       "font-warm-worker",
+       -289,
+       167,
+       [
+        79,
+        21,
+        10
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -205
+      ],
+      [
+       "txt-first-content",
+       -165
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 5.7,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -98,
+       1
+      ],
+      [
+       "font-warm",
+       -97,
+       0
+      ],
+      [
+       "font-warm",
+       -95,
+       0
+      ],
+      [
+       "font-warm",
+       -94,
+       2
+      ],
+      [
+       "font-warm",
+       -91,
+       2
+      ],
+      [
+       "font-warm",
+       -86,
+       7
+      ],
+      [
+       "font-warm",
+       -73,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -231,
+       132,
+       [
+        61,
+        15,
+        12
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -169
+      ],
+      [
+       "txt-first-content",
+       -135
+      ]
+     ]
+    }
+   },
+   {
+    "idleAfterOpen": {
+     "maxGapMs": 6,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -95,
+       0
+      ],
+      [
+       "font-warm",
+       -92,
+       1
+      ],
+      [
+       "font-warm",
+       -90,
+       0
+      ],
+      [
+       "font-warm",
+       -89,
+       2
+      ],
+      [
+       "font-warm",
+       -86,
+       2
+      ],
+      [
+       "font-warm",
+       -83,
+       8
+      ],
+      [
+       "font-warm",
+       -28,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -219,
+       124,
+       [
+        57,
+        13,
+        10
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -161
+      ],
+      [
+       "txt-first-content",
+       -129
+      ]
+     ]
+    }
+   }
+  ],
+  "final": [
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 5.5,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -143,
+       0
+      ],
+      [
+       "font-warm",
+       -142,
+       0
+      ],
+      [
+       "font-warm",
+       -140,
+       0
+      ],
+      [
+       "font-warm",
+       -140,
+       2
+      ],
+      [
+       "font-warm",
+       -138,
+       1
+      ],
+      [
+       "font-warm",
+       -136,
+       7
+      ],
+      [
+       "font-warm",
+       -125,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -239,
+       94,
+       [
+        47,
+        13,
+        7
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -190
+      ],
+      [
+       "txt-first-content",
+       -167
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 7.4,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3329,
+       0
+      ],
+      [
+       "font-warm",
+       -3327,
+       0
+      ],
+      [
+       "font-warm",
+       -3325,
+       0
+      ],
+      [
+       "font-warm",
+       -3325,
+       2
+      ],
+      [
+       "font-warm",
+       -3323,
+       1
+      ],
+      [
+       "font-warm",
+       -3322,
+       7
+      ],
+      [
+       "font-warm",
+       -3310,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -3424,
+       94,
+       [
+        47,
+        13,
+        7
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3375
+      ],
+      [
+       "txt-first-content",
+       -3352
+      ]
+     ],
+     "openedMs": 43
+    }
+   },
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 5.5,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -184,
+       0
+      ],
+      [
+       "font-warm",
+       -183,
+       0
+      ],
+      [
+       "font-warm",
+       -180,
+       0
+      ],
+      [
+       "font-warm",
+       -179,
+       1
+      ],
+      [
+       "font-warm",
+       -177,
+       1
+      ],
+      [
+       "font-warm",
+       -176,
+       4
+      ],
+      [
+       "font-warm",
+       -167,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -286,
+       101,
+       [
+        47,
+        8,
+        7
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -240
+      ],
+      [
+       "txt-first-content",
+       -207
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 6.2,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3259,
+       0
+      ],
+      [
+       "font-warm",
+       -3259,
+       0
+      ],
+      [
+       "font-warm",
+       -3256,
+       0
+      ],
+      [
+       "font-warm",
+       -3255,
+       1
+      ],
+      [
+       "font-warm",
+       -3252,
+       1
+      ],
+      [
+       "font-warm",
+       -3251,
+       4
+      ],
+      [
+       "font-warm",
+       -3243,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -3361,
+       101,
+       [
+        47,
+        8,
+        7
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3316
+      ],
+      [
+       "txt-first-content",
+       -3283
+      ]
+     ],
+     "openedMs": 131
+    }
+   },
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 5.3,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -140,
+       0
+      ],
+      [
+       "font-warm",
+       -139,
+       0
+      ],
+      [
+       "font-warm",
+       -138,
+       0
+      ],
+      [
+       "font-warm",
+       -138,
+       2
+      ],
+      [
+       "font-warm",
+       -136,
+       2
+      ],
+      [
+       "font-warm",
+       -132,
+       5
+      ],
+      [
+       "font-warm",
+       -123,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -252,
+       110,
+       [
+        48,
+        15,
+        8
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -208
+      ],
+      [
+       "txt-first-content",
+       -164
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 6.9,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3337,
+       0
+      ],
+      [
+       "font-warm",
+       -3336,
+       0
+      ],
+      [
+       "font-warm",
+       -3335,
+       0
+      ],
+      [
+       "font-warm",
+       -3335,
+       2
+      ],
+      [
+       "font-warm",
+       -3333,
+       2
+      ],
+      [
+       "font-warm",
+       -3329,
+       5
+      ],
+      [
+       "font-warm",
+       -3320,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -3449,
+       110,
+       [
+        48,
+        15,
+        8
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3405
+      ],
+      [
+       "txt-first-content",
+       -3361
+      ]
+     ],
+     "openedMs": 155
+    }
+   },
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 6.8,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -142,
+       0
+      ],
+      [
+       "font-warm",
+       -141,
+       0
+      ],
+      [
+       "font-warm",
+       -140,
+       0
+      ],
+      [
+       "font-warm",
+       -140,
+       1
+      ],
+      [
+       "font-warm",
+       -138,
+       1
+      ],
+      [
+       "font-warm",
+       -137,
+       6
+      ],
+      [
+       "font-warm",
+       -124,
+       2
+      ],
+      [
+       "font-warm-worker",
+       -245,
+       103,
+       [
+        51,
+        13,
+        6
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -196
+      ],
+      [
+       "txt-first-content",
+       -171
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 6.8,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3350,
+       0
+      ],
+      [
+       "font-warm",
+       -3348,
+       0
+      ],
+      [
+       "font-warm",
+       -3347,
+       0
+      ],
+      [
+       "font-warm",
+       -3347,
+       1
+      ],
+      [
+       "font-warm",
+       -3346,
+       1
+      ],
+      [
+       "font-warm",
+       -3344,
+       6
+      ],
+      [
+       "font-warm",
+       -3332,
+       2
+      ],
+      [
+       "font-warm-worker",
+       -3453,
+       103,
+       [
+        51,
+        13,
+        6
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3403
+      ],
+      [
+       "txt-first-content",
+       -3379
+      ]
+     ],
+     "openedMs": 141
+    }
+   },
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 5.9,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -158,
+       0
+      ],
+      [
+       "font-warm",
+       -156,
+       0
+      ],
+      [
+       "font-warm",
+       -155,
+       0
+      ],
+      [
+       "font-warm",
+       -154,
+       2
+      ],
+      [
+       "font-warm",
+       -150,
+       2
+      ],
+      [
+       "font-warm",
+       -149,
+       6
+      ],
+      [
+       "font-warm",
+       -135,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -283,
+       107,
+       [
+        52,
+        10,
+        11
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -234
+      ],
+      [
+       "txt-first-content",
+       -192
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 6.6,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3355,
+       0
+      ],
+      [
+       "font-warm",
+       -3354,
+       0
+      ],
+      [
+       "font-warm",
+       -3353,
+       0
+      ],
+      [
+       "font-warm",
+       -3351,
+       2
+      ],
+      [
+       "font-warm",
+       -3348,
+       2
+      ],
+      [
+       "font-warm",
+       -3346,
+       6
+      ],
+      [
+       "font-warm",
+       -3332,
+       4
+      ],
+      [
+       "font-warm-worker",
+       -3480,
+       107,
+       [
+        52,
+        10,
+        11
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3431
+      ],
+      [
+       "txt-first-content",
+       -3389
+      ]
+     ],
+     "openedMs": 150
+    }
+   },
+   {
+    "sinceLoad": {
+     "longFrames": [],
+     "longTasks": []
+    },
+    "idleAfterOpen": {
+     "maxGapMs": 6.6,
+     "gapsOver8Ms": 0,
+     "gapsAt": [],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -147,
+       0
+      ],
+      [
+       "font-warm",
+       -146,
+       0
+      ],
+      [
+       "font-warm",
+       -143,
+       0
+      ],
+      [
+       "font-warm",
+       -140,
+       2
+      ],
+      [
+       "font-warm",
+       -138,
+       1
+      ],
+      [
+       "font-warm",
+       -136,
+       5
+      ],
+      [
+       "font-warm",
+       -127,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -261,
+       112,
+       [
+        47,
+        20,
+        10
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -214
+      ],
+      [
+       "txt-first-content",
+       -189
+      ]
+     ]
+    },
+    "openInProbe": {
+     "maxGapMs": 12.8,
+     "gapsOver8Ms": 2,
+     "gapsAt": [
+      [
+       3124,
+       9
+      ],
+      [
+       3147,
+       13
+      ]
+     ],
+     "longFrames": [],
+     "marks": [
+      [
+       "font-warm",
+       -3352,
+       0
+      ],
+      [
+       "font-warm",
+       -3350,
+       0
+      ],
+      [
+       "font-warm",
+       -3347,
+       0
+      ],
+      [
+       "font-warm",
+       -3345,
+       2
+      ],
+      [
+       "font-warm",
+       -3342,
+       1
+      ],
+      [
+       "font-warm",
+       -3341,
+       5
+      ],
+      [
+       "font-warm",
+       -3331,
+       3
+      ],
+      [
+       "font-warm-worker",
+       -3465,
+       112,
+       [
+        47,
+        20,
+        10
+       ]
+      ],
+      [
+       "txt-first-rows-ready",
+       -3419
+      ],
+      [
+       "txt-first-content",
+       -3393
+      ]
+     ],
+     "openedMs": 136
+    }
+   }
+  ]
+ }
+}
