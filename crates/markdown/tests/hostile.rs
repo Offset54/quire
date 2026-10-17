@@ -93,3 +93,28 @@ fn what_stays_and_what_is_a_placeholder() {
     assert!(!on.contains("C%3A%5Csecret.png"));
     assert!(!on.contains("forged.png"));
 }
+
+/// The check's own scheme rule (fuzz: md_sanitize, 2026-10-17): NULs in a
+/// link's URL come out as `%EF%BF%BD`, and `%` can't be part of a scheme, so
+/// the link is relative, as a browser parses it. Real schemes are still seen.
+#[test]
+fn the_check_reads_schemes_as_browsers_do() {
+    let html = render(b"[x](http\0\0s://e.com/p)\n", false);
+    assert!(
+        html.contains(" href=\"http%EF%BF%BD%EF%BF%BDs://e.com/p\""),
+        "{html}"
+    );
+    assert!(check("nul", &html).is_empty(), "{html}");
+    for (href, ok) in [
+        ("http%EF%BF%BDs://e.com", true),
+        ("./a:b", true),
+        ("1x:y", true),
+        ("java\u{0}script:x", false),
+        ("JaVa&#x09;Script:x", false),
+        ("ms-settings:x", false),
+        ("a+b.c-d:x", false),
+    ] {
+        let bad = check("href", &format!("<a href=\"{href}\">x</a>"));
+        assert_eq!(bad.is_empty(), ok, "{href}: {bad:?}");
+    }
+}

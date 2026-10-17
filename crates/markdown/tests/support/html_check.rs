@@ -273,6 +273,12 @@ fn start_tags(html: &str) -> Vec<Tag> {
     out
 }
 
+/// The scheme a browser would see. Whitespace and controls are dropped
+/// everywhere (browsers drop only tabs and newlines inside, and C0 controls
+/// and spaces at the ends: more is stricter). As in the WHATWG URL parser, a
+/// scheme is an ASCII letter followed by letters, digits, `+`, `-` or `.`
+/// up to the colon; anything else before the colon (`/`, `%`, U+FFFD) makes
+/// the URL relative.
 fn scheme(url: &str) -> Option<String> {
     let cleaned: String = url
         .chars()
@@ -280,7 +286,11 @@ fn scheme(url: &str) -> Option<String> {
         .collect::<String>()
         .to_ascii_lowercase();
     let i = cleaned.find(':')?;
-    (!cleaned[..i].contains(['/', '?', '#'])).then(|| cleaned[..i].to_owned())
+    let s = &cleaned[..i];
+    let mut chars = s.chars();
+    (chars.next().is_some_and(|c| c.is_ascii_alphabetic())
+        && chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.')))
+    .then(|| s.to_owned())
 }
 
 pub fn check(name: &str, html: &str) -> Vec<String> {

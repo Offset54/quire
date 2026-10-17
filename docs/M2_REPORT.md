@@ -77,6 +77,7 @@ The other suites on the final build: TXT 21/21 (`refsim-txt-2026-10-17-014646.js
 11. **Footnote labels depended on the stretch** (fuzz on CI: md_incremental): comrak renames a definition after a reference in the same parse, so a block's kind could differ between the incremental and the full parse. The kind now holds the normalized label.
 12. **The outline UI flow** read the heading count before it had followed an edit (401 instead of 400 on the runner); it waits for the converged count now.
 13. **New advisories for `zip`** (RUSTSEC-2026-0367, -0368, -0369, about extraction), reached only through the fixture generator: upgraded to 9.0.4, fixtures byte-identical.
+14. **The hostile-HTML check misread a relative link as a scheme** (scheduled fuzz on CI, 2026-10-17 07:46Z at `eba2aa8`: md_sanitize). `[x](http\0…\0s://tracker.example/…)` renders `href="http%EF%BF%BD…s://…"`: comrak writes the NULs as escaped U+FFFD. The check took everything before the colon as the scheme and flagged `http%ef%bf%bd…s`. A browser can't read a scheme there (`%` isn't a scheme character), so the link is relative and harmless; the product was right and the check was wrong. The check now reads schemes by the WHATWG URL rule and still drops controls and whitespace first, so it stays stricter than a browser (ADR-0028 addendum 2). No product code changed.
 
 ## Deviations from the plan
 
