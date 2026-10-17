@@ -2,7 +2,7 @@
 resolver = "3"
 members = ["crates/*", "apps/desktop/src-tauri", "spikes/*/src-tauri", "tools/fixtures", "tools/refsim", "spikes/webview2-floor", "spikes/source-scan", "spikes/md-parser"]
 # Patched third-party crates (ADR-0034): built as dependencies, not members.
-exclude = ["third_party/tree-sitter-md", "third_party/tree-sitter-bash"]
+exclude = ["third_party/tree-sitter-md", "third_party/tree-sitter-bash", "third_party/tree-sitter-sequel"]
 
 [workspace.package]
 version = "0.0.0"
@@ -32,8 +32,9 @@ debug = "line-tables-only"
 [profile.bench]
 debug = "line-tables-only"
 
-# Grammars with a memory-safety fix in their C scanners (ADR-0034); the fuzz
+# Grammars with a fix in their C scanners (ADR-0034); the fuzz
 # workspace (fuzz/Cargo.toml) patches them the same way.
 [patch.crates-io]
 tree-sitter-md = { path = "third_party/tree-sitter-md" }
 tree-sitter-bash = { path = "third_party/tree-sitter-bash" }
+tree-sitter-sequel = { path = "third_party/tree-sitter-sequel" }

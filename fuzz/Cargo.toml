@@ -24,6 +24,7 @@ members = ["."]
 [patch.crates-io]
 tree-sitter-md = { path = "../third_party/tree-sitter-md" }
 tree-sitter-bash = { path = "../third_party/tree-sitter-bash" }
+tree-sitter-sequel = { path = "../third_party/tree-sitter-sequel" }
 
 [[bin]]
 name = "encoding"
