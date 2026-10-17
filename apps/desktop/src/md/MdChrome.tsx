@@ -12,8 +12,47 @@ export function useMdStatus() {
   return useSyncExternalStore(subscribeMd, getMdStatus);
 }
 
-/** Remote images are blocked (§8): say so, with the per-document toggle. */
+/** The Markdown banners: an export in progress, blocked remote images. */
 export function MdBanner({ session }: { session: Session }) {
+  return (
+    <>
+      <ExportBanner session={session} />
+      <RemoteBanner session={session} />
+    </>
+  );
+}
+
+/** An export in progress (RISKS #17): what it is doing, with Cancel. */
+function ExportBanner({ session }: { session: Session }) {
+  const ex = useMdStatus()?.exporting;
+  if (!ex) return null;
+  const kind = ex.kind.toUpperCase();
+  const text =
+    ex.phase === "building"
+      ? t("md.exportBuilding", { kind, pct: Math.floor(ex.fraction * 100) })
+      : ex.phase === "choosing"
+        ? t("md.exportChoosing", { kind })
+        : ex.kind === "pdf"
+          ? t("md.exportPrinting")
+          : t("md.exportSaving", { kind });
+  return (
+    <div className="banner info" role="status" data-export={ex.phase}>
+      <span>{text}</span>
+      {ex.phase === "building" && <progress max={1} value={ex.fraction} />}
+      <button
+        type="button"
+        onClick={() => {
+          session.md?.cancelExport();
+        }}
+      >
+        {t("common.cancel")}
+      </button>
+    </div>
+  );
+}
+
+/** Remote images are blocked (§8): say so, with the per-document toggle. */
+function RemoteBanner({ session }: { session: Session }) {
   const md = useMdStatus();
   if (!md?.blocked || md.remote) return null;
   return (

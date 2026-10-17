@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     watch: { ignored: ["**/src-tauri/**"] },
   },
+  // The export's math worker (src/md/export-worker.ts) is a module.
+  worker: { format: "es" },
   build: {
     target: "es2023",
     sourcemap: true,

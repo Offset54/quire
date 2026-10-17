@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-export-seal"
+description = "Enables the md_export_seal command without any pre-configured scope."
+commands.allow = ["md_export_seal"]
+
+[[permission]]
+identifier = "deny-md-export-seal"
+description = "Denies the md_export_seal command without any pre-configured scope."
+commands.deny = ["md_export_seal"]

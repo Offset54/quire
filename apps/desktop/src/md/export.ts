@@ -1,15 +1,23 @@
-// Exports (M2 task 11, ADR-0031): self-contained HTML and PDF.
+// Exports (M2 task 11, ADR-0031 and its addendum): self-contained HTML and
+// PDF, built without long tasks on the page's main thread (RISKS #17).
 //
-// The core renders the whole document with code highlighted and images
-// inlined (`md_export_html`). Here math is rendered with KaTeX and diagrams
-// in the Mermaid frame (ADR-0033), the export stylesheet and, when there is
-// math, KaTeX's stylesheet with its fonts as data URLs are added, and the
-// page is written as HTML or printed to PDF by the host (`md_export_save`).
-// Everything not carried over is in the returned report.
+// The core renders the whole document block by block on its own thread,
+// code highlighted and images inlined (`md_export_begin`). The page takes
+// the HTML in batches of whole blocks (`md_export_take`) and hands each to
+// a worker, which renders the math with KaTeX and splits the batch at its
+// diagrams; the page renders those in the Mermaid frame (ADR-0033) one at
+// a time and puts every piece back to the host in order (`md_export_put`).
+// The head (the export stylesheet and, when there is math, KaTeX's with
+// its fonts as data URLs) goes last; the host keeps the page and writes it
+// as HTML or prints it to PDF (`md_export_finish`). Nothing here parses or
+// serializes the page. Everything not carried over is in the report.
 
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../i18n";
 import exportCss from "./export.css?raw";
-import { DiagramFrame, diagramFigure, loadKatex, renderMathElement } from "./rich";
+import type { WorkerRequest, WorkerResponse } from "./export-worker";
+import { escapeHtml, type MathLabels } from "./math-core";
+import { DiagramFrame } from "./rich";
 
 export interface ReportItem {
   kind: string;
@@ -17,11 +25,20 @@ export interface ReportItem {
   reason: string;
 }
 
-export interface Exported {
-  /** The finished page. */
-  html: string;
+/** A built page, kept by the host until it is finished or aborted. */
+export interface Built {
+  id: number;
   title: string;
+  /** The page's size in bytes. */
+  bytes: number;
   report: ReportItem[];
+}
+
+/** The error an export rejects with once cancelled. */
+export class ExportCancelled extends Error {
+  constructor() {
+    super("cancelled");
+  }
 }
 
 /** KaTeX's fonts as data URLs, loaded only when a document has math. */
@@ -45,53 +62,160 @@ async function katexCss(): Promise<string> {
   });
 }
 
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/** The worker, one request at a time. */
+class MathWorker {
+  private readonly worker = new Worker(new URL("./export-worker.ts", import.meta.url), {
+    type: "module",
+  });
+  private seq = 0;
+  private readonly labels: MathLabels = {
+    error: t("md.mathError"),
+    tooLarge: t("md.mathTooLarge"),
+  };
 
-/** Builds the export page of document `doc`. */
-export async function buildExport(doc: number, frameUrl: string): Promise<Exported> {
-  const r = await invoke<{ html: string; report: ReportItem[]; title: string }>("md_export_html", {
+  process(html: ArrayBuffer): Promise<WorkerResponse> {
+    const seq = ++this.seq;
+    return new Promise((resolve, reject) => {
+      this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+        if (e.data.seq === seq) resolve(e.data);
+      };
+      this.worker.onerror = (e) => {
+        reject(new Error(e.message || "the export worker failed"));
+      };
+      const req: WorkerRequest = { seq, labels: this.labels, html };
+      this.worker.postMessage(req, [html]);
+    });
+  }
+
+  destroy(): void {
+    this.worker.terminate();
+  }
+}
+
+const encoder = new TextEncoder();
+
+function put(id: number, piece: "head" | "body" | "tail", bytes: ArrayBuffer | Uint8Array) {
+  return invoke("md_export_put", bytes, {
+    headers: { "x-quire-export": String(id), "x-quire-piece": piece },
+  });
+}
+
+/** A diagram's SVG as an <img> (as `diagramFigure` makes it). */
+function figureHtml(svg: string): string {
+  return (
+    `<figure class="md-diagram"><img alt="${escapeHtml(t("md.diagramAlt"))}" decoding="async" ` +
+    `src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}"></figure>`
+  );
+}
+
+/** Builds the export page of document `doc` in the host. `progress` gets
+ *  the fraction of the source done; `signal` cancels (the job is aborted
+ *  and this rejects with `ExportCancelled`). */
+export async function buildExport(
+  doc: number,
+  frameUrl: string,
+  progress: (fraction: number) => void,
+  signal: AbortSignal,
+): Promise<Built> {
+  const job = await invoke<{ id: number; title: string; total: number }>("md_export_begin", {
     doc,
   });
-  const report = [...r.report];
-  // An inert document: nothing in it runs or loads.
-  const page = new DOMParser().parseFromString(
-    `<!doctype html><html><body><article class="markdown-body">${r.html}</article></body></html>`,
-    "text/html",
-  );
-  const math = [...page.querySelectorAll<HTMLElement>("[data-math-style]")];
-  if (math.length > 0) {
-    const katex = await loadKatex();
-    for (const el of math) {
-      const src = el.textContent;
-      const err = renderMathElement(katex, el);
-      if (err) report.push({ kind: "math", source: src.slice(0, 120), reason: err });
-    }
-  }
-  const diagrams = [...page.querySelectorAll<HTMLElement>('pre[data-lang="mermaid"]')];
-  if (diagrams.length > 0) {
-    const frame = new DiagramFrame(frameUrl);
-    try {
-      for (const pre of diagrams) {
-        const src = pre.querySelector("code")?.textContent ?? "";
-        const d = await frame.render(src);
-        if ("html" in d) pre.replaceWith(diagramFigure(page, d.html, null));
-        else report.push({ kind: "diagram", source: src.slice(0, 120), reason: d.error });
+  const id = job.id;
+  const report: ReportItem[] = [];
+  const worker = new MathWorker();
+  let frame: DiagramFrame | undefined;
+  const check = () => {
+    if (signal.aborted) throw new ExportCancelled();
+  };
+  const take = () => invoke<ArrayBuffer>("md_export_take", { id });
+  try {
+    let math = 0;
+    // The next batch is asked for while this one is processed.
+    let next = take();
+    for (;;) {
+      const batch = await next;
+      check();
+      if (batch.byteLength <= 8) break;
+      const reached = Number(new DataView(batch).getBigUint64(0, true));
+      next = take();
+      // Keep a rejection of the prefetch from going unhandled when this
+      // batch fails first.
+      next.catch(() => undefined);
+      const r = await worker.process(batch.slice(8));
+      check();
+      math += r.math;
+      report.push(...r.report);
+      for (const p of r.pieces) {
+        if (p instanceof ArrayBuffer) {
+          if (p.byteLength > 0) await put(id, "body", p);
+          continue;
+        }
+        frame ??= new DiagramFrame(frameUrl);
+        const d = await frame.render(p.diagram);
+        check();
+        if ("html" in d) {
+          await put(id, "body", encoder.encode(figureHtml(d.html)));
+        } else {
+          report.push({ kind: "diagram", source: p.diagram.slice(0, 120), reason: d.error });
+          // The source stays in the page.
+          await put(
+            id,
+            "body",
+            encoder.encode(
+              `<pre data-lang="mermaid"><code class="language-mermaid">${escapeHtml(p.diagram)}</code></pre>`,
+            ),
+          );
+        }
       }
-    } finally {
-      frame.destroy();
+      progress(job.total > 0 ? reached / job.total : 1);
     }
+    const css = exportCss + (math > 0 ? `\n${await katexCss()}` : "");
+    check();
+    const head =
+      `<!doctype html>\n<html>\n<head>\n<meta charset="utf-8">\n` +
+      `<meta name="viewport" content="width=device-width, initial-scale=1">\n` +
+      `<meta name="generator" content="quire">\n` +
+      `<title>${escapeHtml(job.title)}</title>\n<style>\n${css}\n</style>\n</head>\n<body>\n` +
+      `<article class="markdown-body">`;
+    await put(id, "head", encoder.encode(head));
+    await put(id, "tail", encoder.encode(`</article>\n</body>\n</html>\n`));
+    const sealed = await invoke<{ bytes: number; report: ReportItem[] }>("md_export_seal", { id });
+    return { id, title: job.title, bytes: sealed.bytes, report: [...sealed.report, ...report] };
+  } catch (err) {
+    void abortExport(id);
+    if (signal.aborted) throw new ExportCancelled();
+    throw err;
+  } finally {
+    worker.destroy();
+    frame?.destroy();
   }
-  // Sources positions are for the preview only.
-  for (const el of page.querySelectorAll("[data-sourcepos]")) el.removeAttribute("data-sourcepos");
-  const css = exportCss + (math.length > 0 ? `\n${await katexCss()}` : "");
-  const body = page.querySelector("article")?.outerHTML ?? "";
-  const html =
-    `<!doctype html>\n<html>\n<head>\n<meta charset="utf-8">\n` +
-    `<meta name="viewport" content="width=device-width, initial-scale=1">\n` +
-    `<meta name="generator" content="quire">\n` +
-    `<title>${escapeHtml(r.title)}</title>\n<style>\n${css}\n</style>\n</head>\n<body>\n${body}\n</body>\n</html>\n`;
-  return { html, title: r.title, report };
+}
+
+/** Drops a built page (or stops one being built or printed). */
+export function abortExport(id: number): Promise<void> {
+  return invoke("md_export_abort", { id });
+}
+
+/** Writes a built page to `path` as HTML, or prints it there as PDF;
+ *  `signal` cancels (a PDF print is abandoned, nothing is written). */
+export async function finishExport(
+  built: Built,
+  path: string,
+  kind: "html" | "pdf",
+  signal: AbortSignal,
+): Promise<void> {
+  const onAbort = () => {
+    void abortExport(built.id);
+  };
+  signal.addEventListener("abort", onAbort);
+  try {
+    await invoke("md_export_finish", { id: built.id, path, kind });
+  } catch (err) {
+    if (signal.aborted) throw new ExportCancelled();
+    throw err;
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
 }
 
 /** Largest page printed to PDF (user decision 2026-10-16, ADR-0031): the
@@ -100,15 +224,7 @@ export async function buildExport(doc: number, frameUrl: string): Promise<Export
  *  The host checks the same limit (`md.rs`). */
 export const PDF_MAX_BYTES = 10 * 1024 * 1024;
 
-/** The page's size in bytes when it is too large to print to PDF. */
-export function pdfTooLarge(html: string): number | null {
-  const bytes = new TextEncoder().encode(html).length;
-  return bytes > PDF_MAX_BYTES ? bytes : null;
-}
-
-/** Writes the page to `path` as HTML, or prints it there as PDF. */
-export async function saveExport(html: string, path: string, kind: "html" | "pdf"): Promise<void> {
-  await invoke("md_export_save", new TextEncoder().encode(html), {
-    headers: { "x-quire-path": encodeURIComponent(path), "x-quire-kind": kind },
-  });
+/** Whether a page of `bytes` is too large to print to PDF. */
+export function pdfTooLarge(bytes: number): boolean {
+  return bytes > PDF_MAX_BYTES;
 }

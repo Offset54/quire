@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-export-begin"
+description = "Enables the md_export_begin command without any pre-configured scope."
+commands.allow = ["md_export_begin"]
+
+[[permission]]
+identifier = "deny-md-export-begin"
+description = "Denies the md_export_begin command without any pre-configured scope."
+commands.deny = ["md_export_begin"]

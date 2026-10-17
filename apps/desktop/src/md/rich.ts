@@ -16,10 +16,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { t } from "../i18n";
 import type { FrameRequest } from "../mermaid-frame";
+import { MAX_MATH, katexOptions } from "./math-core";
 
 const SLICE_MS = 4;
 /** Sources larger than this aren't rendered (labeled). */
-const MAX_MATH = 10 * 1024;
 const MAX_DIAGRAM = 50 * 1024;
 const DIAGRAM_TIMEOUT_MS = 10_000;
 /** Entries kept per cache (least recently used out). */
@@ -168,8 +168,8 @@ export class DiagramFrame {
   }
 }
 
-/** Renders one `data-math-style` element in place (the preview and
- *  exports); returns the error, if any. */
+/** Renders one `data-math-style` element in place (the preview; exports
+ *  use `renderMathHtml`, its string twin); returns the error, if any. */
 export function renderMathElement(katex: Katex, el: HTMLElement): string | undefined {
   const doc = el.ownerDocument;
   const display = el.dataset.mathStyle === "display";
@@ -184,19 +184,7 @@ export function renderMathElement(katex: Katex, el: HTMLElement): string | undef
   let r = mathCache.get(key);
   if (!r) {
     try {
-      r = {
-        html: katex.renderToString(src, {
-          displayMode: display,
-          throwOnError: true,
-          // No \href, \url, \htmlClass and friends: math can't link or
-          // style the page.
-          trust: false,
-          strict: "ignore",
-          maxExpand: 1000,
-          maxSize: 100,
-          output: "htmlAndMathml",
-        }),
-      };
+      r = { html: katex.renderToString(src, katexOptions(display)) };
     } catch (e) {
       r = { error: e instanceof Error ? e.message : String(e) };
     }

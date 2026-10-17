@@ -10,7 +10,16 @@ import type { TxtView } from "../txt/txt-view";
 import { SourceDecorator } from "./decorate";
 import { save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { t } from "../i18n";
-import { PDF_MAX_BYTES, buildExport, pdfTooLarge, saveExport, type ReportItem } from "./export";
+import {
+  ExportCancelled,
+  PDF_MAX_BYTES,
+  abortExport,
+  buildExport,
+  finishExport,
+  pdfTooLarge,
+  type Built,
+  type ReportItem,
+} from "./export";
 import { OutlineRail } from "./outline";
 import { KIND } from "./protocol";
 import { MdPreview } from "./preview";
@@ -59,6 +68,11 @@ export interface MdStatus {
   outline: boolean;
   /** The caret is in a table (the table helpers apply). */
   inTable: boolean;
+  /** An export in progress: building the page (with the fraction of the
+   *  source done), waiting for a file name, or writing / printing it. */
+  exporting:
+    | { kind: "html" | "pdf"; phase: "building" | "choosing" | "saving"; fraction: number }
+    | undefined;
 }
 
 export type TableActionName =
@@ -97,6 +111,7 @@ function emptyStatus(): MdStatus {
     mode: savedMode(),
     outline: savedOutline(),
     inTable: false,
+    exporting: undefined,
   };
 }
 
@@ -112,6 +127,8 @@ export class MdController {
    *  other; a pane moved by sync never drives back (no feedback loop). */
   private driving: "source" | "preview" = "source";
   private destroyed = false;
+  /** Cancels the export in progress. */
+  private exportAbort: AbortController | undefined;
 
   private constructor(
     readonly doc: number,
@@ -292,34 +309,82 @@ export class MdController {
       });
   }
 
-  /** Exports the document as HTML or PDF (task 11): asks where, then says
-   *  what wasn't carried over. */
+  /** Exports the document as HTML or PDF (task 11): builds the page with
+   *  progress and Cancel shown, asks where, then says what wasn't carried
+   *  over. */
   async exportAs(kind: "html" | "pdf"): Promise<void> {
     try {
-      const ex = await buildExport(this.doc, this.frameUrl);
-      const tooLarge = kind === "pdf" ? pdfTooLarge(ex.html) : null;
-      if (tooLarge !== null) {
-        const mb = (n: number) => (n / (1024 * 1024)).toFixed(0);
-        notify("error", t("md.pdfTooLarge", { size: mb(tooLarge), limit: mb(PDF_MAX_BYTES) }));
-        return;
-      }
-      const path = await saveDialog({
-        defaultPath: `${ex.title}.${kind}`,
-        filters: [{ name: kind.toUpperCase(), extensions: [kind] }],
+      const report = await this.runExport(kind, async (built) => {
+        if (kind === "pdf" && pdfTooLarge(built.bytes)) {
+          const mb = (n: number) => (n / (1024 * 1024)).toFixed(0);
+          notify("error", t("md.pdfTooLarge", { size: mb(built.bytes), limit: mb(PDF_MAX_BYTES) }));
+          return null;
+        }
+        return saveDialog({
+          defaultPath: `${built.title}.${kind}`,
+          filters: [{ name: kind.toUpperCase(), extensions: [kind] }],
+        });
       });
-      if (!path) return;
-      await saveExport(ex.html, path, kind);
-      notify("info", exportSummary(path, ex.report));
+      if (report) notify("info", exportSummary(report.path, report.items));
     } catch (err) {
-      notify("error", t("md.exportFailed", { message: String(err) }));
+      if (err instanceof ExportCancelled) notify("info", t("md.exportCancelled"), 3000);
+      else notify("error", t("md.exportFailed", { message: String(err) }));
     }
   }
 
-  /** Exports to `path` without asking (UI flows, benchmarks). */
+  /** Exports to `path` without asking (UI flows, benchmarks); rejects with
+   *  "cancelled" when the export is cancelled. */
   async exportTo(kind: "html" | "pdf", path: string): Promise<ReportItem[]> {
-    const ex = await buildExport(this.doc, this.frameUrl);
-    await saveExport(ex.html, path, kind);
-    return ex.report;
+    const r = await this.runExport(kind, () => Promise.resolve(path));
+    return r?.items ?? [];
+  }
+
+  /** Cancels the export in progress (the banner's Cancel). */
+  cancelExport(): void {
+    this.exportAbort?.abort();
+  }
+
+  /** Builds the page, then writes it where `choose` says (null: nowhere). */
+  private async runExport(
+    kind: "html" | "pdf",
+    choose: (built: Built) => Promise<string | null>,
+  ): Promise<{ path: string; items: ReportItem[] } | null> {
+    if (this.exportAbort) throw new Error(t("md.exportBusy"));
+    const abort = new AbortController();
+    this.exportAbort = abort;
+    let shown = -1;
+    const show = (phase: "building" | "choosing" | "saving", fraction: number) => {
+      // Re-render only when the shown percentage changes.
+      const pct = Math.floor(fraction * 100);
+      if (phase === mdStatus?.exporting?.phase && pct === shown) return;
+      shown = pct;
+      if (!this.destroyed) setMd({ exporting: { kind, phase, fraction } });
+    };
+    show("building", 0);
+    let built: Built | undefined;
+    try {
+      built = await buildExport(
+        this.doc,
+        this.frameUrl,
+        (f) => {
+          show("building", f);
+        },
+        abort.signal,
+      );
+      show("choosing", 1);
+      const path = await choose(built);
+      if (abort.signal.aborted) throw new ExportCancelled();
+      if (!path) {
+        void abortExport(built.id);
+        return null;
+      }
+      show("saving", 1);
+      await finishExport(built, path, kind, abort.signal);
+      return { path, items: built.report };
+    } finally {
+      this.exportAbort = undefined;
+      if (!this.destroyed) setMd({ exporting: undefined });
+    }
   }
 
   /** A pasted image (decision A): stored next to the document by the core,
@@ -423,6 +488,7 @@ export class MdController {
   }
 
   destroy(): void {
+    this.exportAbort?.abort();
     this.destroyed = true;
     window.clearTimeout(this.outlineTimer);
     this.decorator.destroy();

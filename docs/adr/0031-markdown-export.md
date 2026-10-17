@@ -59,3 +59,29 @@ The page is mostly math markup: 31,660 KaTeX expressions (HTML plus MathML) are 
 - `export.rs` unit test: local images inline, a non-image and a remote image are reported.
 - Spike numbers above (`bench/results/m2/export-spike-2026-10-15.json`).
 - `src/md/export.test.ts`: the PDF limit counts UTF-8 bytes.
+
+## Addendum (2026-10-17): the export no longer blocks the window (RISKS #17)
+
+The pipeline above ran on the page's main thread: one `DOMParser` parse of the whole page, KaTeX over every expression in one loop, one `outerHTML` serialization and one `TextEncoder` copy, then a single IPC body. The 1 MiB slice had long tasks up to 2.6 s (HTML) and 3.2 s (PDF), against §2's 8 ms rule.
+
+**Now the page is streamed and nothing parses or serializes it in the page:**
+
+1. `md_export_begin` starts an export job (`ExportJob`, `export.rs`): the core renders the document block by block on its own thread (`render_document_parts`, same output as `render_document`), images inlined per block, and queues the parts, at most 8 MiB ahead of the page.
+2. The page takes them in batches of whole blocks, up to 256 KiB (`md_export_take`, the next asked for while the current one is processed), as raw bytes with the source offset reached (the progress).
+3. A Web Worker (`src/md/export-worker.ts`) renders each batch's math with KaTeX on the core's markup as strings (`math-core.ts`): the core writes math in exactly two forms, comrak's `<span data-math-style>` and the ```` ```math ```` `<pre><code>`, and the sanitizer drops `data-math-style` from raw HTML, so the strings are as reliable as the DOM was. The output matches `renderMathElement` (rendered expressions replace their element; refused ones keep the source with a badge and are reported; the same KaTeX options, `katexOptions`). The worker splits the batch at its Mermaid blocks and returns UTF-8 pieces (transferred, not copied).
+4. The page renders each diagram in the sandboxed frame, one at a time, and puts every piece back to the host in order (`md_export_put`); the head (stylesheets, KaTeX's fonts only if there was math) and tail go last. The host keeps the pieces and writes them (`md_export_finish`: HTML atomically; PDF printed as before, now to a temporary file moved into place when complete).
+5. Progress and Cancel: a banner shows the phase (building with a percentage, choosing a file, writing or printing) and Cancel (`md_export_abort`): the renderer stops, the next take fails, a PDF print in progress is abandoned, nothing is written. The PDF limit is checked on the host's byte count before the save dialog, as before.
+
+Differences in the page: math elements no longer carry `data-rich="done"`; otherwise the same markup (the UI flow's checks pass unchanged).
+
+**Measured** (`tests/ui/export-spike.test.mjs`, which now also runs a MessageChannel ping loop on the main thread, so gaps under the Long Tasks API's 50 ms floor show, and a 3 s idle baseline after opening; release build, raw dev machine, not ref-sim; `bench/results/m2/export-streamed-2026-10-17.json`):
+
+| Document | Before | Now |
+|---|---|---|
+| 1 MiB slice, HTML | 4.6 s, long tasks up to 2.6 s | 1.1–3.2 s; no long task; main-thread gaps ≤ 8.0 ms in 6 of 7 exports, one export had two of 10 and 12 ms |
+| 1 MiB slice, PDF (1,131 pages) | 47.5 s, long tasks up to 3.2 s | 40–53 s (printing); no long task; gaps ≤ 7.7 ms |
+| 20 MiB fixture, HTML (144 MB page) | ~3 min | 35 s first, 27 s warm; no long task; gaps over 8 ms only in the last half second: 8–11 ms (4, then 2) and one 62–65 ms pause ~100 ms after the export resolved |
+
+What remains over 8 ms, honestly: the two 10–12 ms gaps and the end-of-export gaps are too short for Long Animation Frame attribution, except the 62–65 ms pause, whose frame has no script in it (not our code; most likely V8 garbage collection after 144 MB passed through the page, unproven). Resizing the editor for the banner causes no gap (probed). Separately, the spike's baseline shows a 64–107 ms task right after opening a 1 MiB Markdown file with no export at all (a `requestAnimationFrame` callback in the app's first frames): not export work, a follow-up of its own.
+
+Memory: the page holds one batch at a time; the host holds the queued parts (≤ 8 MiB) and the finished page once (no second copy for the IPC body). The PDF printer's own growth is unchanged (the 10 MiB limit stays).

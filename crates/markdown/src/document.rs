@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 use std::io;
+use std::ops::ControlFlow;
 use std::sync::Arc;
 
 use crate::analysis::{Analysis, analyze};
@@ -337,6 +338,23 @@ fn render_front_matter(bytes: &[u8], opts: &RenderOptions) -> Rendered {
 /// tables, one block at a time): what the spec harness and exports use.
 /// Footnote definitions become GitHub's footnotes section at the end.
 pub fn render_document(bytes: &[u8], opts: &RenderOptions) -> String {
+    let mut html = String::new();
+    render_document_parts(bytes, opts, |part, _| {
+        html.push_str(&part);
+        ControlFlow::Continue(())
+    });
+    html
+}
+
+/// [`render_document`] in parts, for exports that stream the page: `part`
+/// gets each block's HTML with the end of its bytes (the source offset
+/// reached), then the footnotes section, if any, at `bytes.len()`. It can
+/// stop the rendering (`Break`), and then the footnotes are left out.
+pub fn render_document_parts(
+    bytes: &[u8],
+    opts: &RenderOptions,
+    mut part: impl FnMut(String, u64) -> ControlFlow<()>,
+) {
     let opts = RenderOptions {
         document: true,
         ..opts.clone()
@@ -344,10 +362,12 @@ pub fn render_document(bytes: &[u8], opts: &RenderOptions) -> String {
     let mut doc = MarkdownDoc::with_flavor(bytes.len() as u64, opts.flavor);
     // Reading a byte slice can't fail.
     let _ = doc.extend_to(bytes, bytes.len() as u64);
-    let mut html = String::new();
     let mut notes: Vec<(u32, String)> = Vec::new();
     for i in 0..doc.index().blocks().len() {
-        let kind = doc.index().blocks()[i].kind.clone();
+        let (kind, end) = {
+            let b = &doc.index().blocks()[i];
+            (b.kind.clone(), b.end)
+        };
         let Ok(r) = doc.render(bytes, i, &opts) else {
             continue;
         };
@@ -358,15 +378,17 @@ pub fn render_document(bytes: &[u8], opts: &RenderOptions) -> String {
             }
             continue;
         }
-        html.push_str(&r.html);
+        if part(r.html, end).is_break() {
+            return;
+        }
     }
     if !notes.is_empty() {
         notes.sort_by_key(|n| n.0);
-        html.push_str("<section class=\"footnotes\" data-footnotes>\n<ol>\n");
+        let mut html = String::from("<section class=\"footnotes\" data-footnotes>\n<ol>\n");
         for (_, item) in notes {
             html.push_str(&item);
         }
         html.push_str("</ol>\n</section>\n");
+        let _ = part(html, bytes.len() as u64);
     }
-    html
 }

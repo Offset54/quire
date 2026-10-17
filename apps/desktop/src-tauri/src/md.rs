@@ -14,6 +14,7 @@
 //! frontend asks for other windows with `md_view` (scrolling, jumps).
 
 use std::collections::HashMap;
+use std::ops::ControlFlow;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
@@ -23,7 +24,7 @@ use parking_lot::{Condvar, Mutex, RwLock};
 use quire_core::memory::{CacheClass, DocId, Evictable, MemoryGovernor, Registration};
 use quire_highlight::service::{self as highlight_service, Listener};
 use quire_markdown::document::MarkdownDoc;
-use quire_markdown::document::render_document;
+use quire_markdown::document::render_document_parts;
 use quire_markdown::images::ImagePolicy;
 use quire_markdown::preview::{self, Highlight, Preview, Window};
 use quire_markdown::render::RenderOptions;
@@ -37,6 +38,7 @@ use serde_json::{Value, json};
 use tauri::State;
 use tauri::ipc::{Channel, InvokeResponseBody, Response};
 
+use crate::export::{CANCELLED, ExportJob, Piece};
 use crate::images::{self, ImageService};
 use crate::txt::{CmdResult, TxtService, guarded, io_err};
 
@@ -475,6 +477,9 @@ pub struct MdService {
     txt: Arc<TxtService>,
     images: Arc<ImageService>,
     governor: MemoryGovernor,
+    /// Exports being built (ADR-0031 addendum).
+    exports: Mutex<HashMap<u64, Arc<ExportJob>>>,
+    next_export: AtomicU64,
 }
 
 impl MdService {
@@ -484,6 +489,8 @@ impl MdService {
             txt,
             images,
             governor,
+            exports: Mutex::new(HashMap::new()),
+            next_export: AtomicU64::new(1),
         }
     }
 
@@ -588,6 +595,12 @@ impl MdService {
     }
 
     pub fn detach(&self, doc: u64) {
+        self.exports.lock().retain(|_, job| {
+            if job.doc == doc {
+                job.cancel();
+            }
+            job.doc != doc
+        });
         if let Some(m) = self.docs.lock().remove(&doc) {
             m.closed.store(true, Ordering::Release);
             m.wake.notify_all();
@@ -779,11 +792,26 @@ const EXPORT_MAX: u64 = 256 * 1024 * 1024;
 #[cfg(windows)]
 const PDF_MAX: usize = 10 * 1024 * 1024;
 
-/// The whole document rendered for export (task 11, ADR-0031): HTML with
-/// code highlighted and images inlined, the report of what was left out,
-/// and a title (the file's name).
+/// Most bytes of parts one `md_export_take` returns (at least one part).
+const TAKE_MAX: usize = 256 * 1024;
+
+impl MdService {
+    fn export(&self, id: u64) -> CmdResult<Arc<ExportJob>> {
+        self.exports
+            .lock()
+            .get(&id)
+            .cloned()
+            .ok_or_else(|| CANCELLED.to_owned())
+    }
+}
+
+/// Starts an export of the whole document (task 11, ADR-0031 and its
+/// addendum): the core renders it block by block on its own thread, code
+/// highlighted and images inlined, for `md_export_take`. Returns the job,
+/// the title (the file's name) and the source's size (progress is the
+/// offset reached).
 #[tauri::command]
-pub async fn md_export_html(svc: State<'_, MdService>, doc: u64) -> CmdResult<Value> {
+pub async fn md_export_begin(svc: State<'_, MdService>, doc: u64) -> CmdResult<Value> {
     guarded(|| {
         let s = svc.txt.session(doc)?;
         let (snap, path) = {
@@ -803,63 +831,150 @@ pub async fn md_export_html(svc: State<'_, MdService>, doc: u64) -> CmdResult<Va
             highlight: true,
             ..MdService::options(path.as_deref(), remote)
         };
-        let body = render_document(&bytes, &opts);
-        let mut report = Vec::new();
-        let html =
-            crate::export::inline_images(&body, images::url_prefix(), &svc.images, &mut report);
         let title = path.as_deref().and_then(Path::file_stem).map_or_else(
             || "Untitled".to_owned(),
             |s| s.to_string_lossy().into_owned(),
         );
-        Ok(json!({ "html": html, "report": report, "title": title }))
+        let total = bytes.len();
+        let job = Arc::new(ExportJob::new(doc));
+        let id = svc.next_export.fetch_add(1, Ordering::Relaxed);
+        svc.exports.lock().insert(id, Arc::clone(&job));
+        let images = Arc::clone(&svc.images);
+        std::thread::Builder::new()
+            .name(format!("quire-md-export-{id}"))
+            .spawn(move || {
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    render_document_parts(&bytes, &opts, |html, end| {
+                        let mut report = Vec::new();
+                        let html = crate::export::inline_images(
+                            &html,
+                            images::url_prefix(),
+                            &images,
+                            &mut report,
+                        );
+                        if job.push(html, end, report) {
+                            ControlFlow::Continue(())
+                        } else {
+                            ControlFlow::Break(())
+                        }
+                    });
+                }));
+                if r.is_err() {
+                    tracing::error!("export rendering panicked");
+                }
+                job.rendered(r.err().map(|_| "internal error while rendering".to_owned()));
+            })
+            .map_err(io_err)?;
+        Ok(json!({ "id": id, "title": title, "total": total }))
     })
 }
 
-/// Writes an export: the raw body is the finished HTML page; header
-/// `x-quire-path` (percent-encoded) is where, `x-quire-kind` is `html` or
-/// `pdf` (printed by WebView2 from the page).
+/// The next batch of an export's parts (`ExportJob::take`): the source
+/// offset reached (u64 LE), then whole blocks of HTML; just the offset at
+/// the end. Waits for the renderer on a blocking thread.
 #[tauri::command]
-pub async fn md_export_save(
-    app: tauri::AppHandle,
+pub async fn md_export_take(svc: State<'_, MdService>, id: u64) -> CmdResult<Response> {
+    let job = svc.export(id)?;
+    tauri::async_runtime::spawn_blocking(move || guarded(|| job.take(TAKE_MAX)))
+        .await
+        .map_err(io_err)?
+        .map(Response::new)
+}
+
+/// A piece of an export's finished page: the raw body; header
+/// `x-quire-export` is the job, `x-quire-piece` is `head`, `body` (in
+/// order) or `tail`.
+#[tauri::command]
+pub async fn md_export_put(
+    svc: State<'_, MdService>,
     request: tauri::ipc::Request<'_>,
+) -> CmdResult<()> {
+    guarded(|| {
+        let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+            return Err("expected a raw body".into());
+        };
+        let header = |k: &str| {
+            request
+                .headers()
+                .get(k)
+                .and_then(|v| v.to_str().ok())
+                .ok_or_else(|| format!("missing header {k}"))
+        };
+        let id: u64 = header("x-quire-export")?.parse().map_err(io_err)?;
+        let piece = match header("x-quire-piece")? {
+            "head" => Piece::Head,
+            "body" => Piece::Body,
+            "tail" => Piece::Tail,
+            other => return Err(format!("unknown piece {other}")),
+        };
+        svc.export(id)?.put(piece, body.clone())
+    })
+}
+
+/// The finished page's size and the report of what the core left out.
+#[tauri::command]
+pub async fn md_export_seal(svc: State<'_, MdService>, id: u64) -> CmdResult<Value> {
+    guarded(|| {
+        let (bytes, report) = svc.export(id)?.summary();
+        Ok(json!({ "bytes": bytes, "report": report }))
+    })
+}
+
+/// Writes an export's page to `path` as HTML (atomically), or prints it
+/// there as PDF (WebView2, on a blocking thread; `md_export_abort` stops
+/// it). The job ends either way.
+#[tauri::command]
+pub async fn md_export_finish(
+    app: tauri::AppHandle,
+    svc: State<'_, MdService>,
+    id: u64,
+    path: String,
+    kind: String,
 ) -> CmdResult<()> {
     // Only the PDF printer (Windows for now) needs the app.
     #[cfg(not(windows))]
     let _ = &app;
-    let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
-        return Err("expected a raw body".into());
-    };
-    let header = |k: &str| {
-        request
-            .headers()
-            .get(k)
-            .and_then(|v| v.to_str().ok())
-            .map(str::to_owned)
-            .ok_or_else(|| format!("missing header {k}"))
-    };
-    let path = quire_markdown::images::percent_decode(&header("x-quire-path")?)
-        .map(std::path::PathBuf::from)
-        .ok_or("bad path")?;
-    match header("x-quire-kind")?.as_str() {
-        "html" => crate::export::write_file(&path, body).map_err(io_err),
+    let job = svc.export(id)?;
+    let path = std::path::PathBuf::from(path);
+    let page = job.take_page();
+    let r = match kind.as_str() {
+        "html" => guarded(|| crate::export::write_file(&path, &page).map_err(io_err)),
         #[cfg(windows)]
         "pdf" => {
-            if body.len() > PDF_MAX {
-                return Err(format!(
+            let len: usize = page.iter().map(Vec::len).sum();
+            if len > PDF_MAX {
+                Err(format!(
                     "the page is too large to print to PDF ({} MiB, over {} MiB); export it as HTML",
-                    body.len() >> 20,
+                    len >> 20,
                     PDF_MAX >> 20
-                ));
+                ))
+            } else {
+                let printing = Arc::clone(&job);
+                tauri::async_runtime::spawn_blocking(move || {
+                    crate::export::print_pdf(&app, &page, &path, printing.cancel_flag())
+                })
+                .await
+                .map_err(io_err)
+                .and_then(|r| r)
             }
-            let html = body.clone();
-            tauri::async_runtime::spawn_blocking(move || {
-                crate::export::print_pdf(&app, &html, &path)
-            })
-            .await
-            .map_err(io_err)?
         }
         other => Err(format!("unknown export kind {other}")),
+    };
+    svc.exports.lock().remove(&id);
+    if job.cancelled() {
+        return Err(CANCELLED.into());
     }
+    r
+}
+
+/// Cancels an export: the renderer stops, the next take fails, a PDF print
+/// is abandoned (nothing is written).
+#[tauri::command]
+pub async fn md_export_abort(svc: State<'_, MdService>, id: u64) -> CmdResult<()> {
+    if let Some(job) = svc.exports.lock().remove(&id) {
+        job.cancel();
+    }
+    Ok(())
 }
 
 /// Longest heading text sent to the outline rail.

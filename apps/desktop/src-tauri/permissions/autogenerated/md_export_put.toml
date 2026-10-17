@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-md-export-put"
+description = "Enables the md_export_put command without any pre-configured scope."
+commands.allow = ["md_export_put"]
+
+[[permission]]
+identifier = "deny-md-export-put"
+description = "Denies the md_export_put command without any pre-configured scope."
+commands.deny = ["md_export_put"]

@@ -703,3 +703,67 @@ test("export to HTML is self-contained and reports what it left out; PDF prints"
   assert.equal(head, "%PDF-");
   console.log(`PDF export: ${fs.statSync(pdf).size} bytes in ${Date.now() - started} ms`);
 });
+
+test("an export shows its progress and Cancel stops it without writing", async () => {
+  // Large and math-heavy enough to take seconds (RISKS #17).
+  const big = path.join(mdDir, "math-heavy.md");
+  const lines = ["# Math heavy\n"];
+  for (let i = 0; i < 12_000; i++) {
+    lines.push(
+      `Paragraph ${i}: $\\sum_{k=1}^{${i}} k^2 = \\frac{n(n+1)(2n+1)}{6}$ and $\\alpha_${i % 10} + \\beta$.\n`,
+    );
+    if (i % 50 === 0) lines.push(`$$\n\\int_0^{${i}} e^{-t^2}\\,dt\n$$\n`);
+  }
+  fs.writeFileSync(big, lines.join("\n"));
+  const before = await wd.exec("return window.__quire.session?.md?.doc ?? null");
+  await wd.exec("void window.__quire.open(arguments[0])", [big]);
+  await untilOrDump(
+    () =>
+      wd.exec(
+        "const d = window.__quire.session?.md?.doc; return d !== undefined && d !== arguments[0]",
+        [before],
+      ),
+    30_000,
+    "the math-heavy document",
+  );
+  const out = path.join(mdDir, "math-heavy.html");
+  fs.rmSync(out, { force: true });
+  // The failure goes in `failed`: a value with `error` reads as a WebDriver
+  // protocol error.
+  await wd.exec(
+    `window.__exported = undefined;
+     window.__quire.session.md.exportTo("html", arguments[0]).then(
+       (report) => { window.__exported = { report }; },
+       (err) => { window.__exported = { failed: String(err) }; });`,
+    [out],
+  );
+  // The banner shows the progress, which moves.
+  const pct = async () => {
+    const text = await wd.exec(
+      "return document.querySelector('[data-export=\"building\"]')?.innerText ?? null",
+    );
+    const m = text && /(\d+)%/.exec(text);
+    return m ? Number(m[1]) : null;
+  };
+  await untilOrDump(async () => ((await pct()) ?? 0) > 0, 30_000, "export progress");
+  const seen = await pct();
+  assert.ok(seen < 100, `progress ${seen}%`);
+  // Cancel, as the user would.
+  await wd.click(await wd.find('[data-export="building"] button'));
+  const r = await untilOrDump(
+    () => wd.exec("return window.__exported"),
+    10_000,
+    "the cancelled export",
+  );
+  assert.match(r.failed ?? "", /cancelled/, JSON.stringify(r));
+  await untilOrDump(
+    () => wd.exec("return document.querySelector('[data-export]') === null"),
+    5_000,
+    "the banner gone",
+  );
+  assert.ok(!fs.existsSync(out), "nothing written");
+  assert.deepEqual(
+    fs.readdirSync(mdDir).filter((f) => f.includes("quire-tmp")),
+    [],
+  );
+});

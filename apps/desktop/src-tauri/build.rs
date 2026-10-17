@@ -45,8 +45,12 @@ fn main() {
         "md_outline",
         "md_table",
         "md_paste_image",
-        "md_export_html",
-        "md_export_save",
+        "md_export_begin",
+        "md_export_take",
+        "md_export_put",
+        "md_export_seal",
+        "md_export_finish",
+        "md_export_abort",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
         commands.extend([
