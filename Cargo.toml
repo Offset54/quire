@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "apps/desktop/src-tauri", "spikes/*/src-tauri", "tools/fixtures", "tools/refsim", "spikes/webview2-floor", "spikes/source-scan", "spikes/md-parser"]
+members = ["crates/*", "apps/desktop/src-tauri", "spikes/*/src-tauri", "tools/fixtures", "tools/refsim", "spikes/webview2-floor", "spikes/source-scan", "spikes/md-parser", "spikes/pdf-engine"]
 # Patched third-party crates (ADR-0034): built as dependencies, not members.
 exclude = ["third_party/tree-sitter-md", "third_party/tree-sitter-bash", "third_party/tree-sitter-sequel"]
 

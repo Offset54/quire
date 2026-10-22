@@ -1,0 +1,20 @@
+[package]
+name = "quire-spike-pdf-engine"
+description = "M3 spike: PDFium (thin FFI) vs. hayro on the 5,000-page fixture: worker spawn, open, first page, 800 % tile, text extraction. Not shipped."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "pdf-engine"
+path = "src/main.rs"
+
+[dependencies]
+libloading = "0.8"
+hayro = { version = "=0.8.0", default-features = false, features = ["embed-fonts", "embed-cmaps", "simd"] }
+memmap2 = "0.9"
+serde_json = "1"
+
+[lints]
+workspace = true

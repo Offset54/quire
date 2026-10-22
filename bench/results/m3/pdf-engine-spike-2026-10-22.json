@@ -1,0 +1,931 @@
+{
+ "spike": "M3 PDF engine (spikes/pdf-engine)",
+ "date": "2026-10-22",
+ "commitBase": "5b1a448",
+ "machine": "dev machine, raw (not ref-sim): Intel Core Ultra 7 258V (4 P + 4 LP E cores, 8 threads), 32 GB (31.5 GiB usable), NVMe; AC power",
+ "engines": {
+  "pdfium": "bblanchon/pdfium-binaries chromium/7881 (PDFium 151.0.7881.0), win-x64, no V8/XFA, pdfium.dll 7,211,520 bytes; called through a thin FFI (libloading)",
+  "hayro": "hayro 0.8.0 (Apache-2.0 OR MIT), default features but logging"
+ },
+ "fixtures": "tools/fixtures: book-5000-pages.pdf (1,010,042,958 B), -linearized (1,000,708,412 B), scanned-1000-pages.pdf (489,636,189 B)",
+ "cold": "'cold' runs follow `refsim purge <file>` (verified: 2.9 GB/s cold vs 6.0 GB/s warm sequential read)",
+ "scales": "100 % = 2.0 device px per point (150 % display scaling); 800 % tile = 512 px square at 16 px per point",
+ "runs": {
+  "cold-pages": [
+   {
+    "bind_ms": 5.6091,
+    "count_ms": 0.0,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "first_page_ms": 19.1689,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 4.1834999999999996,
+    "pages": 5000,
+    "tile_800_ms": [
+     2.1220000000000003,
+     2.1625,
+     1.9268,
+     1.5627
+    ],
+    "typical_page_ms": [
+     14.062399999999998,
+     436.8472,
+     417.7477,
+     403.5672,
+     259.24019999999996,
+     17.0722,
+     21.998299999999997
+    ]
+   },
+   {
+    "bind_ms": 8.9012,
+    "count_ms": 0.00019999999999999998,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "first_page_ms": 27.6915,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 6.0419,
+    "pages": 5000,
+    "tile_800_ms": [
+     1.9743,
+     1.6831,
+     1.7495,
+     1.9472
+    ],
+    "typical_page_ms": [
+     16.3014,
+     579.0615,
+     710.9277000000001,
+     388.5557,
+     278.06969999999995,
+     16.1898,
+     19.9006
+    ]
+   },
+   {
+    "bind_ms": 8.5452,
+    "count_ms": 0.00019999999999999998,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "first_page_ms": 23.6909,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 13.770100000000001,
+    "pages": 5000,
+    "tile_800_ms": [
+     3.4503,
+     2.8371,
+     1.8497,
+     2.4122000000000003
+    ],
+    "typical_page_ms": [
+     21.9977,
+     381.7501,
+     410.10049999999995,
+     395.0423,
+     263.2412,
+     15.886199999999999,
+     18.0228
+    ]
+   },
+   {
+    "bind_ms": 8.6867,
+    "count_ms": 9.999999999999999e-05,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "first_page_ms": 31.3033,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 15.610199999999999,
+    "pages": 5000,
+    "tile_800_ms": [
+     3.2334,
+     2.8297,
+     2.5875,
+     2.3199
+    ],
+    "typical_page_ms": [
+     17.1036,
+     562.3887,
+     915.5581000000001,
+     594.1549,
+     414.7009,
+     20.3947,
+     15.824399999999999
+    ]
+   },
+   {
+    "bind_ms": 8.6601,
+    "count_ms": 0.00019999999999999998,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "first_page_ms": 32.912499999999994,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 14.4652,
+    "pages": 5000,
+    "tile_800_ms": [
+     2.1511,
+     2.0683,
+     2.1441,
+     1.6865999999999999
+    ],
+    "typical_page_ms": [
+     26.7773,
+     452.8198,
+     374.9267,
+     396.3809,
+     272.29389999999995,
+     21.6511,
+     16.5538
+    ]
+   },
+   {
+    "bind_ms": 8.3521,
+    "count_ms": 0.00039999999999999996,
+    "engine": "pdfium-7881",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "first_page_ms": 25.8572,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18062502,
+    "open_ms": 14.360299999999999,
+    "pages": 5000,
+    "tile_800_ms": [
+     2.2952,
+     2.2493000000000003,
+     2.1207000000000003,
+     1.7573
+    ],
+    "typical_page_ms": [
+     20.4423,
+     598.6503,
+     737.4617999999999,
+     394.32689999999997,
+     277.04839999999996,
+     19.0708,
+     22.014599999999998
+    ]
+   }
+  ],
+  "cold-spawn": [
+   {
+    "end_to_end_ms": [
+     42.2253
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 6.0408,
+      "count_ms": 0.0001,
+      "first_ms": 19.0431,
+      "open_ms": 4.1404,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     38.5034
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.3036,
+      "count_ms": 0.0001,
+      "first_ms": 18.519,
+      "open_ms": 4.1097,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     41.8586
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.364,
+      "count_ms": 0.0001,
+      "first_ms": 19.077299999999997,
+      "open_ms": 4.9399999999999995,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     40.3555
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.2585,
+      "count_ms": 0.0,
+      "first_ms": 16.9239,
+      "open_ms": 5.0857,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     40.0676
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.100300000000001,
+      "count_ms": 0.0001,
+      "first_ms": 18.385,
+      "open_ms": 5.1651,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     38.8596
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.0614,
+      "count_ms": 0.0001,
+      "first_ms": 18.4284,
+      "open_ms": 4.973,
+      "sum": 18062502
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     45.760000000000005
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/scanned-1000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.458,
+      "count_ms": 0.0001,
+      "first_ms": 27.6304,
+      "open_ms": 1.6352,
+      "sum": 17448965
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     43.3992
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/scanned-1000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 5.1512,
+      "count_ms": 0.0001,
+      "first_ms": 26.287000000000003,
+      "open_ms": 1.297,
+      "sum": 17448965
+     }
+    ],
+    "mode": "spawn"
+   },
+   {
+    "end_to_end_ms": [
+     55.9542
+    ],
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/scanned-1000-pages.pdf",
+    "inner": [
+     {
+      "bind_ms": 8.060400000000001,
+      "count_ms": 0.0001,
+      "first_ms": 32.9276,
+      "open_ms": 1.7862,
+      "sum": 17448965
+     }
+    ],
+    "mode": "spawn"
+   }
+  ],
+  "cold-walk": [
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "jumps_after_walk_ms": [
+     28.267,
+     18.7471,
+     19.024099999999997,
+     19.042199999999998,
+     16.712500000000002
+    ],
+    "open_ms": 6.1885,
+    "walk_ms": 1314.0328000000002
+   },
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "jumps_after_walk_ms": [
+     26.6918,
+     16.4866,
+     16.985699999999998,
+     17.3247,
+     17.6219
+    ],
+    "open_ms": 14.0842,
+    "walk_ms": 1474.9634999999998
+   },
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "jumps_after_walk_ms": [
+     29.834699999999998,
+     18.406200000000002,
+     18.153699999999997,
+     17.9561,
+     17.1874
+    ],
+    "open_ms": 13.6177,
+    "walk_ms": 2032.1718999999998
+   },
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "jumps_after_walk_ms": [
+     25.508699999999997,
+     16.100199999999997,
+     17.3556,
+     16.56,
+     17.1871
+    ],
+    "open_ms": 8.0062,
+    "walk_ms": 2119.6458
+   },
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "jumps_after_walk_ms": [
+     28.237499999999997,
+     20.587899999999998,
+     26.8334,
+     27.6093,
+     27.9858
+    ],
+    "open_ms": 7.9693000000000005,
+    "walk_ms": 1378.8287
+   },
+   {
+    "area": 2504950000.0,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "jumps_after_walk_ms": [
+     27.0235,
+     21.9185,
+     16.6404,
+     16.3833,
+     17.1669
+    ],
+    "open_ms": 7.7924999999999995,
+    "walk_ms": 1583.0085000000001
+   }
+  ],
+  "hayro": [
+   {
+    "engine": "hayro-0.8.0",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "first_page_ms": 21.6463,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18098663,
+    "note": "no clip-to-tile entry point in the simple API; text extraction, forms, annotations and saving are not in hayro",
+    "open_ms": 1378.0973999999999,
+    "pages": 5000,
+    "typical_page_ms": [
+     25.6555,
+     22.313,
+     22.1459,
+     22.104499999999998,
+     27.014300000000002,
+     25.5214,
+     22.7362
+    ]
+   },
+   {
+    "engine": "hayro-0.8.0",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "first_page_ms": 19.6287,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 18098663,
+    "note": "no clip-to-tile entry point in the simple API; text extraction, forms, annotations and saving are not in hayro",
+    "open_ms": 1846.3851,
+    "pages": 5000,
+    "typical_page_ms": [
+     17.939,
+     18.781,
+     17.7369,
+     18.2227,
+     18.8152,
+     17.5154,
+     16.8309
+    ]
+   },
+   {
+    "engine": "hayro-0.8.0",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/scanned-1000-pages.pdf",
+    "first_page_ms": 30.6675,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 17504864,
+    "note": "no clip-to-tile entry point in the simple API; text extraction, forms, annotations and saving are not in hayro",
+    "open_ms": 289.7609,
+    "pages": 1000,
+    "typical_page_ms": [
+     28.361,
+     27.270599999999998
+    ]
+   },
+   {
+    "engine": "hayro-0.8.0",
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/scanned-1000-pages.pdf",
+    "first_page_ms": 33.633700000000005,
+    "first_page_px": [
+     1190,
+     1684
+    ],
+    "first_sum": 17504864,
+    "note": "no clip-to-tile entry point in the simple API; text extraction, forms, annotations and saving are not in hayro",
+    "open_ms": 458.03490000000005,
+    "pages": 1000,
+    "typical_page_ms": [
+     33.765,
+     39.429899999999996
+    ]
+   }
+  ],
+  "save-fake": [
+   {
+    "edit_ms": 672.0361,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.41796875,
+    "prefix_identical": true,
+    "save_ms": 1620.8159,
+    "seq_reads": 246593,
+    "tail_fnv": "5bcb418cdde11f08",
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 1438.904,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.43359375,
+    "prefix_identical": true,
+    "save_ms": 150.7037,
+    "seq_reads": 246593,
+    "tail_fnv": "35598941da6c35b0",
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 1397.9225,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.43359375,
+    "prefix_identical": true,
+    "save_ms": 159.8733,
+    "seq_reads": 246593,
+    "tail_fnv": "bab52c185a4e1564",
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 731.3152,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.44140625,
+    "prefix_identical": true,
+    "save_ms": 147.99599999999998,
+    "seq_reads": 246593,
+    "tail_fnv": "24e5e6c8b25efe2c",
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 644.737,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.234375,
+    "prefix_identical": true,
+    "save_ms": 1545.3815,
+    "seq_reads": 244314,
+    "tail_fnv": "a900591063e102ee",
+    "update_bytes": 718203,
+    "written": 1001426615
+   },
+   {
+    "edit_ms": 768.639,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.203125,
+    "prefix_identical": true,
+    "save_ms": 142.7618,
+    "seq_reads": 244314,
+    "tail_fnv": "e1c499552b09ec90",
+    "update_bytes": 718203,
+    "written": 1001426615
+   },
+   {
+    "edit_ms": 904.655,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.25,
+    "prefix_identical": true,
+    "save_ms": 121.8872,
+    "seq_reads": 244314,
+    "tail_fnv": "5d34862755c0dab5",
+    "update_bytes": 718203,
+    "written": 1001426615
+   },
+   {
+    "edit_ms": 979.8143,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "other_reads": 0,
+    "peak_private_mib": 13.22265625,
+    "prefix_identical": true,
+    "save_ms": 118.71950000000001,
+    "seq_reads": 244314,
+    "tail_fnv": "73c1649b4482cd16",
+    "update_bytes": 718203,
+    "written": 1001426615
+   }
+  ],
+  "save-nocompare": [
+   {
+    "edit_ms": 708.055,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.5390625,
+    "prefix_identical": true,
+    "save_ms": 1601.3468,
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 701.7419,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.578125,
+    "prefix_identical": true,
+    "save_ms": 1620.2441,
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 1351.3108,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.5390625,
+    "prefix_identical": true,
+    "save_ms": 2092.9711,
+    "update_bytes": 698169,
+    "written": 1010741127
+   }
+  ],
+  "save": [
+   {
+    "edit_ms": 951.5224,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.41015625,
+    "prefix_identical": true,
+    "save_ms": 1505.584,
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 537.1536,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.41015625,
+    "prefix_identical": true,
+    "save_ms": 1441.7438,
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 558.8984,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.50390625,
+    "prefix_identical": true,
+    "save_ms": 1499.2859,
+    "update_bytes": 698169,
+    "written": 1010741127
+   },
+   {
+    "edit_ms": 569.9415,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.2109375,
+    "prefix_identical": true,
+    "save_ms": 1528.6988999999999,
+    "update_bytes": 718203,
+    "written": 1001426615
+   },
+   {
+    "edit_ms": 597.5858,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.3203125,
+    "prefix_identical": true,
+    "save_ms": 1474.8147999999999,
+    "update_bytes": 718203,
+    "written": 1001426615
+   },
+   {
+    "edit_ms": 585.5057999999999,
+    "file": "C:/Users/MSJin/dev/quire/.cache/fixtures/book-5000-pages-linearized.pdf",
+    "ok": 1,
+    "peak_private_mib": 13.23828125,
+    "prefix_identical": true,
+    "save_ms": 1405.0846,
+    "update_bytes": 718203,
+    "written": 1001426615
+   }
+  ],
+  "text-pool": [
+   {
+    "mode": "pool",
+    "pages": 5000,
+    "wall_ms": 9998.737500000001,
+    "workers": 1,
+    "workers_out": [
+     {
+      "chars": 12499389,
+      "from": 0,
+      "ms": 9623.0877,
+      "ms_per_page": 1.92462018,
+      "to": 5000,
+      "token_hits": 5000,
+      "total_ms": 9631.616,
+      "x": 2990299924.7858276
+     }
+    ]
+   },
+   {
+    "mode": "pool",
+    "pages": 5000,
+    "wall_ms": 2989.0436,
+    "workers": 3,
+    "workers_out": [
+     {
+      "chars": 4165447,
+      "from": 0,
+      "ms": 2273.9982,
+      "ms_per_page": 1.3641296940611878,
+      "to": 1667,
+      "token_hits": 1667,
+      "total_ms": 2282.2876,
+      "x": 996417408.5152932
+     },
+     {
+      "chars": 4170654,
+      "from": 1667,
+      "ms": 2616.1434,
+      "ms_per_page": 1.5693769046190762,
+      "to": 3334,
+      "token_hits": 1667,
+      "total_ms": 2624.7628999999997,
+      "x": 998376850.5290452
+     },
+     {
+      "chars": 4163288,
+      "from": 3334,
+      "ms": 2883.647,
+      "ms_per_page": 1.7308873349339735,
+      "to": 5000,
+      "token_hits": 1666,
+      "total_ms": 2892.6984,
+      "x": 995505665.7414894
+     }
+    ]
+   },
+   {
+    "mode": "pool",
+    "pages": 5000,
+    "wall_ms": 2545.474,
+    "workers": 4,
+    "workers_out": [
+     {
+      "chars": 3122821,
+      "from": 0,
+      "ms": 1746.1615,
+      "ms_per_page": 1.39693456,
+      "to": 1250,
+      "token_hits": 1250,
+      "total_ms": 1756.4852,
+      "x": 746947585.9081764
+     },
+     {
+      "chars": 3126696,
+      "from": 1250,
+      "ms": 1969.8937,
+      "ms_per_page": 1.57592056,
+      "to": 2500,
+      "token_hits": 1250,
+      "total_ms": 1979.0941,
+      "x": 748404299.4979744
+     },
+     {
+      "chars": 3124238,
+      "from": 2500,
+      "ms": 2187.0976,
+      "ms_per_page": 1.74968288,
+      "to": 3750,
+      "token_hits": 1250,
+      "total_ms": 2199.8032,
+      "x": 747232861.3060493
+     },
+     {
+      "chars": 3125634,
+      "from": 3750,
+      "ms": 2449.4373,
+      "ms_per_page": 1.9595548000000005,
+      "to": 5000,
+      "token_hits": 1250,
+      "total_ms": 2461.5936,
+      "x": 747715178.0736275
+     }
+    ]
+   },
+   {
+    "mode": "pool",
+    "pages": 5000,
+    "wall_ms": 2084.7729,
+    "workers": 7,
+    "workers_out": [
+     {
+      "chars": 1785355,
+      "from": 0,
+      "ms": 1070.3194,
+      "ms_per_page": 1.4969587412587415,
+      "to": 715,
+      "token_hits": 715,
+      "total_ms": 1080.0035,
+      "x": 426957741.5702362
+     },
+     {
+      "chars": 1787693,
+      "from": 715,
+      "ms": 1243.4386,
+      "ms_per_page": 1.7390836363636364,
+      "to": 1430,
+      "token_hits": 715,
+      "total_ms": 1255.7337,
+      "x": 427765616.71811295
+     },
+     {
+      "chars": 1787639,
+      "from": 1430,
+      "ms": 1409.0487,
+      "ms_per_page": 1.970706153846154,
+      "to": 2145,
+      "token_hits": 715,
+      "total_ms": 1421.4356,
+      "x": 427721775.5412445
+     },
+     {
+      "chars": 1789790,
+      "from": 2145,
+      "ms": 1554.0407,
+      "ms_per_page": 2.1734935664335664,
+      "to": 2860,
+      "token_hits": 715,
+      "total_ms": 1569.9631,
+      "x": 428582426.96138
+     },
+     {
+      "chars": 1785809,
+      "from": 2860,
+      "ms": 1688.0948999999998,
+      "ms_per_page": 2.360984055944056,
+      "to": 3575,
+      "token_hits": 715,
+      "total_ms": 1702.6699999999998,
+      "x": 426944378.86088943
+     },
+     {
+      "chars": 1789919,
+      "from": 3575,
+      "ms": 1834.0232,
+      "ms_per_page": 2.5650787412587412,
+      "to": 4290,
+      "token_hits": 715,
+      "total_ms": 1848.9959,
+      "x": 428449245.0754357
+     },
+     {
+      "chars": 1773184,
+      "from": 4290,
+      "ms": 1974.0785,
+      "ms_per_page": 2.780404084507042,
+      "to": 5000,
+      "token_hits": 710,
+      "total_ms": 1989.3799,
+      "x": 423878740.0585289
+     }
+    ]
+   }
+  ],
+  "memory_peak_private_mib": {
+   "note": "K32GetProcessMemoryInfo PeakPagefileUsage of one worker process, book fixture unless named; warm file cache",
+   "pdfium_open_render_8_pages_4_tiles": 28.3,
+   "pdfium_scanned_open_render": 18.1,
+   "pdfium_walk_all_page_sizes": 28.2,
+   "pdfium_text_pages_0_250": 57,
+   "pdfium_text_pages_0_1000": 210,
+   "pdfium_text_pages_4000_4250": 65,
+   "pdfium_text_all_5000": 1021.3,
+   "hayro_open_render_8_pages": 29.6
+  },
+  "hayro_open_split": {
+   "note": "cold; Pdf::new walks every page eagerly",
+   "book_pdf_new_ms": [
+    1293.8,
+    1365.0
+   ],
+   "book_first_page_ms": [
+    20,
+    28
+   ]
+  },
+  "append_while_mapped": {
+   "append_700k_and_fsync_ms": 3.8,
+   "append_ok": true,
+   "old_mapping_still_reads": true,
+   "truncate_while_mapped": "os error 1224"
+  }
+ },
+ "summary": {
+  "first_page_cold_new_worker_process_ms": "39-56 end to end (spawn, bind 5-8, open 1-5, render 17-33)",
+  "far_page_cold_before_page_tree_walk_ms": "260-920 (pages 1000-4998)",
+  "page_tree_walk_cold_ms": "1314-2120 for 5,000 pages, serial",
+  "far_page_cold_after_walk_ms": "16-28",
+  "page_100pct_warm_ms": "12-29",
+  "tile_800pct_ms": "book 1.3-3.5; scanned 21",
+  "text_full_pass_s": {
+   "1 worker": 10.0,
+   "3 workers": 2.99,
+   "4 workers": 2.55,
+   "7 workers": 2.08
+  },
+  "incremental_save_pdfium_ms": {
+   "cold": "1405-2093",
+   "warm": "456-465",
+   "copy_reads_elided_cold": "119-160"
+  },
+  "incremental_update_bytes": "698,169 (one note annotation; PDFium rewrites catalog, page tree and touched page dicts)",
+  "update_identical_with_elided_reads": "yes, but for the trailer /ID, which PDFium randomizes on every save",
+  "hayro": "open 1.3-1.8 s cold (eager page walk); pages 17-27 ms at 100 %; no text extraction, forms, annotations or saving"
+ }
+}
