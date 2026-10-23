@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pdf-request-tiles"
+description = "Enables the pdf_request_tiles command without any pre-configured scope."
+commands.allow = ["pdf_request_tiles"]
+
+[[permission]]
+identifier = "deny-pdf-request-tiles"
+description = "Denies the pdf_request_tiles command without any pre-configured scope."
+commands.deny = ["pdf_request_tiles"]

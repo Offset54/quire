@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "./i18n";
+import { PdfScreen, pdfState } from "./pdf/PdfScreen";
 import { notify, useDocState } from "./txt/doc-store";
 import { EditorScreen, Notices } from "./txt/EditorScreen";
 import { Session, getUi, setUi } from "./txt/session";
@@ -41,7 +42,8 @@ function Decoding() {
 export const appState: {
   session: Session | undefined;
   open?: (path: string) => Promise<void>;
-} = { session: undefined };
+  pdf: typeof pdfState;
+} = { session: undefined, pdf: pdfState };
 // UI tests (WebDriver) read it to check positions; never exposed otherwise.
 if (navigator.webdriver) {
   (window as unknown as { __quire?: typeof appState }).__quire = appState;
@@ -49,6 +51,8 @@ if (navigator.webdriver) {
 
 export function App() {
   const [session, setSession] = useState<Session | undefined>();
+  // An open PDF (M3); the TXT/MD session and a PDF never show together.
+  const [pdfPath, setPdfPath] = useState<string | undefined>();
   const [orphans, setOrphans] = useState<Orphan[]>([]);
   const [wrap, setWrap] = useState(false);
   const sessionRef = useRef<Session | undefined>(undefined);
@@ -79,6 +83,14 @@ export function App() {
     async (path?: string) => {
       const p = path ?? (await openDialog({ multiple: false, directory: false }));
       if (!p) return;
+      // Content decides, not the extension (§5.3).
+      const kind = await invoke<string>("doc_probe", { path: p }).catch(() => "text");
+      if (kind === "pdf") {
+        await replace(() => Promise.resolve(undefined));
+        setPdfPath(p);
+        return;
+      }
+      setPdfPath(undefined);
       await replace(() => Session.open(p));
     },
     [replace],
@@ -90,6 +102,9 @@ export function App() {
   // Startup: a file from the command line (already opening in the core),
   // and journals left by a crash.
   useEffect(() => {
+    void invoke<string | null>("pdf_startup").then((p) => {
+      if (p) setPdfPath(p);
+    });
     Session.startup()
       .then((s) => {
         if (s) show(s);
@@ -188,6 +203,21 @@ export function App() {
     };
   }, []);
 
+  if (pdfPath && !session) {
+    return (
+      <>
+        <PdfScreen
+          key={pdfPath}
+          path={pdfPath}
+          onError={(e) => {
+            setPdfPath(undefined);
+            notify("error", t("app.openFailed", { error: e }), 0);
+          }}
+        />
+        <Notices />
+      </>
+    );
+  }
   if (session) {
     return (
       <EditorScreen

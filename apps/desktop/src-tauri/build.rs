@@ -51,6 +51,13 @@ fn main() {
         "md_export_seal",
         "md_export_finish",
         "md_export_abort",
+        "doc_probe",
+        "pdf_startup",
+        "pdf_open",
+        "pdf_request_tiles",
+        "pdf_close",
+        "pdf_stats",
+        "pdf_crash_worker",
     ];
     if std::env::var_os("CARGO_FEATURE_BENCH_FIXTURES").is_some() {
         commands.extend([

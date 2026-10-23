@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pdf-crash-worker"
+description = "Enables the pdf_crash_worker command without any pre-configured scope."
+commands.allow = ["pdf_crash_worker"]
+
+[[permission]]
+identifier = "deny-pdf-crash-worker"
+description = "Denies the pdf_crash_worker command without any pre-configured scope."
+commands.deny = ["pdf_crash_worker"]

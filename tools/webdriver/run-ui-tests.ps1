@@ -7,7 +7,7 @@
   Logs (tauri-driver and app output, verbose msedgedriver log) go to the
   run's directory under .cache/ui-tests; their tails are printed on failure.
 #>
-param([switch] $NoBuild, [string[]] $Tests = @("txt-flows", "md-flows"))
+param([switch] $NoBuild, [string[]] $Tests = @("txt-flows", "md-flows", "pdf-flows"))
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 $app = Join-Path $root "target/release/quire.exe"
@@ -27,6 +27,9 @@ if (-not $tauriDriver) { $tauriDriver = Join-Path $env:USERPROFILE ".cargo/bin/t
 $savedLocal = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = Join-Path $dir "appdata"
 New-Item -ItemType Directory -Force $env:LOCALAPPDATA | Out-Null
+# The app inherits tauri-driver's environment. The PDF flows crash a worker
+# on purpose (pdf_crash_worker refuses without this).
+$env:QUIRE_PDF_FAULTS = "1"
 # msedgedriver through a wrapper that adds a verbose log; tauri-driver's
 # output (and the app's, which inherits it) goes to files.
 $driverLog = Join-Path $dir "msedgedriver.log"
@@ -99,6 +102,7 @@ try {
   Stop-Process $td -Force -ErrorAction SilentlyContinue
   Get-Process msedgedriver -ErrorAction SilentlyContinue | Stop-Process -Force
   $env:LOCALAPPDATA = $savedLocal
+  Remove-Item Env:QUIRE_PDF_FAULTS -ErrorAction SilentlyContinue
   Remove-Item Env:QUIRE_APP, Env:QUIRE_UI_DIR -ErrorAction SilentlyContinue
 }
 exit $code

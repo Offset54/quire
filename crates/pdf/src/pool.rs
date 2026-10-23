@@ -98,7 +98,8 @@ pub struct DocInfo {
     pub version: u32,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PoolStats {
     pub slots: usize,
     pub alive: usize,

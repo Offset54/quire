@@ -3530,6 +3530,7 @@ dependencies = [
  "quire-core",
  "quire-highlight",
  "quire-markdown",
+ "quire-pdf",
  "quire-raster",
  "quire-text",
  "serde",
@@ -3614,6 +3615,7 @@ dependencies = [
  "pdf-writer",
  "quire-core",
  "quire-text",
+ "serde",
  "tracing",
  "windows-sys 0.61.2",
 ]

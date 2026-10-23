@@ -9,13 +9,13 @@ mod frontend_cache;
 mod images;
 mod md;
 mod paste;
+mod pdf;
 #[cfg(feature = "bench-fixtures")]
 mod synthetic;
 mod tracing_setup;
 mod txt;
-// Tile views: only the bench-fixtures build opens one today (TXT renders
-// DOM rows, ADR-0023).
-#[cfg_attr(not(feature = "bench-fixtures"), allow(dead_code))]
+// Tile delivery: PDF pages, and the synthetic views of the bench build
+// (TXT renders DOM rows, ADR-0023).
 mod transport;
 #[cfg_attr(not(feature = "bench-fixtures"), allow(dead_code))]
 mod view;
@@ -121,7 +121,6 @@ async fn perf_stats(
     })
 }
 
-#[cfg_attr(not(feature = "bench-fixtures"), allow(dead_code))]
 /// Picks the tile transport for a view (ADR-0004). `QUIRE_TRANSPORT=channel`
 /// forces the cross-platform path.
 fn make_sink(
@@ -217,6 +216,14 @@ fn create_main_window(app: &tauri::App, opening: bool) -> tauri::Result<()> {
 }
 
 fn main() {
+    // A PDFium worker process (ADR-0036): the same executable, started by
+    // the PDF pool with this switch first. Nothing else of the app runs.
+    if std::env::args_os()
+        .nth(1)
+        .is_some_and(|a| a == "--pdf-worker")
+    {
+        std::process::exit(quire_pdf::worker::run());
+    }
     let tracing = tracing_setup::init();
     let startup = tracing::info_span!("startup").entered();
 
@@ -241,7 +248,13 @@ fn main() {
     });
     tracing::info!(args = ?std::env::args_os().skip(1).collect::<Vec<_>>(), file = ?file_arg, "command line");
     let opening = file_arg.is_some();
-    if let Some(path) = file_arg {
+    // A PDF goes to the PDF service; anything else opens as text (§5.3:
+    // content decides).
+    let pdf_arg = file_arg
+        .as_ref()
+        .filter(|p| pdf::probe(p).is_ok_and(|k| k == "pdf"))
+        .cloned();
+    if let Some(path) = file_arg.filter(|_| pdf_arg.is_none()) {
         txt.preopen(path);
     }
 
@@ -276,6 +289,11 @@ fn main() {
         .manage(markdown)
         .manage(image_service)
         .manage(tracing)
+        .manage(pdf::PdfService::new(
+            Arc::clone(&scheduler),
+            &governor,
+            pdf_arg,
+        ))
         .manage(ViewService::new(scheduler))
         .manage(governor.clone())
         .manage(txt);
@@ -331,6 +349,13 @@ fn main() {
         md::md_export_finish,
         md::md_export_abort,
         md::md_blocks,
+        pdf::doc_probe,
+        pdf::pdf_startup,
+        pdf::pdf_open,
+        pdf::pdf_request_tiles,
+        pdf::pdf_close,
+        pdf::pdf_stats,
+        pdf::pdf_crash_worker,
         bench::bench_scenario,
         bench::bench_open_synthetic,
         bench::bench_report,
@@ -390,6 +415,13 @@ fn main() {
         md::md_export_finish,
         md::md_export_abort,
         md::md_blocks,
+        pdf::doc_probe,
+        pdf::pdf_startup,
+        pdf::pdf_open,
+        pdf::pdf_request_tiles,
+        pdf::pdf_close,
+        pdf::pdf_stats,
+        pdf::pdf_crash_worker,
     ]);
 
     let build_span = tracing::info_span!("tauri_build").entered();

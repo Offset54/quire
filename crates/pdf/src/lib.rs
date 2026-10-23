@@ -6,6 +6,7 @@ pub mod cpu;
 mod ffi;
 pub mod pool;
 pub mod protocol;
+pub mod tiles;
 pub mod worker;
 
 pub use pool::{DocInfo, PdfError, Pool, PoolConfig, PoolStats, WorkerCommand};

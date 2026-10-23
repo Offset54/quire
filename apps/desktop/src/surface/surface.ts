@@ -58,11 +58,31 @@ interface WebView2 {
 }
 
 const webview2 = (window as unknown as { chrome?: { webview?: WebView2 } }).chrome?.webview;
-const surfacesByView = new Map<number, DocumentSurface>();
+
+/** Anything that takes tiles for a view id: document surfaces and PDF views. */
+export interface TileReceiver {
+  wants(id: TileId): boolean;
+  receive(id: TileId, bitmap: ImageBitmap): void;
+  trimCache(bytes: number): void;
+  readonly counters: TileCounters;
+}
+
+const surfacesByView = new Map<number, TileReceiver>();
+
+/** Routes tiles (and memory trims) for `view` to `receiver`. */
+export function registerTileReceiver(view: number, receiver: TileReceiver): void {
+  surfacesByView.set(view, receiver);
+  installSharedBufferListener();
+  installTrimListener();
+}
+
+export function unregisterTileReceiver(view: number): void {
+  surfacesByView.delete(view);
+}
 
 /** Open surfaces, for the performance HUD. */
 export function openSurfaces(): DocumentSurface[] {
-  return [...surfacesByView.values()];
+  return [...surfacesByView.values()].filter((s) => s instanceof DocumentSurface);
 }
 let sharedListenerInstalled = false;
 
@@ -120,7 +140,7 @@ function bitmapBytes(b: ImageBitmap): number {
  * LRU cache of tile bitmaps for one surface. Capped by count, and its bytes
  * are reported to the core memory governor, which can ask for a trim.
  */
-class TileCache {
+export class TileCache {
   private readonly tiles = new Map<string, ImageBitmap>();
   bytes = 0;
   constructor(public capacity: number) {}
@@ -187,7 +207,7 @@ export interface SurfaceDiagnostics {
   counters: TileCounters;
 }
 
-export class DocumentSurface {
+export class DocumentSurface implements TileReceiver {
   readonly element: HTMLDivElement;
   private readonly tileCanvas: HTMLCanvasElement;
   private readonly overlayCanvas: HTMLCanvasElement;

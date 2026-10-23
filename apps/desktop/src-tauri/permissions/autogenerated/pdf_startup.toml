@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pdf-startup"
+description = "Enables the pdf_startup command without any pre-configured scope."
+commands.allow = ["pdf_startup"]
+
+[[permission]]
+identifier = "deny-pdf-startup"
+description = "Denies the pdf_startup command without any pre-configured scope."
+commands.deny = ["pdf_startup"]

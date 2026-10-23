@@ -23,8 +23,11 @@
 
 | # | Task | Status |
 |---|---|---|
-| 1 | PDFium binaries | In progress: [ADR-0035](adr/0035-pdf-engine.md); `tools/pdfium/pdfium.json` pins `chromium/7881` for five platforms, `fetch-pdfium.ps1` checks hash, build args and licences and writes the notices file, run in CI on every OS. Bundling with the worker comes with task 2 |
-| 2–20 | | Not started |
+| 1 | PDFium binaries | Mostly done: [ADR-0035](adr/0035-pdf-engine.md); `tools/pdfium/pdfium.json` pins `chromium/7881` for five platforms, `fetch-pdfium.ps1` checks hash, build args and licences and writes the notices file, run in CI on every OS. Development builds find the fetched library; installer bundling waits for M7's installers |
+| 2 | Worker process and protocol | Mostly done ([ADR-0036](adr/0036-pdf-worker-processes.md)): `crates/pdf` (protocol, worker, pool, worker count); workers are `quire --pdf-worker`; crash and timeout recovery, Job Object. Raw: spawn to open 22–30 ms, 512 px tile round trip 2.0–2.1 ms, 800 % viewport on 3 workers 12–20 ms. Left: lowered integrity level (task 14), recycling over a memory cap (task 4) |
+| 3 | Opening and progressive loading | In progress: probe, open, password and repaired banner, background page walk streamed to the view |
+| 4–5 | Tiles, layers, PDF surface | In progress: page-local tiles, fallback bitmaps, stale tiles while zooming, layouts, rotation, zoom, go-to-page |
+| 6–20 | | Not started |
 
 ## M2 tasks
 

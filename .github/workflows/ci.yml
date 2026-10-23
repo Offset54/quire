@@ -77,6 +77,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: tauri-driver
         run: cargo install tauri-driver --version 2.1.0 --locked
+      - name: PDFium (ADR-0035)
+        run: pwsh tools/pdfium/fetch-pdfium.ps1
       - name: Release app
         run: pnpm --filter @quire/desktop tauri build --no-bundle
       - name: UI flows

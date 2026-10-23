@@ -18,6 +18,7 @@ quire-text = { path = "../text" }
 libloading = "0.8"
 memmap2 = "0.9"
 parking_lot = "0.12"
+serde = { version = "1", features = ["derive"] }
 tracing = "0.1"
 
 [target.'cfg(windows)'.dependencies]
