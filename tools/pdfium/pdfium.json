@@ -1,0 +1,61 @@
+{
+  "comment": "Pinned PDFium build (ADR-0035). fetch-pdfium.ps1 downloads, verifies and licence-checks it. Changing the release means new SHA-256s, re-running the engine checks, and the licence list below re-reviewed.",
+  "source": "https://github.com/bblanchon/pdfium-binaries",
+  "release": "chromium/7881",
+  "version": "151.0.7881.0",
+  "assets": {
+    "windows-x64": {
+      "file": "pdfium-win-x64.tgz",
+      "sha256": "73cc0de638ac2095e7445bf56a38200a5b7c7ca0e9f4ba144598f2457377ac08",
+      "lib": "bin/pdfium.dll"
+    },
+    "windows-arm64": {
+      "file": "pdfium-win-arm64.tgz",
+      "sha256": "d3035d4d2cacac6ecd1a2ece197a3d702a1b2a58466276b9f870b8cb278a9d84",
+      "lib": "bin/pdfium.dll"
+    },
+    "macos-arm64": {
+      "file": "pdfium-mac-arm64.tgz",
+      "sha256": "52e94ca5aa8847934330daf3f8150c190682c5ca93831468794f8b90d4392e40",
+      "lib": "lib/libpdfium.dylib"
+    },
+    "macos-x64": {
+      "file": "pdfium-mac-x64.tgz",
+      "sha256": "6dedf83990e0e3d6b7c93c9e7589c5a126b0ae14b7464d76120cff7a26afb18b",
+      "lib": "lib/libpdfium.dylib"
+    },
+    "linux-x64": {
+      "file": "pdfium-linux-x64.tgz",
+      "sha256": "1470e21b8b4a3b4ad7f85684e2da11d94f3b69a86d81dee11b9b6709d927ac1d",
+      "lib": "lib/libpdfium.so"
+    }
+  },
+  "requiredArgs": {
+    "pdf_enable_v8": "false",
+    "pdf_enable_xfa": "false",
+    "is_debug": "false"
+  },
+  "licenses": {
+    "pdfium.txt": { "license": "BSD-3-Clause", "approval": "§0" },
+    "abseil.txt": { "license": "Apache-2.0", "approval": "§0" },
+    "simdutf.txt": { "license": "Apache-2.0 OR MIT", "approval": "§0" },
+    "llvm-libc.txt": { "license": "Apache-2.0 WITH LLVM-exception", "approval": "§0" },
+    "fast_float.txt": { "license": "Apache-2.0 OR MIT OR BSL-1.0", "approval": "§0" },
+    "lcms.txt": { "license": "MIT", "approval": "§0" },
+    "libopenjpeg.txt": { "license": "BSD-2-Clause", "approval": "§0" },
+    "zlib.txt": { "license": "Zlib", "approval": "§0" },
+    "freetype.txt": { "license": "FTL", "approval": "user, 2026-10-08" },
+    "icu.txt": { "license": "Unicode-3.0", "approval": "user, 2026-10-08" },
+    "libjpeg_turbo.ijg": { "license": "IJG", "approval": "user, 2026-10-23 (ADR-0035)" },
+    "libjpeg_turbo.md": {
+      "license": "IJG AND BSD-3-Clause AND Zlib",
+      "approval": "user, 2026-10-23 (ADR-0035)"
+    },
+    "libpng.txt": { "license": "libpng-2.0", "approval": "user, 2026-10-23 (ADR-0035)" },
+    "libtiff.txt": { "license": "libtiff", "approval": "user, 2026-10-23 (ADR-0035)" },
+    "agg23.txt": {
+      "license": "AGG 2.3 notice (non-SPDX, permissive)",
+      "approval": "user, 2026-10-23 (ADR-0035)"
+    }
+  }
+}

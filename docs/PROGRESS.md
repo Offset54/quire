@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Phase | M3 (PDF) planning: [M3_PLAN](M3_PLAN.md) written, decisions A–C open |
+| Phase | M3 (PDF) in progress ([plan](M3_PLAN.md); decisions A–C taken 2026-10-23) |
 | Product name | Codename `quire` (bundle id `dev.quire.app`) |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-23 |
 
 ## Milestones
 
@@ -13,11 +13,18 @@
 | M0 Foundations | Done ([report](M0_REPORT.md)) | All 3 met; startup under the revised budget (ADR-0022) |
 | M1 TXT engine | Done ([report](M1_REPORT.md), [plan](M1_PLAN.md)) | All 4 met. Ref-sim run 6 (2026-10-13): 21 of 21 TXT budgets, platform frame stalls reported separately (ADR-0024) |
 | M2 Markdown | Done ([report](M2_REPORT.md), [plan](M2_PLAN.md)) | Both met: spec suite 99.26 % with the exceptions listed; ref-sim 2026-10-17: 11 of 11 Markdown rows (plus TXT 21/21, M0 11/11) |
-| M3 PDF | Planned ([plan](M3_PLAN.md)); engine spike done (`bench/results/m3/`) | n/a |
+| M3 PDF | In progress ([plan](M3_PLAN.md)) | n/a |
 | M4 DOCX | Not started | n/a |
 | M5 PPTX | Not started | n/a |
 | M6 PPT, export and print | Not started | n/a |
 | M7 Hardening and release | Not started | n/a |
+
+## M3 tasks
+
+| # | Task | Status |
+|---|---|---|
+| 1 | PDFium binaries | In progress: [ADR-0035](adr/0035-pdf-engine.md); `tools/pdfium/pdfium.json` pins `chromium/7881` for five platforms, `fetch-pdfium.ps1` checks hash, build args and licences and writes the notices file, run in CI on every OS. Bundling with the worker comes with task 2 |
+| 2–20 | | Not started |
 
 ## M2 tasks
 

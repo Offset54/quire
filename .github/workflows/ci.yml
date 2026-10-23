@@ -49,6 +49,8 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked
       - name: Markdown spec corpora
         run: pwsh tools/corpora/fetch-markdown-spec.ps1
+      - name: PDFium build and its licences (ADR-0035)
+        run: pwsh tools/pdfium/fetch-pdfium.ps1
       - name: Tests
         run: cargo test --workspace --locked
         env:
@@ -166,5 +168,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @quire/desktop build
+      - name: PDFium build and its licences (ADR-0035)
+        run: pwsh tools/pdfium/fetch-pdfium.ps1
       - run: cargo build --workspace --locked
       - run: cargo test --workspace --locked

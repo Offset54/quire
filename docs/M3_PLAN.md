@@ -25,7 +25,7 @@ Carried into M3: PDF tiles in the webview report through `memory_report` (`src-t
 
 ## The engine spike (2026-10-22)
 
-`spikes/pdf-engine` (not shipped) measured PDFium against hayro on the §10 fixtures, raw on the dev machine (Core Ultra 7 258V: 4 P + 4 LP E cores; not ref-sim). PDFium is bblanchon/pdfium-binaries `chromium/7881` (PDFium 151.0.7881.0, Windows x64, no V8 or XFA; `pdfium.dll` 7.2 MB), called through a thin hand-written FFI. "Cold" means after `refsim purge` of the file. Results: [`bench/results/m3/pdf-engine-spike-2026-10-22.json`](../bench/results/m3/pdf-engine-spike-2026-10-22.json); fetch the binary with `spikes/pdf-engine/fetch-pdfium.ps1`.
+`spikes/pdf-engine` (not shipped) measured PDFium against hayro on the §10 fixtures, raw on the dev machine (Core Ultra 7 258V: 4 P + 4 LP E cores; not ref-sim). PDFium is bblanchon/pdfium-binaries `chromium/7881` (PDFium 151.0.7881.0, Windows x64, no V8 or XFA; `pdfium.dll` 7.2 MB), called through a thin hand-written FFI. "Cold" means after `refsim purge` of the file. Results: [`bench/results/m3/pdf-engine-spike-2026-10-22.json`](../bench/results/m3/pdf-engine-spike-2026-10-22.json); fetch the binary with `tools/pdfium/fetch-pdfium.ps1`.
 
 | Measurement | PDFium | hayro 0.8 |
 |---|---|---|
@@ -122,7 +122,13 @@ The ADR index reserved 0011 (PDF engine) and 0012 (structure operations and expo
 - **0041 PDF editing and incremental save:** the edit model, read elision, in-place append (decision B), signatures.
 - **0042 PDF security:** actions, URIs, attachments, the worker sandbox.
 
-## Open decisions for the user
+## User decisions (2026-10-23)
+
+- **A. Licences:** the four notice licences inside `pdfium.dll` (IJG, libpng, libtiff, AGG 2.3) are approved; PDFium ships with a third-party notices file ([ADR-0035](adr/0035-pdf-engine.md)).
+- **B. Incremental save** appends the update to the file in place for every PDF, with the original length in the journal so a crash mid-append is truncated back at the next start (ADR-0041 when task 13 lands).
+- **C. Acrobat:** the user installs Acrobat Reader and checks about 12 prepared files against our reference renders with a checklist at the end of M3; Edge and Chrome are checked through WebDriver (task 19).
+
+## Open decisions for the user (as put on 2026-10-22)
 
 **A. PDFium and the licences inside its binary.** `pdfium.dll` from bblanchon/pdfium-binaries (the "prebuilt binaries" §5.1 names) carries, besides PDFium (BSD-3-Clause): abseil, simdutf, llvm-libc (Apache-2.0), fast_float, lcms (MIT), libopenjpeg (BSD-2-Clause), zlib (Zlib), FreeType (FTL, approved 2026-10-08), ICU (Unicode-3.0, approved), and four notice licences not on §0's list: **IJG** (libjpeg-turbo), **libpng**, **libtiff** and the **Anti-Grain Geometry 2.3** notice. All four are permissive (use, modify and redistribute with the notice kept, no copyleft). Options: (1) approve the four, ship a third-party notices file (recommended); (2) build PDFium ourselves without some of them (we'd own a Chromium-style build, gn and depot_tools, on three OSes; JPEG and PNG decoding can't be dropped, so IJG and libpng stay anyway); (3) hayro, which needs none of them but misses the first-page budget and most of M3's scope (spike above).
 

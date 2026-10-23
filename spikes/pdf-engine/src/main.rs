@@ -7,8 +7,15 @@
 //! pdf-engine text   <pdfium.dll> <file.pdf> <from> <to>   # extract text + boxes
 //! pdf-engine spawn  <pdfium.dll> <file.pdf> <runs>        # worker process end to end
 //! pdf-engine pool   <pdfium.dll> <file.pdf> <workers>     # full text pass across workers
+//! pdf-engine walk   <pdfium.dll> <file.pdf>              # page-tree walk, then far jumps
+//! pdf-engine save   <pdfium.dll> <file.pdf>              # incremental save of one note
+//! pdf-engine append <scratch-file>                       # append to a mapped file
 //! pdf-engine hayro  <file.pdf>
 //! ```
+//!
+//! Get PDFium with `pwsh tools/pdfium/fetch-pdfium.ps1` (it prints the
+//! library's path). `save` honours `SPIKE_NO_COMPARE`, `SPIKE_FAKE` (elide
+//! the copy reads) and `SPIKE_TAIL=<path>` (write the update there).
 //!
 //! Scales follow the reference machine: 100 % zoom at 150 % display scaling
 //! is 2.0 device px per PDF point (96 dpi × 1.5 / 72). The 800 % tile is a
