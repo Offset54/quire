@@ -3605,6 +3605,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "quire-pdf"
+version = "0.0.0"
+dependencies = [
+ "libloading 0.8.9",
+ "memmap2",
+ "parking_lot",
+ "pdf-writer",
+ "quire-core",
+ "quire-text",
+ "tracing",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "quire-raster"
 version = "0.0.0"
 dependencies = [

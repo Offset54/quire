@@ -1,0 +1,37 @@
+[package]
+name = "quire-pdf"
+description = "PDF engine host: PDFium worker processes, their protocol and pool (ADR-0035, ADR-0036)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+# The worker on its own, for tests and benchmarks; the app runs the same
+# code as `quire --pdf-worker` (ADR-0036).
+name = "quire-pdf-worker"
+path = "src/bin/quire-pdf-worker.rs"
+
+[dependencies]
+quire-core = { path = "../core" }
+quire-text = { path = "../text" }
+libloading = "0.8"
+memmap2 = "0.9"
+parking_lot = "0.12"
+tracing = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_JobObjects",
+  "Win32_System_ProcessStatus",
+  "Win32_System_SystemInformation",
+  "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+pdf-writer = "0.15.0"
+
+[lints]
+workspace = true

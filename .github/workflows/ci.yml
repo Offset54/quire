@@ -56,6 +56,8 @@ jobs:
         env:
           # The CommonMark/GFM spec harness must run here, not skip.
           QUIRE_SPEC_REQUIRED: "1"
+          # So must the PDF worker tests (crates/pdf/tests).
+          QUIRE_PDFIUM_REQUIRED: "1"
 
   ui-flows:
     # WebDriver UI flows against the release app (ADR-0020): tauri-driver
@@ -172,3 +174,5 @@ jobs:
         run: pwsh tools/pdfium/fetch-pdfium.ps1
       - run: cargo build --workspace --locked
       - run: cargo test --workspace --locked
+        env:
+          QUIRE_PDFIUM_REQUIRED: "1"
